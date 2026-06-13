@@ -454,22 +454,18 @@ function navTo(view,label){
 
 function navToTab(tab){
   const f=document.getElementById("tool-frame");
-  // Update active sub-item
   document.querySelectorAll(".nsi").forEach(n=>n.classList.remove("on"));
   document.getElementById("nsi-"+tab)?.classList.add("on");
-
   if(currentTool==="sd"&&f.style.display!=="none"){
-    // Already on S&D — change hash directly (no reload, same-origin)
-    try{
-      f.contentWindow.location.hash=tab;
-    }catch(e){
-      // Fallback: reload with hash
-      f.src="supply-demand.html#"+tab;
-    }
+    // S&D already loaded — send postMessage
+    try{f.contentWindow.postMessage({tab},"*");}catch(e){}
   } else {
-    // Load S&D with hash
+    // Load S&D, then send tab once loaded
     navTo("sd");
-    f.src="supply-demand.html#"+tab;
+    f.addEventListener("load",function onLoad(){
+      try{f.contentWindow.postMessage({tab},"*");}catch(e){}
+      f.removeEventListener("load",onLoad);
+    });
   }
 }
 
