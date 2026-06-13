@@ -310,6 +310,16 @@ const PIN="estrategia";
 const CAP_COLORS={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"};
 let currentUser=null,sbCol=false,currentTool=null;
 
+// Apply current theme to iframe every time it loads
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('tool-frame').addEventListener('load',function(){
+    try{
+      const dark=document.documentElement.getAttribute('data-theme')==='dark';
+      this.contentDocument.documentElement.setAttribute('data-theme',dark?'dark':'light');
+    }catch(e){}
+  });
+});
+
 // Date
 function updDate(){
   const d=new Date(),days=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"],
