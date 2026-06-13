@@ -280,7 +280,7 @@ label{font-size:13px;color:var(--text2);display:inline-flex;align-items:center;g
           <div style="border-top:1px solid var(--border)"></div>
           <div class="flex gap10" style="align-items:flex-start">
             <span style="font-size:11px;font-weight:600;color:var(--text3);min-width:70px;padding-top:1px">ROLES</span>
-            <p style="font-size:12px;color:var(--text2);line-height:1.5">Todos los miembros pueden capturar inputs y puntuar. El acceso al Roadmap y a la gestión de Acciones requiere contraseña de administrador.</p>
+            <p style="font-size:12px;color:var(--text2);line-height:1.5">Todos los miembros del equipo tienen acceso completo: capturar inputs, puntuar, gestionar acciones y actualizar el roadmap.</p>
           </div>
           <div style="border-top:1px solid var(--border)"></div>
           <p style="font-size:12px;font-weight:600;color:var(--text2);padding-top:2px">Escaleta de la weekly</p>
@@ -390,7 +390,7 @@ label{font-size:13px;color:var(--text2);display:inline-flex;align-items:center;g
     <div id="v-acciones" class="hidden">
       <div class="flex gap10 mb12 wrap" style="align-items:flex-start">
         <div class="flex1"><p class="section-title">Acciones</p><p class="section-sub">Agrupa inputs en buckets y define acciones concretas con valor esperado.</p></div>
-        <div id="acc-admin-controls" class="hidden"><button class="primary" onclick="showCreateBucket()"><i class="ti ti-plus"></i>Nuevo bucket</button></div>
+        <div id="acc-admin-controls"><button class="primary" onclick="showCreateBucket()"><i class="ti ti-plus"></i>Nuevo bucket</button></div>
       </div>
       <div id="acc-guide" class="mb12" style="background:var(--info-bg);border:1px solid var(--info-border);border-radius:var(--r-lg);padding:1rem">
         <div class="flex gap8 mb8" style="align-items:center">
@@ -549,7 +549,7 @@ var api={
   del:function(t,q){return fetch(SURL+'/rest/v1/'+t+'?'+q,{method:'DELETE',headers:gh(true)}).then(function(r){if(!r.ok)throw new Error('DEL '+r.status);});}
 };
 
-var user='',admin=false,tab='home',stab='list',inputFilter='all',inputType='pain_point',formOpen=false;
+var user='',admin=true,tab='home',stab='list',inputFilter='all',inputType='pain_point',formOpen=false;
 var INPUTS=[],BUCKETS=[],BINPUTS=[],ACTIONS=[],AINPUTS=[],ADEPS=[],ROADMAP=[],TAX={internal:[],external:[]};
 var openBuckets={},showOrigin={},logCursor={},collapsedCards={};
 
@@ -712,7 +712,7 @@ function delBucket(id){
   ACTIONS=ACTIONS.filter(function(a){return a.bucketId!==id;});
   AINPUTS=AINPUTS.filter(function(a){return actIds.indexOf(a.action_id)<0;});
   ROADMAP=ROADMAP.filter(function(r){return actIds.indexOf(r.actionId)<0;});
-  rAcciones();if(tab==='roadmap'&&admin)rBoard();
+  rAcciones();if(tab==='roadmap'){admin=true;rBoard();}
   api.del('buckets','id=eq.'+id).catch(function(e){console.error(e);});
 }
 function assignInputToBucket(inputId,bucketId){
@@ -759,14 +759,14 @@ function delAction(id){
   ACTIONS=ACTIONS.filter(function(a){return a.id!==id;});
   AINPUTS=AINPUTS.filter(function(a){return a.action_id!==id;});
   ROADMAP=ROADMAP.filter(function(r){return r.actionId!==id;});
-  rAcciones();rHome();if(tab==='roadmap'&&admin)rBoard();
+  rAcciones();rHome();if(tab==='roadmap'){admin=true;rBoard();}
   api.del('actions','id=eq.'+id).catch(function(e){console.error(e);});
 }
 function toRoadmap(actionId){
   if(ROADMAP.find(function(r){return r.actionId===actionId;}))return;
   var act=ACTIONS.find(function(a){return a.id===actionId;});if(!act)return;
   var rm={id:uid(),actionId:actionId,title:act.title,horizon:'corto',owner:'',status:'Sin iniciar',deadline:'',notes:'',log:[]};
-  ROADMAP.push(rm);rAcciones();rHome();if(tab==='roadmap'&&admin)rBoard();
+  ROADMAP.push(rm);rAcciones();rHome();if(tab==='roadmap'){admin=true;rBoard();}
   api.post('roadmap_items',{id:rm.id,action_id:rm.actionId,title:rm.title,horizon:rm.horizon,owner:rm.owner,status:rm.status,deadline:rm.deadline,notes:rm.notes,log:rm.log}).catch(function(e){console.error(e);});
 }
 var saveTimers={};
