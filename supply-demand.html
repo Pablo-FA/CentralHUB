@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Supply & Demand · Marketing Operations</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--bg1:#141414;--bg2:#1c1c1c;--bg3:#242424;--b:rgba(255,255,255,.08);--bh:rgba(255,255,255,.16);--t:#f0f0f0;--t2:#999;--t3:#555;--acc:#7c6ee8;--accbg:rgba(124,110,232,.12);--green:#22c55e;--greenbg:rgba(34,197,94,.1);--amber:#f59e0b;--amberbg:rgba(245,158,11,.1);--red:#ef4444;--redbg:rgba(239,68,68,.1);--blue:#3b82f6;--bluebg:rgba(59,130,246,.1)}
+body{background:var(--bg);color:var(--t);font-family:system-ui,-apple-system,sans-serif;font-size:14px;min-height:100vh}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:72px;border-bottom:1px solid var(--b);background:var(--bg1);position:sticky;top:0;z-index:20}
+.hdr-t{font-size:22px;font-weight:500;letter-spacing:-0.01em}.hdr-s{font-size:11px;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+.tabs{display:flex;border-bottom:1px solid var(--b);background:var(--bg1);padding:0 28px;position:sticky;top:72px;z-index:19}
+.tab{padding:14px 20px;font-size:13px;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s}
+.tab:hover{color:var(--t)}.tab.on{color:var(--t);border-bottom-color:var(--acc)}
+.content{padding:24px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:10px 16px;font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--b);background:var(--bg2);cursor:pointer;user-select:none;white-space:nowrap}
+thead th:hover{color:var(--t2)}
+tbody tr{border-bottom:1px solid var(--b);cursor:pointer;transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bg2)}
+tbody td{padding:12px 16px;vertical-align:middle}
+.tw{background:var(--bg1);border:1px solid var(--b);border-radius:8px;overflow:hidden;overflow-x:auto}
+.av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;background:var(--accbg);color:var(--acc)}
+.bdg{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.bg{background:rgba(255,255,255,.06);color:var(--t2)}.bgreen{background:var(--greenbg);color:var(--green)}
+.bamber{background:var(--amberbg);color:var(--amber)}.bred{background:var(--redbg);color:var(--red)}
+.bblue{background:var(--bluebg);color:var(--blue)}.bacc{background:var(--accbg);color:var(--acc)}
+.cbar{display:flex;align-items:center;gap:8px}
+.ctrack{flex:1;height:4px;background:var(--bg3);border-radius:2px;min-width:60px}
+.cfill{height:100%;border-radius:2px}
+.btn{padding:7px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--b);background:transparent;color:var(--t);white-space:nowrap;transition:all .15s;font-family:inherit}
+.btn:hover{background:var(--bg3);border-color:var(--bh)}
+.btnp{background:var(--acc);border-color:var(--acc);color:#fff}.btnp:hover{background:#6d5fd4}
+.btns{padding:5px 12px;font-size:12px}.btnd{border-color:var(--red);color:var(--red)}.btnd:hover{background:var(--redbg)}
+/* FILTER BAR */
+.fbar{display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.fsearch{padding:8px 12px;background:var(--bg1);border:1px solid var(--b);border-radius:6px;color:var(--t);font-size:13px;font-family:inherit;width:200px;transition:border-color .15s}
+.fsearch:focus{outline:none;border-color:var(--acc)}
+.fdd{position:relative}
+.fdd-btn{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--b);background:var(--bg1);color:var(--t2);font-family:inherit;transition:all .15s;white-space:nowrap}
+.fdd-btn:hover{border-color:var(--bh);color:var(--t)}
+.fdd-btn.active{border-color:var(--acc);color:var(--acc);background:var(--accbg)}
+.fdd-cnt{background:var(--acc);color:#fff;border-radius:10px;font-size:10px;padding:1px 5px;font-weight:600}
+.fdd-arrow{font-size:10px;opacity:.5;transition:transform .15s}
+.fdd-btn.open .fdd-arrow{transform:rotate(180deg)}
+.fdd-panel{position:absolute;top:calc(100% + 6px);left:0;background:var(--bg1);border:1px solid var(--bh);border-radius:8px;min-width:200px;max-width:260px;z-index:50;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;max-height:300px;overflow-y:auto}
+.fdd-panel.open{display:block}
+.fdd-item{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;transition:background .1s;user-select:none}
+.fdd-item:hover{background:var(--bg2)}
+.fdd-chk{width:15px;height:15px;border-radius:3px;border:1px solid var(--b);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.fdd-chk.on{background:var(--acc);border-color:var(--acc)}
+.fdd-chk.on::after{content:"✓";font-size:10px;color:#fff;font-weight:700}
+.fdd-label{font-size:13px;color:var(--t)}.fdd-sub{font-size:10px;color:var(--t3);margin-left:auto}
+.fdd-divider{height:1px;background:var(--b);margin:4px 0}
+.fdd-clr{padding:8px 14px;font-size:11px;color:var(--t3);cursor:pointer}.fdd-clr:hover{color:var(--red)}
+/* MODALS */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:flex-start;justify-content:center;z-index:100;padding:40px 20px;overflow-y:auto}
+.modal{background:var(--bg1);border:1px solid rgba(255,255,255,.1);border-radius:12px;width:100%;max-width:540px;display:flex;flex-direction:column;margin:auto}
+.mhdr{padding:20px 24px;border-bottom:1px solid var(--b);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.mbdy{padding:0 24px 8px}
+.mftr{padding:14px 24px;border-top:1px solid var(--b);display:flex;justify-content:flex-end;gap:8px;align-items:center}
+.mtabs{display:flex;border-bottom:1px solid var(--b);margin:0 -24px 20px;padding:0 24px}
+.mtab{padding:11px 14px;font-size:12px;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s}
+.mtab:hover{color:var(--t)}.mtab.on{color:var(--t);border-bottom-color:var(--acc)}
+/* Form */
+.fld{margin-bottom:16px}
+.fld label{display:block;font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.fi{width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--b);border-radius:6px;color:var(--t);font-size:13px;font-family:inherit;transition:border-color .15s}
+.fi:focus{outline:none;border-color:var(--acc)}
+textarea.fi{resize:vertical;min-height:75px}
+select.fi option{background:var(--bg2)}
+.tgg{display:flex;gap:6px;flex-wrap:wrap}
+.tgb{padding:6px 14px;border-radius:5px;font-size:12px;cursor:pointer;border:1px solid var(--b);background:transparent;color:var(--t2);transition:all .15s;font-family:inherit}
+.tgb:hover{color:var(--t);border-color:var(--bh)}.tgb.on{background:var(--accbg);border-color:var(--acc);color:var(--acc);font-weight:500}
+.sdk{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sdot{width:13px;height:13px;border-radius:50%;border:1px solid var(--b);background:var(--bg3);flex-shrink:0;transition:all .1s}
+.sdot.on{background:var(--acc);border-color:var(--acc)}.sdot.click{cursor:pointer}
+.r2{display:flex;gap:12px}.r2 .fld{flex:1}
+.lcri{display:flex;align-items:center;gap:8px}.lcri .fi{width:90px;text-align:center}
+.lcrbtn{width:28px;height:28px;border-radius:4px;border:1px solid var(--b);background:var(--bg2);color:var(--t);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}.lcrbtn:hover{background:var(--bg3)}
+/* Info rows (read mode) */
+.info-row{display:flex;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--b)}
+.info-row:last-child{border-bottom:none}
+.info-lbl{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;width:140px;flex-shrink:0;padding-top:1px}
+.info-val{font-size:13px;color:var(--t);flex:1}
+/* Dashboard */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px}
+.mcard{background:var(--bg1);border:1px solid var(--b);border-radius:8px;padding:20px}
+.mlbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.mval{font-size:28px;font-weight:500}.msub{font-size:11px;color:var(--t3);margin-top:4px}
+.shdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.stitle{font-size:15px;font-weight:500}.scnt{font-size:12px;color:var(--t3);margin-left:8px}
+.apill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;background:var(--bg3);border:1px solid var(--b);margin:2px}
+.apill.fc{border-style:dashed;opacity:.8}
+.empty{text-align:center;padding:48px;color:var(--t3);font-size:13px}
+.sect-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.pgate{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg)}
+.hist-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--b)}.hist-item:last-child{border-bottom:none}
+.hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+input[type=range]{accent-color:var(--acc);width:100%}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--b);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="root"></div><div id="mroot"></div>
+<script>
+const PIN="estrategia";
+const SENIORITY=["Junior","Mid","Senior","Lead"];
+const LEVELS=["CL12","CL11","CL10","CL9","CL8","CL7"];
+const LN={CL12:"Junior Analyst",CL11:"Analyst",CL10:"Sr. Analyst",CL9:"Consultant",CL8:"Associated Manager",CL7:"Manager"};
+const STATUSES=["Vacío","Entrevistas","Entrevistado","Propuesto","Asignado","En revisión","Esperando"];
+const SLVL=["","Básico","Sólido","Avanzado","Avanzado+","Experto"];
+const CAPS=["Creative","CGI","Content","Media","Data","Development","DPM"];
+const LOCATIONS=["Madrid","Málaga","Barcelona","Alicante"];
+const CONTRACT_TYPES=["Interno","Subcontractor"];
+const ROLES_BY_CAP={"Creative":["Art Director","Creative Director","Designer","Brand Designer","Copywriter","Creative Strategist"],"CGI":["3D Artist","Motion Designer","VFX Artist","Compositor","CGI Supervisor","Lighting Artist"],"Content":["Content Producer","Video Editor","Producer","Content Strategist","Social Media Manager"],"Media":["Media Planner","Media Buyer","Paid Media Specialist","Programmatic Specialist","SEO Specialist"],"Data":["Data Analyst","Data Engineer","BI Developer","Data Scientist","Analytics Lead"],"Development":["Frontend Developer","Backend Developer","Full Stack Developer","Tech Lead","Solutions Architect"],"DPM":["Digital Project Manager","Program Manager","Scrum Master","Delivery Lead","PMO Analyst"]};
+
+// ── DEMO DATA ──────────────────────────────────────────────────────────────
+const DP=[
+  {id:"d01",name:"María García",eid:"maria.garcia",role:"Art Director",capability:"Creative",seniority:"Senior",level_accenture:"CL9",location:"Madrid",people_lead:"Carlos Rodríguez",lcr:43,contract_type:"Interno",employee_number:"AC-0014",hire_date:"2020-03-15",agency:"",notes:"",current_project:"Coca-Cola Q2",next_assignment:"",performance_notes:"Perfil sólido. Excelente gestión de cliente. Candidata a CL8 en próxima revisión.",skills:[{name:"Adobe Creative Suite",level:5},{name:"Figma",level:4},{name:"Brand Strategy",level:4},{name:"Visual Direction",level:3},{name:"Storytelling",level:4},{name:"Client Presentations",level:3}]},
+  {id:"d02",name:"Carlos Rodríguez",eid:"carlos.rodriguez",role:"Creative Director",capability:"Creative",seniority:"Lead",level_accenture:"CL7",location:"Madrid",people_lead:"",lcr:67,contract_type:"Interno",employee_number:"AC-0003",hire_date:"2017-09-01",agency:"",notes:"",current_project:"Nike Running FW24",next_assignment:"",performance_notes:"Director creativo de referencia. Gestiona equipo de 6.",skills:[{name:"Creative Leadership",level:5},{name:"Brand Strategy",level:5},{name:"Adobe Creative Suite",level:4},{name:"Storytelling",level:5},{name:"Client Management",level:4},{name:"Team Leadership",level:4}]},
+  {id:"d03",name:"Ana Martínez",eid:"ana.martinez",role:"Designer",capability:"Creative",seniority:"Mid",level_accenture:"CL11",location:"Barcelona",people_lead:"María García",lcr:28,contract_type:"Interno",employee_number:"AC-0029",hire_date:"2022-06-01",agency:"",notes:"",current_project:"Santander Digital Rebrand",next_assignment:"",performance_notes:"Buen desempeño. En desarrollo hacia CL10.",skills:[{name:"Figma",level:4},{name:"Adobe Illustrator",level:4},{name:"Adobe Photoshop",level:3},{name:"Motion Graphics",level:3},{name:"Attention to Detail",level:4}]},
+  {id:"d04",name:"Luis López",eid:"luis.lopez",role:"Copywriter",capability:"Creative",seniority:"Mid",level_accenture:"CL10",location:"Madrid",people_lead:"Carlos Rodríguez",lcr:35,contract_type:"Interno",employee_number:"AC-0021",hire_date:"2021-02-15",agency:"",notes:"",current_project:"Heineken World Cup",next_assignment:"",performance_notes:"",skills:[{name:"SEO Copywriting",level:4},{name:"Brand Voice",level:4},{name:"Content Strategy",level:3},{name:"Storytelling",level:4},{name:"Creative Writing",level:5},{name:"English",level:4}]},
+  {id:"d05",name:"Carmen Sánchez",eid:"carmen.sanchez",role:"Brand Designer",capability:"Creative",seniority:"Junior",level_accenture:"CL11",location:"Málaga",people_lead:"María García",lcr:27,contract_type:"Subcontractor",employee_number:"",hire_date:"2023-09-01",agency:"Studio Freelance SL",notes:"Contrato hasta dic 2026",current_project:"",next_assignment:"",performance_notes:"",skills:[{name:"Adobe Creative Suite",level:3},{name:"Figma",level:3},{name:"Brand Identity",level:3},{name:"Typography",level:4},{name:"Color Theory",level:4}]},
+  {id:"d06",name:"José González",eid:"jose.gonzalez",role:"Art Director",capability:"Creative",seniority:"Mid",level_accenture:"CL10",location:"Barcelona",people_lead:"Carlos Rodríguez",lcr:32,contract_type:"Interno",employee_number:"AC-0025",hire_date:"2021-09-15",agency:"",notes:"",current_project:"Zara Spring Collection",next_assignment:"",performance_notes:"",skills:[{name:"Adobe Creative Suite",level:5},{name:"Brand Direction",level:4},{name:"Visual Communication",level:4},{name:"Photography Direction",level:3},{name:"Client Presentations",level:3}]},
+  {id:"d07",name:"Isabel Fernández",eid:"isabel.fernandez",role:"3D Artist",capability:"CGI",seniority:"Mid",level_accenture:"CL10",location:"Madrid",people_lead:"Manuel Díaz",lcr:36,contract_type:"Interno",employee_number:"AC-0018",hire_date:"2021-04-01",agency:"",notes:"",current_project:"Seat Tarraco CGI",next_assignment:"",performance_notes:"Especialista en hard surface. Referente técnico del equipo.",skills:[{name:"Maya",level:5},{name:"Arnold Renderer",level:4},{name:"Substance Painter",level:4},{name:"ZBrush",level:3},{name:"3D Modeling",level:5},{name:"Texturing",level:4}]},
+  {id:"d08",name:"Antonio Pérez",eid:"antonio.perez",role:"Motion Designer",capability:"CGI",seniority:"Senior",level_accenture:"CL9",location:"Barcelona",people_lead:"Manuel Díaz",lcr:42,contract_type:"Interno",employee_number:"AC-0012",hire_date:"2019-11-15",agency:"",notes:"",current_project:"Samsung Galaxy Launch",next_assignment:"",performance_notes:"Perfil versátil. Excelente en pitches animados.",skills:[{name:"After Effects",level:5},{name:"Cinema 4D",level:5},{name:"Premiere Pro",level:4},{name:"Motion Graphics",level:5},{name:"Lottie Animation",level:3},{name:"Compositing",level:4}]},
+  {id:"d09",name:"Laura Torres",eid:"laura.torres",role:"VFX Artist",capability:"CGI",seniority:"Senior",level_accenture:"CL9",location:"Madrid",people_lead:"Manuel Díaz",lcr:44,contract_type:"Interno",employee_number:"AC-0016",hire_date:"2020-07-01",agency:"",notes:"",current_project:"Seat Tarraco CGI",next_assignment:"",performance_notes:"Especialista en simulaciones. Referente en Houdini.",skills:[{name:"Houdini",level:4},{name:"Nuke",level:5},{name:"After Effects",level:4},{name:"VFX Compositing",level:5},{name:"Particle Systems",level:4},{name:"Problem Solving",level:4}]},
+  {id:"d10",name:"Manuel Díaz",eid:"manuel.diaz",role:"CGI Supervisor",capability:"CGI",seniority:"Lead",level_accenture:"CL8",location:"Madrid",people_lead:"Carlos Rodríguez",lcr:52,contract_type:"Interno",employee_number:"AC-0007",hire_date:"2018-05-01",agency:"",notes:"",current_project:"Seat Tarraco CGI",next_assignment:"",performance_notes:"Gestiona pipeline CGI completo.",skills:[{name:"Maya",level:5},{name:"Houdini",level:4},{name:"Pipeline Management",level:5},{name:"Team Leadership",level:4},{name:"Arnold Renderer",level:5},{name:"Client Management",level:3}]},
+  {id:"d11",name:"Elena Ruiz",eid:"elena.ruiz",role:"3D Artist",capability:"CGI",seniority:"Junior",level_accenture:"CL12",location:"Málaga",people_lead:"Manuel Díaz",lcr:20,contract_type:"Subcontractor",employee_number:"",hire_date:"2024-01-15",agency:"Pixel Factory",notes:"",current_project:"",next_assignment:"",performance_notes:"",skills:[{name:"Blender",level:3},{name:"Maya",level:2},{name:"3D Modeling",level:3},{name:"Substance Painter",level:2},{name:"Attention to Detail",level:4}]},
+  {id:"d12",name:"Pablo Moreno",eid:"pablo.moreno",role:"Motion Designer",capability:"CGI",seniority:"Mid",level_accenture:"CL10",location:"Barcelona",people_lead:"Manuel Díaz",lcr:33,contract_type:"Interno",employee_number:"AC-0023",hire_date:"2021-07-01",agency:"",notes:"",current_project:"Samsung Galaxy Launch",next_assignment:"",performance_notes:"",skills:[{name:"After Effects",level:4},{name:"Cinema 4D",level:3},{name:"Motion Graphics",level:4},{name:"Adobe Premiere",level:3},{name:"Storytelling",level:3}]},
+  {id:"d13",name:"Sofía Jiménez",eid:"sofia.jimenez",role:"Content Producer",capability:"Content",seniority:"Mid",level_accenture:"CL10",location:"Madrid",people_lead:"Cristina Romero",lcr:34,contract_type:"Interno",employee_number:"AC-0022",hire_date:"2021-06-15",agency:"",notes:"",current_project:"Iberdrola ESG",next_assignment:"",performance_notes:"",skills:[{name:"Content Strategy",level:4},{name:"Video Production",level:4},{name:"Project Coordination",level:3},{name:"Adobe Premiere",level:3},{name:"Stakeholder Management",level:3}]},
+  {id:"d14",name:"Alejandro Álvarez",eid:"alejandro.alvarez",role:"Video Editor",capability:"Content",seniority:"Junior",level_accenture:"CL11",location:"Alicante",people_lead:"Cristina Romero",lcr:27,contract_type:"Subcontractor",employee_number:"",hire_date:"2023-04-01",agency:"Post Studio BCN",notes:"",current_project:"",next_assignment:"",performance_notes:"",skills:[{name:"Premiere Pro",level:4},{name:"DaVinci Resolve",level:3},{name:"After Effects",level:3},{name:"Color Grading",level:3},{name:"Storytelling",level:3}]},
+  {id:"d15",name:"Cristina Romero",eid:"cristina.romero",role:"Producer",capability:"Content",seniority:"Senior",level_accenture:"CL9",location:"Barcelona",people_lead:"Eduardo Medina",lcr:40,contract_type:"Interno",employee_number:"AC-0011",hire_date:"2019-09-01",agency:"",notes:"",current_project:"Coca-Cola Q2",next_assignment:"",performance_notes:"Excelente coordinación. Gestiona 3 proyectos simultáneamente.",skills:[{name:"Production Planning",level:5},{name:"Budget Management",level:4},{name:"Vendor Management",level:4},{name:"Risk Management",level:3},{name:"Communication",level:5},{name:"Leadership",level:3}]},
+  {id:"d16",name:"David Navarro",eid:"david.navarro",role:"Video Editor",capability:"Content",seniority:"Junior",level_accenture:"CL12",location:"Madrid",people_lead:"Cristina Romero",lcr:22,contract_type:"Subcontractor",employee_number:"",hire_date:"2024-03-01",agency:"Freelance directo",notes:"Previsión de contratación fija si renueva proyecto",current_project:"Telefónica B2B",next_assignment:"",performance_notes:"",skills:[{name:"Premiere Pro",level:3},{name:"After Effects",level:2},{name:"DaVinci Resolve",level:3},{name:"Color Grading",level:2},{name:"Attention to Detail",level:3}]},
+  {id:"d17",name:"Lucía Morales",eid:"lucia.morales",role:"Content Producer",capability:"Content",seniority:"Mid",level_accenture:"CL11",location:"Madrid",people_lead:"Cristina Romero",lcr:29,contract_type:"Interno",employee_number:"AC-0028",hire_date:"2022-04-01",agency:"",notes:"",current_project:"Heineken World Cup",next_assignment:"",performance_notes:"",skills:[{name:"Content Strategy",level:3},{name:"Social Media",level:4},{name:"Adobe Premiere",level:3},{name:"Photography",level:3},{name:"Communication",level:4}]},
+  {id:"d18",name:"Miguel Domínguez",eid:"miguel.dominguez",role:"Media Planner",capability:"Media",seniority:"Senior",level_accenture:"CL9",location:"Madrid",people_lead:"Roberto Castro",lcr:41,contract_type:"Interno",employee_number:"AC-0013",hire_date:"2020-01-15",agency:"",notes:"",current_project:"BBVA Mobile",next_assignment:"",performance_notes:"Experto en atribución de medios digitales.",skills:[{name:"Google Ads",level:5},{name:"Meta Ads",level:4},{name:"DV360",level:4},{name:"Attribution Modeling",level:4},{name:"Analytics",level:4},{name:"Negotiation",level:3}]},
+  {id:"d19",name:"Andrea Ramos",eid:"andrea.ramos",role:"Paid Media Specialist",capability:"Media",seniority:"Mid",level_accenture:"CL10",location:"Barcelona",people_lead:"Roberto Castro",lcr:35,contract_type:"Interno",employee_number:"AC-0024",hire_date:"2021-08-01",agency:"",notes:"",current_project:"Samsung Galaxy Launch",next_assignment:"",performance_notes:"",skills:[{name:"Google Ads",level:4},{name:"Meta Ads",level:5},{name:"TikTok Ads",level:3},{name:"Performance Marketing",level:4},{name:"Excel",level:4},{name:"Data Analysis",level:3}]},
+  {id:"d20",name:"Sergio Vega",eid:"sergio.vega",role:"Media Buyer",capability:"Media",seniority:"Junior",level_accenture:"CL11",location:"Madrid",people_lead:"Roberto Castro",lcr:28,contract_type:"Subcontractor",employee_number:"",hire_date:"2023-10-15",agency:"MediaDesk SL",notes:"",current_project:"",next_assignment:"",performance_notes:"",skills:[{name:"Media Buying",level:3},{name:"Google Ads",level:3},{name:"Programmatic",level:3},{name:"Excel",level:4},{name:"Attention to Detail",level:3}]},
+  {id:"d21",name:"Patricia Herrero",eid:"patricia.herrero",role:"Programmatic Specialist",capability:"Media",seniority:"Mid",level_accenture:"CL10",location:"Alicante",people_lead:"Roberto Castro",lcr:33,contract_type:"Interno",employee_number:"AC-0026",hire_date:"2021-11-01",agency:"",notes:"",current_project:"BBVA Mobile",next_assignment:"",performance_notes:"",skills:[{name:"DV360",level:4},{name:"The Trade Desk",level:4},{name:"Programmatic",level:5},{name:"Attribution Modeling",level:3},{name:"Data Analysis",level:4}]},
+  {id:"d22",name:"Roberto Castro",eid:"roberto.castro",role:"Media Planner",capability:"Media",seniority:"Lead",level_accenture:"CL8",location:"Madrid",people_lead:"Carlos Rodríguez",lcr:50,contract_type:"Interno",employee_number:"AC-0008",hire_date:"2018-07-01",agency:"",notes:"",current_project:"Nike Running FW24",next_assignment:"",performance_notes:"Lidera media buying. Candidato a Media Director.",skills:[{name:"Media Strategy",level:5},{name:"Google Ads",level:4},{name:"DV360",level:5},{name:"Budget Management",level:4},{name:"Client Management",level:4},{name:"Team Leadership",level:3}]},
+  {id:"d23",name:"Natalia Ortega",eid:"natalia.ortega",role:"Data Analyst",capability:"Data",seniority:"Mid",level_accenture:"CL10",location:"Barcelona",people_lead:"Javier Vargas",lcr:36,contract_type:"Interno",employee_number:"AC-0020",hire_date:"2021-05-01",agency:"",notes:"",current_project:"BBVA Mobile",next_assignment:"",performance_notes:"",skills:[{name:"Python",level:4},{name:"SQL",level:4},{name:"Tableau",level:4},{name:"Excel",level:5},{name:"Data Visualization",level:4},{name:"Communication",level:3}]},
+  {id:"d24",name:"Alberto Gil",eid:"alberto.gil",role:"Data Engineer",capability:"Data",seniority:"Senior",level_accenture:"CL9",location:"Madrid",people_lead:"Javier Vargas",lcr:43,contract_type:"Interno",employee_number:"AC-0015",hire_date:"2020-04-15",agency:"",notes:"",current_project:"Santander Digital Rebrand",next_assignment:"",performance_notes:"Referente en ingeniería de datos. Especialista en BigQuery.",skills:[{name:"Python",level:5},{name:"SQL",level:5},{name:"dbt",level:4},{name:"Airflow",level:3},{name:"BigQuery",level:4},{name:"Problem Solving",level:4}]},
+  {id:"d25",name:"Marta Suárez",eid:"marta.suarez",role:"BI Developer",capability:"Data",seniority:"Mid",level_accenture:"CL10",location:"Madrid",people_lead:"Javier Vargas",lcr:34,contract_type:"Interno",employee_number:"AC-0019",hire_date:"2021-03-01",agency:"",notes:"",current_project:"Iberdrola ESG",next_assignment:"",performance_notes:"",skills:[{name:"Power BI",level:5},{name:"Tableau",level:3},{name:"SQL",level:4},{name:"DAX",level:4},{name:"Data Modeling",level:4},{name:"Attention to Detail",level:4}]},
+  {id:"d26",name:"Javier Vargas",eid:"javier.vargas",role:"Data Scientist",capability:"Data",seniority:"Lead",level_accenture:"CL8",location:"Barcelona",people_lead:"Carlos Rodríguez",lcr:51,contract_type:"Interno",employee_number:"AC-0009",hire_date:"2018-10-01",agency:"",notes:"",current_project:"BBVA Mobile",next_assignment:"",performance_notes:"Experto en ML aplicado a marketing.",skills:[{name:"Python",level:5},{name:"Machine Learning",level:4},{name:"TensorFlow",level:3},{name:"SQL",level:4},{name:"Statistical Analysis",level:5},{name:"Leadership",level:3}]},
+  {id:"d27",name:"Rosa Molina",eid:"rosa.molina",role:"Data Analyst",capability:"Data",seniority:"Junior",level_accenture:"CL11",location:"Málaga",people_lead:"Javier Vargas",lcr:27,contract_type:"Subcontractor",employee_number:"",hire_date:"2024-02-01",agency:"Data Talent Agency",notes:"",current_project:"",next_assignment:"",performance_notes:"",skills:[{name:"Excel",level:4},{name:"SQL",level:3},{name:"Power BI",level:3},{name:"Data Visualization",level:3},{name:"Attention to Detail",level:4}]},
+  {id:"d28",name:"Fernando Blanco",eid:"fernando.blanco",role:"Frontend Developer",capability:"Development",seniority:"Senior",level_accenture:"CL9",location:"Madrid",people_lead:"Ricardo Guerrero",lcr:42,contract_type:"Interno",employee_number:"AC-0017",hire_date:"2020-09-01",agency:"",notes:"",current_project:"Telefónica B2B",next_assignment:"",performance_notes:"Especialista en React. Referente en accesibilidad.",skills:[{name:"React",level:5},{name:"TypeScript",level:4},{name:"CSS/SASS",level:5},{name:"Git",level:4},{name:"Performance Optimization",level:4},{name:"Problem Solving",level:4}]},
+  {id:"d29",name:"Silvia Iglesias",eid:"silvia.iglesias",role:"Backend Developer",capability:"Development",seniority:"Senior",level_accenture:"CL9",location:"Barcelona",people_lead:"Ricardo Guerrero",lcr:40,contract_type:"Interno",employee_number:"AC-0016b",hire_date:"2020-06-01",agency:"",notes:"",current_project:"BBVA Mobile",next_assignment:"",performance_notes:"",skills:[{name:"Node.js",level:4},{name:"Python",level:4},{name:"PostgreSQL",level:4},{name:"Docker",level:3},{name:"REST APIs",level:5},{name:"Problem Solving",level:4}]},
+  {id:"d30",name:"Ricardo Guerrero",eid:"ricardo.guerrero",role:"Tech Lead",capability:"Development",seniority:"Lead",level_accenture:"CL7",location:"Madrid",people_lead:"Carlos Rodríguez",lcr:68,contract_type:"Interno",employee_number:"AC-0004",hire_date:"2017-11-01",agency:"",notes:"",current_project:"Telefónica B2B",next_assignment:"",performance_notes:"Tech Lead del centro. Impulsa cultura de code review.",skills:[{name:"Architecture Design",level:5},{name:"React",level:4},{name:"Node.js",level:4},{name:"Technical Leadership",level:5},{name:"Code Review",level:4},{name:"Team Management",level:4}]},
+  {id:"d31",name:"Beatriz León",eid:"beatriz.leon",role:"Full Stack Developer",capability:"Development",seniority:"Mid",level_accenture:"CL10",location:"Alicante",people_lead:"Ricardo Guerrero",lcr:35,contract_type:"Interno",employee_number:"AC-0027",hire_date:"2022-03-01",agency:"",notes:"",current_project:"Telefónica B2B",next_assignment:"",performance_notes:"",skills:[{name:"React",level:4},{name:"Node.js",level:3},{name:"PostgreSQL",level:3},{name:"TypeScript",level:4},{name:"Git",level:4},{name:"Adaptability",level:4}]},
+  {id:"d32",name:"Eduardo Medina",eid:"eduardo.medina",role:"Digital Project Manager",capability:"DPM",seniority:"Senior",level_accenture:"CL9",location:"Madrid",people_lead:"Pilar Cano",lcr:41,contract_type:"Interno",employee_number:"AC-0010",hire_date:"2019-06-01",agency:"",notes:"",current_project:"Coca-Cola Q2",next_assignment:"",performance_notes:"Gestiona 4 proyectos simultáneos.",skills:[{name:"Agile/Scrum",level:5},{name:"JIRA",level:5},{name:"Risk Management",level:4},{name:"Stakeholder Management",level:5},{name:"Communication",level:5},{name:"MS Project",level:3}]},
+  {id:"d33",name:"Pilar Cano",eid:"pilar.cano",role:"Program Manager",capability:"DPM",seniority:"Lead",level_accenture:"CL8",location:"Barcelona",people_lead:"Carlos Rodríguez",lcr:48,contract_type:"Interno",employee_number:"AC-0006",hire_date:"2018-03-01",agency:"",notes:"",current_project:"Samsung Galaxy Launch",next_assignment:"",performance_notes:"Head de DPM. Desarrolla metodologías del centro.",skills:[{name:"Program Management",level:5},{name:"Agile",level:4},{name:"Budget Management",level:4},{name:"Leadership",level:5},{name:"Stakeholder Management",level:5},{name:"PRINCE2",level:3}]},
+  {id:"d34",name:"Adrián Santos",eid:"adrian.santos",role:"Scrum Master",capability:"DPM",seniority:"Mid",level_accenture:"CL10",location:"Madrid",people_lead:"Pilar Cano",lcr:33,contract_type:"Interno",employee_number:"AC-0030",hire_date:"2022-07-01",agency:"",notes:"",current_project:"BBVA Mobile",next_assignment:"",performance_notes:"",skills:[{name:"Agile/Scrum",level:5},{name:"JIRA",level:4},{name:"Facilitation",level:4},{name:"Conflict Resolution",level:3},{name:"Communication",level:4},{name:"Continuous Improvement",level:4}]},
+  {id:"d35",name:"Clara Reyes",eid:"clara.reyes",role:"Digital Project Manager",capability:"DPM",seniority:"Junior",level_accenture:"CL11",location:"Málaga",people_lead:"Eduardo Medina",lcr:29,contract_type:"Subcontractor",employee_number:"",hire_date:"2023-11-01",agency:"PM Talent SL",notes:"",current_project:"",next_assignment:"",performance_notes:"",skills:[{name:"JIRA",level:3},{name:"Agile",level:3},{name:"Communication",level:4},{name:"Organisational Skills",level:4},{name:"Attention to Detail",level:4}]},
+  {id:"d36",name:"Diego Fuentes",eid:"diego.fuentes",role:"Delivery Lead",capability:"DPM",seniority:"Lead",level_accenture:"CL8",location:"Madrid",people_lead:"Pilar Cano",lcr:51,contract_type:"Interno",employee_number:"AC-0005",hire_date:"2018-01-15",agency:"",notes:"",current_project:"Iberdrola ESG",next_assignment:"",performance_notes:"Delivery Lead senior. Expertise en grandes cuentas.",skills:[{name:"Delivery Management",level:5},{name:"Agile",level:5},{name:"Client Management",level:4},{name:"Risk Management",level:4},{name:"Leadership",level:4},{name:"Stakeholder Management",level:4}]}
+].map(p=>({...p,is_active:true,created_at:"2026-01-01T00:00:00Z"}));
+
+const DA=[
+  {id:"a01",profile_id:"d01",project_name:"Coca-Cola Q2",chargeability:100,start_date:"2026-03-01",end_date:"2026-06-30",is_forecast:false,notes:""},
+  {id:"a02",profile_id:"d02",project_name:"Nike Running FW24",chargeability:60,start_date:"2026-04-01",end_date:"2026-08-31",is_forecast:false,notes:""},
+  {id:"a03",profile_id:"d03",project_name:"Santander Digital Rebrand",chargeability:100,start_date:"2026-05-01",end_date:"2026-07-31",is_forecast:false,notes:""},
+  {id:"a04",profile_id:"d04",project_name:"Heineken World Cup",chargeability:80,start_date:"2026-04-15",end_date:"2026-06-15",is_forecast:false,notes:""},
+  {id:"a05",profile_id:"d06",project_name:"Zara Spring Collection",chargeability:100,start_date:"2026-03-01",end_date:"2026-07-31",is_forecast:false,notes:""},
+  {id:"a06",profile_id:"d07",project_name:"Seat Tarraco CGI",chargeability:100,start_date:"2026-04-01",end_date:"2026-09-30",is_forecast:false,notes:""},
+  {id:"a07",profile_id:"d08",project_name:"Samsung Galaxy Launch",chargeability:75,start_date:"2026-05-01",end_date:"2026-07-31",is_forecast:false,notes:""},
+  {id:"a08",profile_id:"d09",project_name:"Seat Tarraco CGI",chargeability:50,start_date:"2026-03-15",end_date:"2026-06-30",is_forecast:false,notes:""},
+  {id:"a09",profile_id:"d09",project_name:"Nike Running FW24",chargeability:50,start_date:"2026-03-15",end_date:"2026-06-30",is_forecast:false,notes:""},
+  {id:"a10",profile_id:"d10",project_name:"Seat Tarraco CGI",chargeability:100,start_date:"2026-02-01",end_date:"2026-10-31",is_forecast:false,notes:""},
+  {id:"a11",profile_id:"d12",project_name:"Samsung Galaxy Launch",chargeability:100,start_date:"2026-05-15",end_date:"2026-08-31",is_forecast:false,notes:""},
+  {id:"a12",profile_id:"d13",project_name:"Iberdrola ESG",chargeability:100,start_date:"2026-04-01",end_date:"2026-06-30",is_forecast:false,notes:""},
+  {id:"a13",profile_id:"d15",project_name:"Coca-Cola Q2",chargeability:100,start_date:"2026-03-01",end_date:"2026-07-31",is_forecast:false,notes:""},
+  {id:"a14",profile_id:"d16",project_name:"Telefónica B2B",chargeability:50,start_date:"2026-05-01",end_date:"2026-07-31",is_forecast:true,notes:"Pendiente confirmación"},
+  {id:"a15",profile_id:"d17",project_name:"Heineken World Cup",chargeability:100,start_date:"2026-04-01",end_date:"2026-06-20",is_forecast:false,notes:""},
+  {id:"a16",profile_id:"d18",project_name:"BBVA Mobile",chargeability:100,start_date:"2026-03-01",end_date:"2026-08-31",is_forecast:false,notes:""},
+  {id:"a17",profile_id:"d19",project_name:"Samsung Galaxy Launch",chargeability:60,start_date:"2026-05-01",end_date:"2026-07-15",is_forecast:false,notes:""},
+  {id:"a18",profile_id:"d19",project_name:"Coca-Cola Q2",chargeability:40,start_date:"2026-05-01",end_date:"2026-06-30",is_forecast:false,notes:""},
+  {id:"a19",profile_id:"d21",project_name:"BBVA Mobile",chargeability:80,start_date:"2026-04-01",end_date:"2026-07-31",is_forecast:false,notes:""},
+  {id:"a20",profile_id:"d22",project_name:"Nike Running FW24",chargeability:100,start_date:"2026-04-01",end_date:"2026-09-30",is_forecast:false,notes:""},
+  {id:"a21",profile_id:"d23",project_name:"BBVA Mobile",chargeability:100,start_date:"2026-03-01",end_date:"2026-09-30",is_forecast:false,notes:""},
+  {id:"a22",profile_id:"d24",project_name:"Santander Digital Rebrand",chargeability:100,start_date:"2026-04-01",end_date:"2026-10-31",is_forecast:false,notes:""},
+  {id:"a23",profile_id:"d25",project_name:"Iberdrola ESG",chargeability:80,start_date:"2026-04-15",end_date:"2026-07-31",is_forecast:false,notes:""},
+  {id:"a24",profile_id:"d26",project_name:"BBVA Mobile",chargeability:60,start_date:"2026-03-01",end_date:"2026-08-31",is_forecast:false,notes:""},
+  {id:"a25",profile_id:"d28",project_name:"Telefónica B2B",chargeability:100,start_date:"2026-04-01",end_date:"2026-09-30",is_forecast:false,notes:""},
+  {id:"a26",profile_id:"d29",project_name:"BBVA Mobile",chargeability:100,start_date:"2026-04-01",end_date:"2026-08-31",is_forecast:false,notes:""},
+  {id:"a27",profile_id:"d30",project_name:"Telefónica B2B",chargeability:50,start_date:"2026-02-01",end_date:"2026-10-31",is_forecast:false,notes:""},
+  {id:"a28",profile_id:"d30",project_name:"Santander Digital Rebrand",chargeability:30,start_date:"2026-02-01",end_date:"2026-08-31",is_forecast:false,notes:""},
+  {id:"a29",profile_id:"d31",project_name:"Telefónica B2B",chargeability:100,start_date:"2026-05-01",end_date:"2026-08-31",is_forecast:false,notes:""},
+  {id:"a30",profile_id:"d32",project_name:"Coca-Cola Q2",chargeability:100,start_date:"2026-03-01",end_date:"2026-07-31",is_forecast:false,notes:""},
+  {id:"a31",profile_id:"d33",project_name:"Samsung Galaxy Launch",chargeability:100,start_date:"2026-05-01",end_date:"2026-09-30",is_forecast:false,notes:""},
+  {id:"a32",profile_id:"d34",project_name:"BBVA Mobile",chargeability:100,start_date:"2026-04-01",end_date:"2026-08-31",is_forecast:false,notes:""},
+  {id:"a33",profile_id:"d36",project_name:"Iberdrola ESG",chargeability:100,start_date:"2026-03-01",end_date:"2026-08-31",is_forecast:false,notes:""},
+  {id:"ah1",profile_id:"d01",project_name:"Iberdrola ESG 2025",chargeability:100,start_date:"2025-09-01",end_date:"2026-02-28",is_forecast:false,notes:""},
+  {id:"ah2",profile_id:"d07",project_name:"BMW iX Campaign",chargeability:100,start_date:"2025-10-01",end_date:"2026-03-31",is_forecast:false,notes:""},
+  {id:"ah3",profile_id:"d10",project_name:"Audi RS Campaign",chargeability:100,start_date:"2025-06-01",end_date:"2026-01-31",is_forecast:false,notes:""},
+  {id:"ah4",profile_id:"d18",project_name:"Santander Q4 2025",chargeability:100,start_date:"2025-09-01",end_date:"2026-02-28",is_forecast:false,notes:""},
+  {id:"ah5",profile_id:"d28",project_name:"Vodafone Portal",chargeability:100,start_date:"2025-07-01",end_date:"2026-03-31",is_forecast:false,notes:""}
+].map(a=>({...a,created_at:"2026-01-01T00:00:00Z"}));
+
+const DD=[
+  {id:"dem01",client:"Coca-Cola",project_reference:"Q4 Brand Campaign",start_date:"2026-07-01",duration_weeks:12,role:"Creative Director",capability:"Creative",seniority:"Lead",contract_type:"Interno",chargeability_required:60,status:"Propuesto",proposed_profile:"Carlos Rodríguez",notes:[{id:"n1",ts:"2026-05-10T09:00:00Z",text:"Cliente confirma necesidad para julio. Presupuesto aprobado."}]},
+  {id:"dem02",client:"Samsung",project_reference:"Galaxy S26 Launch",start_date:"2026-08-01",duration_weeks:8,role:"Motion Designer",capability:"CGI",seniority:"Mid",contract_type:"Interno",chargeability_required:75,status:"Entrevistas",proposed_profile:"Pablo Moreno",notes:[{id:"n2",ts:"2026-05-14T11:30:00Z",text:"Primera entrevista con Pablo muy positiva. Pendiente segunda ronda."}]},
+  {id:"dem03",client:"BBVA",project_reference:"Digital Banking 2.0",start_date:"2026-09-01",duration_weeks:24,role:"Data Engineer",capability:"Data",seniority:"Senior",contract_type:"Interno",chargeability_required:100,status:"Asignado",proposed_profile:"Alberto Gil",notes:[{id:"n3",ts:"2026-05-18T14:00:00Z",text:"Alberto confirmado. Incorporación el 1 septiembre."}]},
+  {id:"dem04",client:"Nike",project_reference:"FW25 Running Campaign",start_date:"2026-10-01",duration_weeks:16,role:"Media Planner",capability:"Media",seniority:"Lead",contract_type:"Interno",chargeability_required:100,status:"En revisión",proposed_profile:"Roberto Castro",notes:[]},
+  {id:"dem05",client:"Zara",project_reference:"Summer Collection 2027",start_date:"2026-11-01",duration_weeks:20,role:"Art Director",capability:"Creative",seniority:"Mid",contract_type:"Interno",chargeability_required:60,status:"Vacío",proposed_profile:"",notes:[{id:"n4",ts:"2026-05-20T10:00:00Z",text:"Briefing recibido. Buscar perfil CL10 Creative disponible desde noviembre."}]},
+  {id:"dem06",client:"Telefónica",project_reference:"Enterprise Portal v2",start_date:"2026-07-15",duration_weeks:20,role:"Frontend Developer",capability:"Development",seniority:"Senior",contract_type:"Interno",chargeability_required:100,status:"Esperando",proposed_profile:"Fernando Blanco",notes:[{id:"n5",ts:"2026-05-19T16:00:00Z",text:"Esperando confirmación del cliente para activar. Fernando está disponible desde agosto."}]},
+  {id:"dem07",client:"Iberdrola",project_reference:"ESG Report 2026",start_date:"2026-06-15",duration_weeks:6,role:"Content Producer",capability:"Content",seniority:"Mid",contract_type:"Subcontractor",chargeability_required:50,status:"Propuesto",proposed_profile:"",notes:[{id:"n6",ts:"2026-05-15T09:30:00Z",text:"Cliente acepta subcontratación. Buscar perfil externo Content Mid."}]},
+  {id:"dem08",client:"Santander",project_reference:"App Móvil Rediseño",start_date:"2026-08-01",duration_weeks:12,role:"Designer",capability:"Creative",seniority:"Senior",contract_type:"Subcontractor",chargeability_required:100,status:"Entrevistado",proposed_profile:"",notes:[{id:"n7",ts:"2026-05-21T12:00:00Z",text:"Entrevistado perfil externo. Buena impresión. Decisión esta semana."}]},
+  {id:"dem09",client:"Heineken",project_reference:"World Cup 2027 Activación",start_date:"2026-09-01",duration_weeks:32,role:"Creative Strategist",capability:"Creative",seniority:"Senior",contract_type:"Interno",chargeability_required:100,status:"Vacío",proposed_profile:"",notes:[]},
+  {id:"dem10",client:"Apple",project_reference:"Spain Brand Campaign",start_date:"2026-07-01",duration_weeks:10,role:"CGI Supervisor",capability:"CGI",seniority:"Lead",contract_type:"Subcontractor",chargeability_required:100,status:"En revisión",proposed_profile:"Manuel Díaz",notes:[{id:"n8",ts:"2026-05-22T08:00:00Z",text:"Manuel interesado pero tiene conflicto de fechas con Seat. Revisar solapamiento."}]},
+  {id:"dem11",client:"Seat",project_reference:"Tarraco 2.0 CGI",start_date:"2026-11-01",duration_weeks:16,role:"3D Artist",capability:"CGI",seniority:"Mid",contract_type:"Interno",chargeability_required:100,status:"Asignado",proposed_profile:"Isabel Fernández",notes:[{id:"n9",ts:"2026-05-20T15:00:00Z",text:"Isabel asignada. Extensión del proyecto actual con la misma cuenta."}]},
+  {id:"dem12",client:"Vodafone",project_reference:"Portal B2B",start_date:"2026-08-15",duration_weeks:14,role:"Scrum Master",capability:"DPM",seniority:"Mid",contract_type:"Interno",chargeability_required:100,status:"Propuesto",proposed_profile:"Adrián Santos",notes:[{id:"n10",ts:"2026-05-17T11:00:00Z",text:"Adrián disponible desde agosto. Cliente quiere reunión de alineamiento antes de confirmar."}]}
+].map(d=>({...d,created_at:"2026-01-01T00:00:00Z"}));
+
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let S={profiles:[],assigns:[],demands:[],tab:"roster",customRoles:[],
+  rosterSort:{field:"name",dir:"asc"},
+  rf:{q:"",levels:[],caps:[],roles:[],locs:[],skills:[],ctype:""},
+  sf:{q:"",caps:[],levels:[],risks:[],ctypes:[]},supplySort:[{field:"name",dir:"asc"}],supplyView:"asignacion",logView:"bench",bajas:[],demandSort:[{field:"client",dir:"asc"}],df2:{statuses:[],caps:[],clients:[]},colGroups:{asignacion:{perfil:true,asignacion:true},disponibles:{perfil:true,asignacion:true},bajas:{perfil:true,baja:true}},df:{status:""}};
+let editSkills=[],editData={},openFDD=null,modalTabState="general";
+let currentPid=null,modalEditMode=false;
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+const uid=()=>crypto.randomUUID();
+const ini=n=>n.split(" ").slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
+const fds=d=>d?new Date(d).toLocaleDateString("es-ES",{day:"2-digit",month:"short"}):"—";
+const fdl=d=>d?new Date(d).toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric"}):"—";
+const fdm=d=>d?new Date(d).toLocaleDateString("es-ES",{month:"short",year:"numeric"}):"—";
+const cc=c=>c>=80?"var(--green)":c>=40?"var(--amber)":"var(--red)";
+const scol=s=>({Asignado:"bgreen",Entrevistas:"bblue",Entrevistado:"bblue",Propuesto:"bacc",Esperando:"bamber","En revisión":"bamber",Vacío:"bg"})[s]||"bg";
+const rolesForCap=cap=>{const custom=S.customRoles.filter(r=>!cap||r.cap===cap).map(r=>r.name);const base=cap&&ROLES_BY_CAP[cap]?ROLES_BY_CAP[cap]:[...new Set(Object.values(ROLES_BY_CAP).flat())];return[...new Set([...base,...custom])].sort();};
+function pCharge(pid){const now=new Date();return S.assigns.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===pid&&s<=now&&(!e||e>=now)&&!a.is_forecast;}).reduce((t,a)=>t+(a.chargeability||0),0);}
+
+function getBenchSince(pid){
+  const p=S.profiles.find(x=>x.id===pid);
+  if(p&&p.bench_since_override)return new Date(p.bench_since_override);
+  const now=new Date();
+  const past=S.assigns.filter(a=>a.profile_id===pid&&a.end_date&&!a.is_forecast&&new Date(a.end_date)<now).sort((a,b)=>new Date(b.end_date)-new Date(a.end_date));
+  if(past.length>0)return new Date(past[0].end_date);
+  return null;
+}
+
+function getRisk(pid){
+  const p=S.profiles.find(x=>x.id===pid);
+  if(p&&p.risk_override)return p.risk_override;
+  const charge=pCharge(pid);
+  if(charge>=100)return null;
+  const bs=getBenchSince(pid);
+  if(!bs)return"low";
+  const days=Math.floor((new Date()-bs)/(864e5));
+  if(days>30)return"high";
+  if(days>15)return"mid";
+  return"low";
+}
+
+function riskBadge(r){if(!r)return"";const cfg={low:["bgreen","Low"],mid:["bamber","Mid"],high:["bred","High"]};const[cls,lbl]=cfg[r]||["bg","—"];return`<span class="bdg ${cls}" style="font-size:10px">${lbl}</span>`;}
+
+function daysBench(pid){const bs=getBenchSince(pid);if(!bs)return 0;return Math.floor((new Date()-bs)/(864e5));}
+
+
+const CAP_COLORS={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"};
+const LEAVE_TYPES=["Enfermedad","Paternidad","Maternidad","Embarazo","Otros"];
+
+function calcLogProyectos(){
+  const now=new Date();const projects={};
+  S.assigns.filter(a=>!a.is_forecast).forEach(a=>{
+    if(!projects[a.project_name])projects[a.project_name]={name:a.project_name,profiles:new Set(),caps:new Set(),lcr_week:0,start:a.start_date,end:a.end_date||""};
+    const p=S.profiles.find(x=>x.id===a.profile_id);
+    if(p){projects[a.project_name].profiles.add(a.profile_id);projects[a.project_name].caps.add(p.capability||"");if(p.lcr)projects[a.project_name].lcr_week+=parseFloat(p.lcr)*(a.chargeability/100)*30;}
+    if(a.start_date<projects[a.project_name].start)projects[a.project_name].start=a.start_date;
+    if(a.end_date&&(!projects[a.project_name].end||a.end_date>projects[a.project_name].end))projects[a.project_name].end=a.end_date;
+  });
+  return Object.values(projects).map(p=>{
+    const isActive=S.assigns.some(a=>a.project_name===p.name&&!a.is_forecast&&new Date(a.start_date)<=now&&(!a.end_date||new Date(a.end_date)>=now));
+    return{name:p.name,count:p.profiles.size,caps:[...p.caps].filter(Boolean).join(", "),lcr_week:Math.round(p.lcr_week),active:isActive,start:p.start,end:p.end};
+  }).sort((a,b)=>b.count-a.count);
+}
+
+function calcLogCaps(){
+  const now=new Date();const rows=[];
+  for(let i=11;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const lbl=d.toLocaleDateString("es-ES",{month:"short",year:"2-digit"});
+    const entry={lbl};
+    CAPS.forEach(cap=>{entry[cap]=S.profiles.filter(p=>p.capability===cap&&p.is_active&&(!p.hire_date||new Date(p.hire_date)<=d)).length;});
+    rows.push(entry);
+  }
+  return rows;
+}
+
+function calcLogRoles(){
+  const roles={};
+  S.profiles.filter(p=>p.is_active).forEach(p=>{
+    const role=p.role||"Sin rol";
+    if(!roles[role])roles[role]={name:role,total:0,bench:0,caps:new Set()};
+    roles[role].total++;if(pCharge(p.id)<100)roles[role].bench++;if(p.capability)roles[role].caps.add(p.capability);
+  });
+  return Object.values(roles).map(r=>({name:r.name,total:r.total,bench:r.bench,assigned:r.total-r.bench,pct:r.total>0?Math.round((r.total-r.bench)/r.total*100):0,caps:[...r.caps].join(", ")})).sort((a,b)=>b.total-a.total);
+}
+
+function capChart(rows){
+  const maxV=Math.max(...rows.flatMap(r=>CAPS.map(c=>r[c]||0)),1);
+  const W=640,PL=28,PR=8,PT=12,PB=24,CW=W-PL-PR,CH=160;
+  const n=rows.length,xc=i=>PL+i*(CW/n)+(CW/n)/2,vy=v=>PT+CH-Math.round(v/maxV*CH);
+  let grid="";for(let g=0;g<=4;g++){const v=Math.round(g*maxV/4),y=PT+CH-Math.round(g/4*CH);grid+=`<line x1="${PL}" y1="${y}" x2="${PL+CW}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;if(g>0)grid+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="#444">${v}</text>`;}
+  const xlabels=rows.map((r,i)=>`<text x="${xc(i)}" y="${PT+CH+PB-4}" text-anchor="middle" font-size="9" fill="#444">${r.lbl}</text>`).join("");
+  let lines="";
+  CAPS.forEach(cap=>{const color=CAP_COLORS[cap]||"#666";const pts=rows.map((r,i)=>`${xc(i)},${vy(r[cap]||0)}`).join(" ");lines+=`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" opacity="0.85"/>`;lines+=rows.map((r,i)=>`<circle cx="${xc(i)}" cy="${vy(r[cap]||0)}" r="2.5" fill="${color}" opacity="0.9"/>`).join("");});
+  return`<svg viewBox="0 0 ${W} ${PT+CH+PB}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block"><line x1="${PL}" y1="${PT+CH}" x2="${PL+CW}" y2="${PT+CH}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>${grid}${xlabels}${lines}</svg>`;
+}
+
+function projChart(data){
+  const top=data.slice(0,10);const maxV=Math.max(...top.map(d=>d.count),1);
+  const W=640,PL=160,PR=40,PT=8,barH=18,gap=10;const totalH=PT+top.length*(barH+gap);
+  let bars="";
+  top.forEach((d,i)=>{const y=PT+i*(barH+gap);const bw=Math.round(d.count/maxV*(W-PL-PR));const fill=d.active?"#7c6ee8":"#444";const op=d.active?0.8:0.45;const name=d.name.length>24?d.name.slice(0,23)+"…":d.name;bars+=`<rect x="${PL}" y="${y}" width="${Math.max(bw,2)}" height="${barH}" fill="${fill}" opacity="${op}" rx="2"/><text x="${PL-6}" y="${y+barH/2+4}" text-anchor="end" font-size="10" fill="${d.active?"#ccc":"#555"}">${name}</text><text x="${PL+bw+5}" y="${y+barH/2+4}" font-size="10" fill="#666">${d.count}</text>`;});
+  return`<svg viewBox="0 0 ${W} ${totalH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">${bars}</svg>`;
+}
+
+function roleChart(data){
+  const top=data.slice(0,12);const maxV=Math.max(...top.map(d=>d.total),1);
+  const W=640,PL=160,PR=40,PT=8,barH=16,gap=8;const totalH=PT+top.length*(barH+gap);
+  let bars="";
+  top.forEach((d,i)=>{const y=PT+i*(barH+gap);const bwT=Math.round(d.total/maxV*(W-PL-PR));const bwA=Math.round(d.assigned/maxV*(W-PL-PR));const name=d.name.length>24?d.name.slice(0,23)+"…":d.name;bars+=`<rect x="${PL}" y="${y}" width="${Math.max(bwT,2)}" height="${barH}" fill="rgba(255,255,255,0.08)" rx="2"/><rect x="${PL}" y="${y}" width="${Math.max(bwA,0)}" height="${barH}" fill="#7c6ee8" opacity="0.75" rx="2"/><text x="${PL-6}" y="${y+barH/2+4}" text-anchor="end" font-size="10" fill="#ccc">${name}</text><text x="${PL+bwT+5}" y="${y+barH/2+4}" font-size="10" fill="#666">${d.total}</text>`;});
+  return`<svg viewBox="0 0 ${W} ${totalH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">${bars}</svg>`;
+}
+
+
+
+const SOFT_KW=["communication","leadership","team","client","stakeholder","negotiation","facilitation","conflict","organisation","continuous","adaptability","problem solving","storytelling","attention to detail","creative problem","management","risk management","delivery"];
+function skType(sk){return sk.type||(SOFT_KW.some(k=>sk.name.toLowerCase().includes(k))?"soft":"hard");}
+
+
+function dSortBy(field,e){
+  const sort=S.demandSort,idx=sort.findIndex(s=>s.field===field);
+  if(e&&e.shiftKey){if(idx>=0){sort[idx].dir=sort[idx].dir==="asc"?"desc":"asc";}else{sort.push({field,dir:"asc"});if(sort.length>3)sort.shift();}}
+  else{if(idx===0&&sort.length===1){sort[0].dir=sort[0].dir==="asc"?"desc":"asc";}else{S.demandSort=[{field,dir:"asc"}];}}
+  render();
+}
+function dSA(field){const sort=S.demandSort,idx=sort.findIndex(s=>s.field===field);if(idx<0)return`<span style="color:var(--t3);font-size:9px;margin-left:3px">↕</span>`;const num=sort.length>1?`<sup style="font-size:8px">${idx+1}</sup>`:"";return`<span style="font-size:9px;margin-left:2px">${sort[idx].dir==="asc"?"↑":"↓"}${num}</span>`;}
+function sortedDemands(list){
+  const sort=S.demandSort;if(!sort.length)return list;
+  return[...list].sort((a,b)=>{
+    for(const{field,dir}of sort){
+      let va=(a[field]||"").toString().toLowerCase(),vb=(b[field]||"").toString().toLowerCase();
+      if(field==="chargeability_required"||field==="duration_weeks"){va=parseFloat(a[field])||0;vb=parseFloat(b[field])||0;}
+      if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;
+    }
+    return 0;
+  });
+}
+function tDF(field,val){const a=S.df2[field];const i=a.indexOf(val);if(i>=0)a.splice(i,1);else a.push(val);render();}
+
+function toggleCG(v,g){S.colGroups[v][g]=!S.colGroups[v][g];render();}
+
+// Unified supply edit modal (assignments + analysis)
+function openSupplyEdit(pid){
+  const p=S.profiles.find(x=>x.id===pid);
+  if(!p)return;
+  let newOpen=false;let editId=null;
+
+  function buildHTML(){
+    const asgns=S.assigns.filter(a=>a.profile_id===pid).sort((a,b)=>new Date(b.start_date)-new Date(a.start_date));
+    const c2=pCharge(pid);const risk=getRisk(pid);const canAdd=c2<100;
+    const riskBtns=["low","mid","high"].map(r=>`<button class="tgb${(p.risk_override||risk)===r?" on":""}" onclick="selTgg('tgg-serisk',this)">${r==="low"?"Low":r==="mid"?"Mid":"High"}</button>`).join("")+`<button class="tgb${!p.risk_override?" on":""}" onclick="selTgg('tgg-serisk',this)" data-auto="1">Auto</button>`;
+    let assignRows="";
+    asgns.forEach(a=>{
+      const now2=new Date();const isActive=new Date(a.start_date)<=now2&&(!a.end_date||new Date(a.end_date)>=now2);
+      assignRows+=`<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--b)">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:6px">
+            ${a.is_forecast?'<span style="font-size:10px;color:var(--acc)">PREV</span>':''}
+            ${isActive&&!a.is_forecast?'<span style="font-size:10px;color:var(--green)">●</span>':''}
+            <span style="font-weight:500">${a.project_name}</span>
+            <span class="bdg ${a.chargeability>=80?"bgreen":a.chargeability>=40?"bamber":"bg"}" style="font-size:11px">${a.chargeability}%</span>
+          </div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px">${fds(a.start_date)} → ${fds(a.end_date)}</div>
+        </div>
+        ${a.is_forecast?`<button class="btn btns" style="color:var(--green);border-color:rgba(34,197,94,0.35)" onclick="window._confirmA('${a.id}')">Confirmar</button>`:""}
+        <button class="btn btns" style="padding:3px 8px" onclick="window._editA('${a.id}')">✎</button>
+        <button class="btn btns btnd" style="padding:3px 6px" onclick="window._delA('${a.id}')">×</button>
+      </div>`;
+    });
+    let newSection="";
+    if(!canAdd){
+      newSection=`<div style="font-size:12px;color:var(--t3);padding:8px 12px;background:var(--bg2);border-radius:6px;margin-top:10px">Perfil al 100% — reduce una asignación para añadir otra.</div>`;
+    }else if(!newOpen){
+      newSection=`<button class="btn btns" style="border-style:dashed;color:var(--acc);border-color:rgba(124,110,232,0.4);margin-top:10px" onclick="window._toggleNew()">+ Propuesta de asignación</button>`;
+    }else{
+      const maxCh=100-c2;
+      newSection=`<div style="background:var(--bg2);border:1px solid var(--b);border-radius:8px;padding:16px;margin-top:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-size:12px;font-weight:500;color:var(--t2)">${editId?"Editar":"Propuesta de asignación"} <span style="font-size:10px;color:var(--acc)">(se añade como previsión)</span></div>
+          <button onclick="window._toggleNew()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;line-height:1">×</button>
+        </div>
+        <div class="fld"><label>Proyecto</label><input id="se-proj" class="fi" placeholder="Ej: Meta · Q3"/></div>
+        <div class="r2"><div class="fld"><label>Fecha inicio</label><input type="date" id="se-start" class="fi"/></div><div class="fld"><label>Fecha fin</label><input type="date" id="se-end" class="fi"/></div></div>
+        <div class="fld"><label>Cargabilidad — <span id="se-clbl">${maxCh}%</span></label><input type="range" id="se-ch" min="0" max="${maxCh}" step="5" value="${maxCh}" oninput="document.getElementById('se-clbl').textContent=this.value+'%'"/></div>
+        <div id="se-edit-id" style="display:none"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+          <button class="btn btns" onclick="window._toggleNew()">Cancelar</button>
+          <button class="btn btnp btns" onclick="window._saveA('${pid}')">Guardar propuesta</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="ov" id="seov" onclick="if(event.target.id==='seov')cm()">
+    <div class="modal" style="max-width:520px">
+      <div class="mhdr">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="av">${ini(p.name)}</div>
+          <div><div style="font-weight:500;font-size:15px">${p.name}</div><div style="font-size:11px;color:var(--t3)">${p.role||""} · ${p.capability||""}</div></div>
+          <span class="bdg ${c2>=100?"bgreen":c2>0?"bamber":"bred"}" style="margin-left:4px">${c2}%</span>
+          ${p.on_leave?'<span class="bdg bred" style="font-size:10px">De baja</span>':""}
+        </div>
+        <button onclick="cm()" style="background:none;border:none;color:var(--t2);cursor:pointer;font-size:22px;line-height:1">×</button>
+      </div>
+      <div class="mbdy" style="padding-top:16px;max-height:68vh;overflow-y:auto">
+        <div class="sect-lbl">Asignaciones</div>
+        ${asgns.length===0?'<div style="color:var(--t3);font-size:13px;padding:8px 0 10px">Sin asignaciones registradas.</div>':""}
+        ${assignRows}
+        ${newSection}
+        <div style="border-top:1px solid var(--b);margin-top:20px;padding-top:18px">
+          <div class="sect-lbl">Análisis</div>
+          <div class="fld"><label>Riesgo</label><div class="tgg" id="tgg-serisk">${riskBtns}</div><div style="font-size:11px;color:var(--t3);margin-top:6px">Auto: Low &lt;15d · Mid 15–30d · High &gt;30d</div></div>
+          <div class="fld"><label>Comentarios supply</label><textarea id="se-cm" class="fi" style="min-height:65px" placeholder="Contexto, próximos pasos...">${p.supply_comments||""}</textarea></div>
+        </div>
+      </div>
+      <div class="mftr"><div style="flex:1"></div><button class="btn btns" onclick="cm()">Cerrar</button><button class="btn btnp btns" onclick="window._saveAnalysis('${pid}')">Guardar análisis</button></div>
+    </div></div>`;
+  }
+
+  function render2(){
+    document.getElementById("mroot").innerHTML=buildHTML();
+    window._toggleNew=()=>{newOpen=!newOpen;if(!newOpen)editId=null;render2();};
+    window._confirmA=async(aid)=>{S.assigns=S.assigns.map(a=>a.id===aid?{...a,is_forecast:false}:a);await save();render();render2();};
+    window._editA=(aid)=>{
+      const a=S.assigns.find(x=>x.id===aid);if(!a)return;
+      newOpen=true;editId=aid;render2();
+      setTimeout(()=>{
+        const sp=document.getElementById("se-proj");if(sp)sp.value=a.project_name;
+        const ss=document.getElementById("se-start");if(ss)ss.value=a.start_date;
+        const se2=document.getElementById("se-end");if(se2)se2.value=a.end_date||"";
+        const sch=document.getElementById("se-ch");if(sch){sch.max=100;sch.value=a.chargeability;document.getElementById("se-clbl").textContent=a.chargeability+"%";}
+        const sei=document.getElementById("se-edit-id");if(sei)sei.textContent=aid;
+      },0);
+    };
+    window._delA=async(aid)=>{S.assigns=S.assigns.filter(a=>a.id!==aid);await save();render();render2();};
+    window._saveA=async(pid2)=>{
+      const eid=document.getElementById("se-edit-id")?.textContent;
+      const data={profile_id:pid2,project_name:document.getElementById("se-proj")?.value||"",start_date:document.getElementById("se-start")?.value||"",end_date:document.getElementById("se-end")?.value||null,chargeability:parseInt(document.getElementById("se-ch")?.value)||100,is_forecast:true,notes:""};
+      if(!data.project_name||!data.start_date)return;
+      if(eid){S.assigns=S.assigns.map(a=>a.id===eid?{...a,...data}:a);}
+      else{S.assigns.push({...data,id:uid(),created_at:new Date().toISOString()});}
+      newOpen=false;editId=null;await save();render();render2();
+    };
+    window._saveAnalysis=async(pid2)=>{
+      const riskBtn=document.querySelector("#tgg-serisk .tgb.on");
+      const riskVal=riskBtn?(riskBtn.dataset.auto?"":riskBtn.textContent.toLowerCase()):null;
+      const cmVal=document.getElementById("se-cm")?.value||"";
+      S.profiles=S.profiles.map(pr=>pr.id===pid2?{...pr,risk_override:riskVal||null,supply_comments:cmVal}:pr);
+      await save();cm();render();
+    };
+  }
+  render2();
+}
+
+
+// ── SUPPLY HELPERS ────────────────────────────────────────────────────────
+function tSF(field,val){const a=S.sf[field];const i=a.indexOf(val);if(i>=0)a.splice(i,1);else a.push(val);render();}
+
+function sfddM(key,field,label,items){
+  const arr=S.sf[field];const cnt=arr.length;
+  return`<div class="fdd"><button class="fdd-btn${cnt>0?" active":""}" id="fddb-s${key}" onclick="tFDD('s${key}',event)">${label}${cnt>0?` <span class="fdd-cnt">${cnt}</span>`:""}<span class="fdd-arrow">▾</span></button><div class="fdd-panel" id="fddp-s${key}">${items.map(it=>`<div class="fdd-item" onclick="tSF('${field}','${it.val.replace(/'/g,"\\'")}');event.stopPropagation()"><div class="fdd-chk${arr.includes(it.val)?" on":""}"></div><span class="fdd-label">${it.label}</span>${it.sub?`<span class="fdd-sub">${it.sub}</span>`:""}</div>`).join("")}${cnt>0?`<div class="fdd-divider"></div><div class="fdd-clr" onclick="S.sf.${field}=[];render();event.stopPropagation()">× Limpiar</div>`:""}</div></div>`;
+}
+
+function sSortBy(field,e){
+  const sort=S.supplySort,idx=sort.findIndex(s=>s.field===field);
+  if(e&&e.shiftKey){if(idx>=0){sort[idx].dir=sort[idx].dir==="asc"?"desc":"asc";}else{sort.push({field,dir:"asc"});if(sort.length>3)sort.shift();}}
+  else{if(idx===0&&sort.length===1){sort[0].dir=sort[0].dir==="asc"?"desc":"asc";}else{S.supplySort=[{field,dir:"asc"}];}}
+  render();
+}
+function sSA(field){const sort=S.supplySort,idx=sort.findIndex(s=>s.field===field);if(idx<0)return`<span style="color:var(--t3);font-size:9px;margin-left:3px">↕</span>`;const num=sort.length>1?`<sup style="font-size:8px">${idx+1}</sup>`:"";return`<span style="font-size:9px;margin-left:2px">${sort[idx].dir==="asc"?"↑":"↓"}${num}</span>`;}
+
+function sortedSupply(list){
+  const sort=S.supplySort;if(!sort.length)return list;
+  const now=new Date();
+  return[...list].sort((a,b)=>{
+    for(const{field,dir}of sort){
+      let va,vb;
+      if(field==="cargabilidad"){va=pCharge(a.id);vb=pCharge(b.id);}
+      else if(field==="available"){va=100-pCharge(a.id);vb=100-pCharge(b.id);}
+      else if(field==="days"){va=daysBench(a.id);vb=daysBench(b.id);}
+      else if(field==="risk"){const rm={low:0,mid:1,high:2};va=rm[getRisk(a.id)]??-1;vb=rm[getRisk(b.id)]??-1;}
+      else if(field==="bench_since"){const ba=getBenchSince(a.id),bb=getBenchSince(b.id);va=ba?ba.getTime():0;vb=bb?bb.getTime():0;}
+      else if(field==="desde"||field==="hasta"){
+        const getD=(p,type)=>{const active=S.assigns.filter(x=>x.profile_id===p.id&&!x.is_forecast&&new Date(x.start_date)<=now&&(!x.end_date||new Date(x.end_date)>=now));if(!active.length)return type==="hasta"?"0000":"9999";return type==="desde"?active.sort((x,y)=>new Date(x.start_date)-new Date(y.start_date))[0].start_date||"9999":active.sort((x,y)=>new Date(y.end_date||"9999")-new Date(x.end_date||"9999"))[0].end_date||"9999";};
+        va=getD(a,field);vb=getD(b,field);
+      }
+      else if(field==="lcr"){va=parseFloat(a.lcr)||0;vb=parseFloat(b.lcr)||0;}
+      else{va=(a[field]||"").toString().toLowerCase();vb=(b[field]||"").toString().toLowerCase();}
+      if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;
+    }
+    return 0;
+  });
+}
+
+function supplyChart(rows){
+  const maxB=Math.max(...rows.map(r=>r.bench),1);
+  const W=640,PL=32,PR=8,PT=14,PB=28,CW=W-PL-PR,CH=160;
+  const n=rows.length,bW=Math.floor(CW/n)-3;
+  const bx=i=>PL+i*(CW/n)+1;
+  const by=v=>PT+CH-Math.round(v/maxB*CH);
+  let grid="";
+  for(let g=0;g<=4;g++){
+    const v=Math.round(g*maxB/4),y=PT+CH-Math.round(g/4*CH);
+    grid+=`<line x1="${PL}" y1="${y}" x2="${PL+CW}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
+    if(g>0)grid+=`<text x="${PL-4}" y="${y+3}" text-anchor="end" font-size="9" fill="#444">${v}</text>`;
+  }
+  let bars="";
+  rows.forEach((r,i)=>{
+    const h=Math.max(r.bench>0?2:0,Math.round(r.bench/maxB*CH));
+    const x=bx(i),y=PT+CH-h;
+    const fill=r.pct>=25?"#ef4444":r.pct>=10?"#f59e0b":"#22c55e";
+    bars+=`<rect x="${x}" y="${y}" width="${bW}" height="${h}" fill="${fill}" opacity="0.7" rx="2"/>`;
+    if(r.bench>0)bars+=`<text x="${x+bW/2}" y="${y-2}" text-anchor="middle" font-size="8" fill="${fill}" font-weight="500">${r.bench}</text>`;
+    bars+=`<text x="${x+bW/2}" y="${PT+CH+PB-4}" text-anchor="middle" font-size="9" fill="#444">${r.lbl}</text>`;
+  });
+  const maxP=Math.max(...rows.map(r=>r.pct),10);
+  const pyv=v=>PT+CH-Math.round(v/Math.max(maxP,15)*CH);
+  const pts=rows.map((r,i)=>`${bx(i)+bW/2},${pyv(r.pct)}`).join(" ");
+  const dots=rows.map((r,i)=>`<circle cx="${bx(i)+bW/2}" cy="${pyv(r.pct)}" r="2.5" fill="rgba(124,110,232,0.8)"/>`).join("");
+  return`<svg viewBox="0 0 ${W} ${PT+CH+PB}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">${grid}<line x1="${PL}" y1="${PT+CH}" x2="${PL+CW}" y2="${PT+CH}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>${bars}<polyline points="${pts}" fill="none" stroke="rgba(124,110,232,0.5)" stroke-width="1.5" stroke-dasharray="4,2"/>${dots}</svg>`;
+}
+
+function calcLog(){
+  const now=new Date();const rows=[];
+  for(let i=11;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const lbl=d.toLocaleDateString("es-ES",{month:"short",year:"2-digit"});
+    const active=S.profiles.filter(p=>p.is_active&&(!p.hire_date||new Date(p.hire_date)<=d));
+    const bench=active.filter(p=>{
+      const ch=S.assigns.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===p.id&&s<=d&&(!e||e>=d)&&!a.is_forecast;}).reduce((t,a)=>t+(a.chargeability||0),0);
+      return ch<100;
+    });
+    rows.push({lbl,total:active.length,bench:bench.length,pct:active.length?Math.round(bench.length/active.length*100):0});
+  }
+  return rows;
+}
+function calcAge(d){if(!d)return"—";const dt=new Date(d),now=new Date();let y=now.getFullYear()-dt.getFullYear(),m=now.getMonth()-dt.getMonth();if(m<0){y--;m+=12;}return y>0?`${y}a ${m>0?m+"m":""}`:`${m>0?m+" mes":"<1 mes"}`;}
+
+// ── STORAGE ───────────────────────────────────────────────────────────────
+async function save(){const sv=async(k,v)=>{try{if(window.storage)await window.storage.set(k,JSON.stringify(v));else localStorage.setItem(k,JSON.stringify(v));}catch{}};await sv("sd_p3",S.profiles);await sv("sd_a3",S.assigns);await sv("sd_d3",S.demands);await sv("sd_cr3",S.customRoles);await sv("sd_b3",S.bajas);}
+async function loadData(){const gt=async k=>{try{if(window.storage){const r=await window.storage.get(k);return JSON.parse(r.value);}const v=localStorage.getItem(k);return v?JSON.parse(v):[];}catch{return[];}};S.profiles=await gt("sd_p3");S.assigns=await gt("sd_a3");S.demands=await gt("sd_d3");S.customRoles=await gt("sd_cr3");S.bajas=await gt("sd_b3");const demoB=[{id:"b01",profile_id:"d05",type:"Embarazo",desde:"2026-04-01",hasta:"2026-11-30",comments:"Baja maternal. Reincorporación prevista noviembre 2026"},{id:"b02",profile_id:"d11",type:"Enfermedad",desde:"2026-05-01",hasta:"2026-06-15",comments:"Baja médica temporal"},{id:"b03",profile_id:"d20",type:"Paternidad",desde:"2026-06-01",hasta:"2026-06-15",comments:"Paternidad 15 días"}];const existBIds=new Set(S.bajas.map(b=>b.id));const missB=demoB.filter(b=>!existBIds.has(b.id));if(missB.length){S.bajas=[...S.bajas,...missB];}const existDIds=new Set(S.demands.map(d=>d.id));const missD=DD.filter(d=>!existDIds.has(d.id));if(missD.length){S.demands=[...S.demands,...missD];}const eIds=new Set(S.profiles.map(p=>p.id));const miss=DP.filter(p=>!eIds.has(p.id));if(miss.length){S.profiles=[...S.profiles,...miss];}const eAIds=new Set(S.assigns.map(a=>a.id));const missA=DA.filter(a=>!eAIds.has(a.id));if(missA.length){S.assigns=[...S.assigns,...missA];}if(miss.length||missA.length)await save();}
+
+// ── GATE + APP ────────────────────────────────────────────────────────────
+function showGate(){
+  // If loaded from platform shell, skip PIN
+  if(localStorage.getItem("mo_platform_auth")==="1"){
+    loadData().then(()=>{showApp();render();});return;
+  }document.getElementById("root").innerHTML=`<div class="pgate"><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)">Marketing Operations · Supply & Demand</div><div style="font-size:20px;font-weight:500">Acceso requerido</div><div style="display:flex;flex-direction:column;align-items:center;gap:12px"><input class="fi" type="password" id="pi" placeholder="Contraseña" style="width:220px;text-align:center;letter-spacing:.1em"/><button class="btn btnp" style="width:220px" onclick="doPin()">Entrar</button></div><div id="perr" style="color:var(--red);font-size:12px;display:none">Contraseña incorrecta</div></div>`;setTimeout(()=>{const p=document.getElementById("pi");if(p)p.addEventListener("keydown",e=>e.key==="Enter"&&doPin());},50);}
+async function doPin(){const v=document.getElementById("pi")?.value;if(v===PIN){await loadData();showApp();render();}else{const el=document.getElementById("perr");if(el)el.style.display="block";}}
+function showApp(){document.getElementById("root").innerHTML=`<div><div class="hdr"><div><div class="hdr-t">Supply &amp; Demand</div><div class="hdr-s">Marketing Operations</div></div><div></div></div><div class="tabs" id="tabs">${[["roster","Roster"],["supply","Supply"],["demand","Demand"],["dashboard","Dashboard"]].map(([id,l])=>`<div class="tab${S.tab===id?" on":""}" data-tab="${id}">${l}</div>`).join("")}</div><div class="content" id="mc"></div></div>`;document.getElementById("tabs").addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)return;S.tab=t.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab===S.tab));render();});document.addEventListener("click",e=>{if(!e.target.closest(".fdd"))closeFDD();});}
+
+function render(){
+  const mc=document.getElementById("mc");if(!mc)return;
+  if(S.tab==="roster")mc.innerHTML=tRoster();
+  else if(S.tab==="supply")mc.innerHTML=tSupply();
+  else if(S.tab==="demand")mc.innerHTML=tDemand();
+  else mc.innerHTML=tDash();
+  // Fix: restore search focus after re-render
+  if(S.tab==="roster"){
+    setTimeout(()=>{const el=document.getElementById("rf-q");if(el&&document.activeElement!==el&&S.rf.q){el.focus();const l=el.value.length;el.setSelectionRange(l,l);}},0);
+  }
+}
+
+// ── SORT ──────────────────────────────────────────────────────────────────
+function sortBy(f){if(S.rosterSort.field===f)S.rosterSort.dir=S.rosterSort.dir==="asc"?"desc":"asc";else{S.rosterSort.field=f;S.rosterSort.dir="asc";}render();}
+function sa(f){const{field,dir}=S.rosterSort;if(field!==f)return`<span style="color:var(--t3);font-size:9px;margin-left:3px">↕</span>`;return`<span style="font-size:9px;margin-left:3px">${dir==="asc"?"↑":"↓"}</span>`;}
+function sortedProfiles(list){const{field,dir}=S.rosterSort;return[...list].sort((a,b)=>{let va,vb;if(field==="cargabilidad"){va=pCharge(a.id);vb=pCharge(b.id);}else if(field==="lcr"){va=parseFloat(a.lcr)||0;vb=parseFloat(b.lcr)||0;}else{va=(a[field]||"").toString().toLowerCase();vb=(b[field]||"").toString().toLowerCase();}if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;return 0;});}
+
+// ── DROPDOWN FILTERS ──────────────────────────────────────────────────────
+function tFDD(k,e){e.stopPropagation();if(openFDD===k){closeFDD();return;}closeFDD();openFDD=k;const p=document.getElementById("fddp-"+k),b=document.getElementById("fddb-"+k);if(p)p.classList.add("open");if(b)b.classList.add("open");}
+function closeFDD(){if(openFDD){const p=document.getElementById("fddp-"+openFDD),b=document.getElementById("fddb-"+openFDD);if(p)p.classList.remove("open");if(b)b.classList.remove("open");openFDD=null;}}
+function tRF(f,v){const a=S.rf[f];const i=a.indexOf(v);if(i>=0)a.splice(i,1);else a.push(v);render();}
+
+function fddM(key,field,label,items){const arr=S.rf[field];const cnt=arr.length;return`<div class="fdd"><button class="fdd-btn${cnt>0?" active":""}" id="fddb-${key}" onclick="tFDD('${key}',event)">${label}${cnt>0?` <span class="fdd-cnt">${cnt}</span>`:""}<span class="fdd-arrow">▾</span></button><div class="fdd-panel" id="fddp-${key}">${items.map(it=>`<div class="fdd-item" onclick="tRF('${field}','${it.val.replace(/'/g,"\\'")}');event.stopPropagation()"><div class="fdd-chk${arr.includes(it.val)?" on":""}"></div><span class="fdd-label">${it.label}</span>${it.sub?`<span class="fdd-sub">${it.sub}</span>`:""}</div>`).join("")}${cnt>0?`<div class="fdd-divider"></div><div class="fdd-clr" onclick="S.rf.${field}=[];render();event.stopPropagation()">× Limpiar</div>`:""}</div></div>`;}
+
+function filterBar(){
+  const allSkills=[...new Set(S.profiles.flatMap(p=>(p.skills||[]).map(s=>s.name)))].sort();
+  const allRoles=[...new Set(S.profiles.map(p=>p.role).filter(Boolean))].sort();
+  const f=S.rf;const tot=f.levels.length+f.caps.length+f.roles.length+f.locs.length+f.skills.length+(f.ctype?1:0)+(f.q?1:0);
+  return`<div class="fbar">
+    <input id="rf-q" class="fsearch" placeholder="🔍  Nombre o EID..." value="${f.q}" oninput="S.rf.q=this.value;render()"/>
+    ${fddM("lv","levels","Nivel",LEVELS.map(l=>({val:l,label:l,sub:LN[l]})))}
+    ${fddM("cp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}
+    ${fddM("rl","roles","Rol",allRoles.map(r=>({val:r,label:r})))}
+    ${fddM("lc","locs","Ubicación",LOCATIONS.map(l=>({val:l,label:l})))}
+    ${fddM("sk","skills","Skill",allSkills.map(s=>({val:s,label:s})))}
+    <div class="fdd"><button class="fdd-btn${f.ctype?" active":""}" id="fddb-ct" onclick="tFDD('ct',event)">Tipo${f.ctype?` <span class="fdd-cnt">1</span>`:""}<span class="fdd-arrow">▾</span></button><div class="fdd-panel" id="fddp-ct">${CONTRACT_TYPES.map(t=>`<div class="fdd-item" onclick="S.rf.ctype=S.rf.ctype==='${t}'?'':'${t}';render();event.stopPropagation()"><div class="fdd-chk${f.ctype===t?" on":""}"></div><span class="fdd-label">${t}</span></div>`).join("")}${f.ctype?`<div class="fdd-divider"></div><div class="fdd-clr" onclick="S.rf.ctype='';render();event.stopPropagation()">× Limpiar</div>`:""}</div></div>
+    ${tot>0?`<button class="btn btns" style="color:var(--t3);border-color:transparent" onclick="S.rf={q:'',levels:[],caps:[],roles:[],locs:[],skills:[],ctype:''};render()">× ${tot}</button>`:""}
+  </div>`;}
+
+function applyRF(list){const f=S.rf;return list.filter(p=>{if(f.q){const q=f.q.toLowerCase();if(!p.name.toLowerCase().includes(q)&&!(p.eid||"").toLowerCase().includes(q))return false;}if(f.levels.length&&!f.levels.includes(p.level_accenture))return false;if(f.caps.length&&!f.caps.includes(p.capability))return false;if(f.roles.length&&!f.roles.includes(p.role))return false;if(f.locs.length&&!f.locs.includes(p.location))return false;if(f.skills.length&&!f.skills.every(sk=>(p.skills||[]).some(s=>s.name===sk)))return false;if(f.ctype&&p.contract_type!==f.ctype)return false;return true;});}
+
+// ── ROSTER ────────────────────────────────────────────────────────────────
+function tRoster(){
+  const fp=sortedProfiles(applyRF(S.profiles));
+  const th=(label,field)=>`<th onclick="sortBy('${field}')" style="cursor:pointer">${label}${sa(field)}</th>`;
+  return`<div class="shdr"><span class="scnt" style="margin-left:0">${fp.length} de ${S.profiles.length} perfiles</span><button class="btn btnp btns" onclick="openPM(null)">+ Añadir perfil</button></div>
+  ${filterBar()}
+  <div class="tw"><table>
+    <thead><tr>${th("Perfil","name")}${th("EID","eid")}${th("Level","level_accenture")}${th("Capability","capability")}${th("Ubicación","location")}${th("Tipo","contract_type")}${th("LCR","lcr")}${th("Cargabilidad","cargabilidad")}</tr></thead>
+    <tbody>${fp.length===0?`<tr><td colspan="8" class="empty">Sin perfiles que coincidan.</td></tr>`:fp.map(p=>{const c=pCharge(p.id);const sub=p.contract_type==="Subcontractor";return`<tr onclick="openPM('${p.id}')"><td><div style="display:flex;align-items:center;gap:10px"><div class="av">${ini(p.name)}</div><div><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--t3)">${p.role||""}</div></div></div></td><td style="color:var(--t3);font-size:12px;font-family:monospace">${p.eid||"—"}</td><td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td><td style="color:var(--t2);font-size:12px">${p.capability||"—"}</td><td style="color:var(--t2);font-size:12px">${p.location||"—"}</td><td><span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${p.contract_type||"Interno"}</span></td><td style="color:var(--t2);font-size:12px">${p.lcr?parseFloat(p.lcr).toFixed(2)+"€/h":"—"}</td><td><div class="cbar"><div class="ctrack"><div class="cfill" style="width:${Math.min(c,100)}%;background:${cc(c)}"></div></div><span style="font-size:12px;color:var(--t2);min-width:34px">${c}%</span><span class="bdg ${c===0?"bred":c>=80?"bgreen":"bamber"}" style="font-size:10px;margin-left:4px">${c===0?"Banquillo":c>=100?"Full":c+"%"}</span></div></td></tr>`;}).join("")}</tbody>
+  </table></div>`;}
+
+// ── SUPPLY ────────────────────────────────────────────────────────────────
+function tSupply(){
+  const f=S.sf,now=new Date();
+  const ia=a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return s<=now&&(!e||e>=now)&&!a.is_forecast};
+  const sfF=p=>{
+    if(f.q&&!p.name.toLowerCase().includes(f.q.toLowerCase()))return false;
+    if(f.caps.length&&!f.caps.includes(p.capability))return false;
+    if(f.levels.length&&!f.levels.includes(p.level_accenture))return false;
+    if(f.ctypes.length&&!f.ctypes.includes(p.contract_type))return false;
+    return true;
+  };
+  const VIEWS=[["asignacion","Asignación"],["disponibles","Disponibles"],["bajas","Bajas"],["log","Log"]];
+  const vt=`<div style="display:flex;gap:0;background:var(--bg2);border:1px solid var(--b);border-radius:6px;padding:2px">${VIEWS.map(([v,l])=>`<button style="padding:5px 16px;border-radius:5px;font-size:12px;cursor:pointer;border:none;background:${S.supplyView===v?"var(--bg1)":"transparent"};color:${S.supplyView===v?"var(--t)":"var(--t2)"};font-family:inherit;font-weight:${S.supplyView===v?"500":"400"};transition:all .15s" onclick="S.supplyView='${v}';render()">${l}</button>`).join("")}</div>`;
+  const thS=(label,field)=>`<th onclick="sSortBy('${field}',event)" title="Shift+click para orden secundario" style="cursor:pointer">${label}${sSA(field)}</th>`;
+  const editBtn=(pid)=>`<td style="padding:0;width:36px;text-align:center;border-left:1px solid rgba(255,255,255,0.07)"><button onclick="event.stopPropagation();openSupplyEdit('${pid}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:6px 8px;line-height:1;display:block;margin:0 auto" title="Editar supply">✎</button></td>`;
+  const nameCell=(p)=>`<td style="min-width:280px;width:280px"><div style="display:flex;align-items:center;gap:9px"><div class="av" style="flex-shrink:0">${ini(p.name)}</div><div><div style="font-weight:500">${p.name}${p.on_leave?` <span class="bdg bred" style="font-size:9px">Baja</span>`:""}</div><div style="font-size:11px;color:var(--t3)">${p.role||""}</div></div></div></td>`;
+
+  if(S.supplyView==="asignacion"){
+    const fp=sortedSupply(S.profiles.filter(sfF));
+    const fCount=f.caps.length+f.levels.length+f.ctypes.length+(f.q?1:0);
+    return`<div class="shdr" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:16px">${vt}<span class="scnt" style="margin-left:0">${fp.length} perfiles</span></div>
+    </div>
+    <div class="fbar">
+      <input id="sf-q" class="fsearch" placeholder="Buscar perfil..." value="${f.q}" oninput="S.sf.q=this.value;render()"/>
+      ${sfddM("cp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}
+      ${sfddM("lv","levels","Nivel",LEVELS.map(l=>({val:l,label:l,sub:LN[l]})))}
+      ${sfddM("ct","ctypes","Tipo",CONTRACT_TYPES.map(t=>({val:t,label:t})))}
+      ${fCount>0?`<button class="btn btns" style="color:var(--t3);border-color:transparent" onclick="S.sf={q:'',caps:[],levels:[],risks:[],ctypes:[]};render()">× ${fCount}</button>`:""}
+    </div>
+    <div class="tw" style="overflow-x:auto"><table style="min-width:800px">
+      <thead><tr>
+        ${thS("Nombre","name")}
+        ${thS("Capability","capability")}
+        ${thS("Level","level_accenture")}
+        ${thS("Tipo","contract_type")}
+        ${thS("Proyecto","project")}
+        ${thS("Asig.","cargabilidad")}
+        ${thS("Desde","desde")}
+        ${thS("Hasta","hasta")}
+        <th></th>
+      </tr></thead>
+      <tbody>${fp.length===0?`<tr><td colspan="9" class="empty">Sin perfiles</td></tr>`:fp.map(p=>{
+        const active=[...S.assigns.filter(a=>a.profile_id===p.id)].filter(ia);
+        const upcoming=S.assigns.filter(a=>a.profile_id===p.id&&new Date(a.start_date)>now&&!a.is_forecast).sort((a,b)=>new Date(a.start_date)-new Date(b.start_date));
+        const c2=pCharge(p.id);const sub=p.contract_type==="Subcontractor";
+        const projTxt=active.length===0?(upcoming[0]?`<span style="color:var(--acc);font-size:11px">≈</span> <span style="color:var(--t2)">${upcoming[0].project_name}</span>`:`<span style="color:var(--t3);font-size:12px">Sin proyecto</span>`):active.slice(0,3).map(a=>`<div style="display:flex;align-items:center;gap:5px;margin:1px 0;white-space:nowrap"><span style="font-size:12px">${a.project_name}</span>${a.is_forecast?'<span style="font-size:9px;color:var(--acc)">PREV</span>':''}<span class="bdg ${a.chargeability>=80?"bgreen":a.chargeability>=40?"bamber":"bg"}" style="font-size:10px;padding:1px 5px">${a.chargeability}%</span></div>`).join("");
+        const desde=active.length?fds([...active].sort((a,b)=>new Date(a.start_date)-new Date(b.start_date))[0].start_date):"—";
+        const hasta=active.length?fds([...active].sort((a,b)=>new Date(b.end_date||"9999")-new Date(a.end_date||"9999"))[0].end_date):"—";
+        return`<tr onclick="openPM('${p.id}','asignacion')">
+          ${nameCell(p)}
+          <td style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
+          <td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td>
+          <td><span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${p.contract_type||"Interno"}</span></td>
+          <td style="font-size:13px">${projTxt}</td>
+          <td><div class="cbar"><div class="ctrack" style="min-width:50px"><div class="cfill" style="width:${Math.min(c2,100)}%;background:${cc(c2)}"></div></div><span style="font-size:12px;font-weight:500;min-width:32px">${c2}%</span></div></td>
+          <td style="font-size:12px;color:var(--t2)">${desde}</td>
+          <td style="font-size:12px;color:var(--t2)">${hasta}</td>
+          ${editBtn(p.id)}
+        </tr>`;
+      }).join("")}</tbody>
+    </table></div>`;
+  }
+
+  if(S.supplyView==="disponibles"){
+    const bench=S.profiles.filter(p=>sfF(p)&&pCharge(p.id)<100);
+    const rFiltered=f.risks.length?bench.filter(p=>f.risks.includes(getRisk(p.id))):bench;
+    const sorted=sortedSupply(rFiltered);
+    const fCount=f.caps.length+f.levels.length+f.risks.length+f.ctypes.length+(f.q?1:0);
+    return`<div class="shdr" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:16px">${vt}<span class="scnt" style="margin-left:0">${sorted.length} disponibles</span></div>
+    </div>
+    <div class="fbar">
+      <input class="fsearch" placeholder="Buscar perfil..." value="${f.q}" oninput="S.sf.q=this.value;render()"/>
+      ${sfddM("bcp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}
+      ${sfddM("blv","levels","Nivel",LEVELS.map(l=>({val:l,label:l,sub:LN[l]})))}
+      ${sfddM("brk","risks","Riesgo",[{val:"high",label:"High"},{val:"mid",label:"Mid"},{val:"low",label:"Low"}])}
+      ${sfddM("bct","ctypes","Tipo",CONTRACT_TYPES.map(t=>({val:t,label:t})))}
+      ${fCount>0?`<button class="btn btns" style="color:var(--t3);border-color:transparent" onclick="S.sf={q:'',caps:[],levels:[],risks:[],ctypes:[]};render()">× Limpiar</button>`:""}
+    </div>
+    <div class="tw" style="overflow-x:auto"><table style="min-width:700px">
+      <thead><tr>
+        ${thS("Nombre","name")}
+        ${thS("Capability","capability")}
+        ${thS("Level","level_accenture")}
+        ${thS("Tipo","contract_type")}
+        ${thS("Bench desde","bench_since")}
+        ${thS("Días","days")}
+        ${thS("% disponible","available")}
+        ${thS("Riesgo","risk")}
+        <th>Comentarios</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${sorted.length===0?`<tr><td colspan="10" class="empty">Sin perfiles disponibles</td></tr>`:sorted.map(p=>{
+        const avail=100-pCharge(p.id);const bs=getBenchSince(p.id);const days=daysBench(p.id);const risk=getRisk(p.id);const sub=p.contract_type==="Subcontractor";
+        const daysCls=days>30?"bred":days>15?"bamber":"bg";
+        const lastNote=(p.supply_notes||[]).slice(-1)[0];
+        return`<tr onclick="openSupplyEdit('${p.id}')">
+          ${nameCell(p)}
+          <td style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
+          <td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td>
+          <td><span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${p.contract_type||"Interno"}</span></td>
+          <td style="font-size:12px;color:var(--t2)">${bs?fds(bs.toISOString()):"—"}</td>
+          <td><span class="bdg ${daysCls}" style="font-size:11px">${days}d</span></td>
+          <td><div class="cbar"><div class="ctrack" style="min-width:50px"><div class="cfill" style="width:${Math.min(avail,100)}%;background:${cc(100-avail)}"></div></div><span style="font-size:12px;font-weight:500;min-width:34px">${avail}%</span></div></td>
+          <td>${riskBadge(risk)}</td>
+          <td style="font-size:12px;color:var(--t2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${lastNote?lastNote.text:""}</td>
+          ${editBtn(p.id)}
+        </tr>`;
+      }).join("")}</tbody>
+    </table></div>`;
+  }
+
+  if(S.supplyView==="bajas"){
+    const formalBajaIds=new Set(S.bajas.map(b=>b.profile_id));
+    const onLeaveProfiles=S.profiles.filter(p=>p.on_leave&&!formalBajaIds.has(p.id)).map(p=>({id:"ol_"+p.id,profile_id:p.id,type:"Sin registro formal",desde:"",hasta:"",comments:"Marcado como de baja en el perfil",profile:p,synthetic:true}));
+    const bajas=[...S.bajas.map(b=>{const p=S.profiles.find(x=>x.id===b.profile_id);return{...b,profile:p};}).filter(b=>b.profile),...onLeaveProfiles];
+    bajas.sort((a,b)=>new Date(b.desde||0)-new Date(a.desde||0));
+    return`<div class="shdr" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:16px">${vt}<span class="scnt" style="margin-left:0">${bajas.length} bajas</span></div>
+      <button class="btn btnp btns" onclick="openBM(null)">+ Nueva baja</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr>
+        ${thS("Nombre","name")}
+        ${thS("Capability","capability")}
+        ${thS("Level","level_accenture")}
+        <th>Tipo de baja</th>
+        ${thS("Desde","desde")}
+        ${thS("Hasta","hasta")}
+        <th>Comentarios</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${bajas.length===0?`<tr><td colspan="8" class="empty">Sin bajas registradas</td></tr>`:bajas.map(b=>{
+        const p=b.profile;const isActive=b.desde&&new Date(b.desde)<=now&&(!b.hasta||new Date(b.hasta)>=now);
+        const typeCls=b.type==="Enfermedad"?"bred":b.type==="Embarazo"||b.type==="Maternidad"?"bacc":b.type==="Sin registro formal"?"bg":"bamber";
+        return`<tr>
+          <td style="min-width:220px"><div style="display:flex;align-items:center;gap:9px"><div class="av" style="flex-shrink:0">${ini(p.name)}</div><div><div style="font-weight:500">${p.name}</div>${isActive?`<span class="bdg bgreen" style="font-size:9px">Activa</span>`:""}</div></div></td>
+          <td style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
+          <td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td>
+          <td><span class="bdg ${typeCls}" style="font-size:11px">${b.type}</span></td>
+          <td style="font-size:12px;color:var(--t2)">${b.desde?fds(b.desde):"—"}</td>
+          <td style="font-size:12px;color:var(--t2)">${b.hasta?fds(b.hasta):"—"}</td>
+          <td style="font-size:12px;color:var(--t2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.comments||""}</td>
+          <td>${b.synthetic?"":`<button class="btn btns" onclick="openBM('${b.id}')" style="padding:4px 8px;font-size:11px">✎</button>`}</td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table></div>`;
+  }
+
+  if(S.supplyView==="log"){
+    const LOG_VIEWS=[["bench","Disponibles"],["proyectos","Proyectos"],["caps","Capabilities"],["roles","Roles"]];
+    const lvt=`<div style="display:flex;gap:0;background:var(--bg3);border:1px solid var(--b);border-radius:6px;padding:2px;margin-bottom:20px">${LOG_VIEWS.map(([v,l])=>`<button style="padding:4px 14px;border-radius:5px;font-size:12px;cursor:pointer;border:none;background:${S.logView===v?"var(--bg2)":"transparent"};color:${S.logView===v?"var(--t)":"var(--t2)"};font-family:inherit;transition:all .15s" onclick="S.logView='${v}';render()">${l}</button>`).join("")}</div>`;
+    if(S.logView==="bench"){
+      const rows=calcLog();const last=rows[rows.length-1];
+      return`<div class="shdr" style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:16px">${vt}</div></div>${lvt}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px"><div class="mcard"><div class="mlbl">Headcount hoy</div><div class="mval">${last.total}</div></div><div class="mcard"><div class="mlbl">Disponibles hoy</div><div class="mval" style="color:${last.bench>0?"var(--amber)":"var(--green)"}">${last.bench}</div><div class="msub">${last.pct}% del equipo</div></div><div class="mcard"><div class="mlbl">Mejor mes</div><div class="mval" style="color:var(--green)">${Math.min(...rows.map(r=>r.bench))}</div></div><div class="mcard"><div class="mlbl">Peor mes</div><div class="mval" style="color:var(--red)">${Math.max(...rows.map(r=>r.bench))}</div></div></div>
+      <div style="background:var(--bg1);border:1px solid var(--b);border-radius:8px;padding:20px;margin-bottom:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="sect-lbl" style="margin:0">Evolución de disponibles</div><div style="font-size:11px;color:var(--t3)"><span style="color:var(--green)">▊</span><span style="color:var(--amber)">▊</span><span style="color:var(--red)">▊</span> Nº · <span style="color:var(--acc)">--- %</span></div></div>${supplyChart(rows)}</div>
+      <div class="tw"><table><thead><tr><th>Mes</th><th>Headcount</th><th>Disponibles</th><th>% disponibles</th><th>Δ</th></tr></thead><tbody>${rows.map((r,i)=>{const prev2=i>0?rows[i-1]:null;const delta=prev2?r.bench-prev2.bench:null;const deltaCls=delta===null?"":delta>0?"bred":delta<0?"bgreen":"bg";const deltaLbl=delta===null?"—":delta>0?`+${delta}`:delta<0?`${delta}`:"=";const pctCls=r.pct>=25?"bred":r.pct>=10?"bamber":"bgreen";const isLast=i===rows.length-1;return`<tr${isLast?' style="font-weight:500"':""}><td>${r.lbl}${isLast?` <span class="bdg bacc" style="font-size:10px">hoy</span>`:""}</td><td style="color:var(--t2)">${r.total}</td><td><span style="font-weight:500;color:${r.bench>0?"var(--amber)":"var(--green)"}">${r.bench}</span></td><td><span class="bdg ${pctCls}" style="font-size:11px">${r.pct}%</span></td><td>${delta!==null?`<span class="bdg ${deltaCls}" style="font-size:11px">${deltaLbl}</span>`:"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
+    }
+    if(S.logView==="proyectos"){
+      const data=calcLogProyectos();const activeProj=data.filter(d=>d.active);const totalActive=activeProj.reduce((s,d)=>s+d.count,0);
+      return`<div class="shdr" style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:16px">${vt}</div></div>${lvt}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px"><div class="mcard"><div class="mlbl">Activos</div><div class="mval">${activeProj.length}</div></div><div class="mcard"><div class="mlbl">Total</div><div class="mval" style="color:var(--t2)">${data.length}</div></div><div class="mcard"><div class="mlbl">Asignados</div><div class="mval">${totalActive}</div></div><div class="mcard"><div class="mlbl">Mayor proyecto</div><div style="font-size:14px;font-weight:500;margin-top:4px">${data[0]?data[0].name.split(" ").slice(0,3).join(" "):"—"}</div><div class="msub">${data[0]?data[0].count+" perfiles":""}</div></div></div>
+      <div style="background:var(--bg1);border:1px solid var(--b);border-radius:8px;padding:20px;margin-bottom:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="sect-lbl" style="margin:0">Headcount por proyecto</div><div style="font-size:11px;color:var(--t3)"><span style="color:var(--acc)">■ Activo</span> · <span style="color:#444">■ Histórico</span></div></div>${projChart(data)}</div>
+      <div class="tw"><table><thead><tr><th>Proyecto</th><th>Estado</th><th>Perfiles</th><th>Capabilities</th><th>LCR/mes</th><th>Inicio</th><th>Fin</th></tr></thead><tbody>${data.map(d=>`<tr><td style="font-weight:500">${d.name}</td><td><span class="bdg ${d.active?"bgreen":"bg"}" style="font-size:10px">${d.active?"Activo":"Cerrado"}</span></td><td>${d.count}</td><td style="font-size:12px;color:var(--t2)">${d.caps}</td><td style="font-size:12px;color:var(--t2)">${d.lcr_week?d.lcr_week+"€":"—"}</td><td style="font-size:12px;color:var(--t2)">${fds(d.start)}</td><td style="font-size:12px;color:var(--t2)">${d.end?fds(d.end):"—"}</td></tr>`).join("")}</tbody></table></div>`;
+    }
+    if(S.logView==="caps"){
+      const rows=calcLogCaps();const last=rows[rows.length-1];
+      return`<div class="shdr" style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:16px">${vt}</div></div>${lvt}
+      <div style="background:var(--bg1);border:1px solid var(--b);border-radius:8px;padding:20px;margin-bottom:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="sect-lbl" style="margin:0">Evolución headcount por capability</div><div style="display:flex;flex-wrap:wrap;gap:10px">${CAPS.map(cap=>`<span style="font-size:11px;color:${CAP_COLORS[cap]}">${cap} ${last[cap]||0}</span>`).join("")}</div></div>${capChart(rows)}</div>
+      <div class="tw"><table><thead><tr><th>Capability</th><th>Headcount</th><th>Disponibles</th><th>Cargabilidad media</th><th>Δ</th></tr></thead><tbody>${CAPS.map(cap=>{const curr=S.profiles.filter(p=>p.capability===cap&&p.is_active);const bench=curr.filter(p=>pCharge(p.id)<100).length;const avg=curr.length?Math.round(curr.reduce((s,p)=>s+pCharge(p.id),0)/curr.length):0;const prev=rows[rows.length-2];const delta=prev?(last[cap]||0)-(prev[cap]||0):null;const deltaCls=delta===null?"":delta>0?"bgreen":delta<0?"bred":"bg";const deltaLbl=delta===null?"—":delta>0?`+${delta}`:delta<0?`${delta}`:"=";return`<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${CAP_COLORS[cap]};margin-right:8px"></span><span style="font-weight:500">${cap}</span></td><td>${curr.length}</td><td><span class="bdg ${bench>0?"bamber":"bgreen"}">${bench}</span></td><td><div class="cbar"><div class="ctrack" style="min-width:80px"><div class="cfill" style="width:${Math.min(avg,100)}%;background:${cc(avg)}"></div></div><span style="font-size:12px">${avg}%</span></div></td><td>${delta!==null?`<span class="bdg ${deltaCls}" style="font-size:11px">${deltaLbl}</span>`:"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
+    }
+    if(S.logView==="roles"){
+      const data=calcLogRoles();
+      return`<div class="shdr" style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:16px">${vt}</div></div>${lvt}
+      <div style="background:var(--bg1);border:1px solid var(--b);border-radius:8px;padding:20px;margin-bottom:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="sect-lbl" style="margin:0">Headcount por rol</div><div style="font-size:11px;color:var(--t3)"><span style="color:var(--acc)">■ asignado</span> · fondo = total</div></div>${roleChart(data)}</div>
+      <div class="tw"><table><thead><tr><th>Rol</th><th>Total</th><th>Asignados</th><th>Disponibles</th><th>% asignación</th><th>Capabilities</th></tr></thead><tbody>${data.map(r=>{const pctCls=r.pct>=80?"bgreen":r.pct>=50?"bamber":"bred";return`<tr><td style="font-weight:500">${r.name}</td><td>${r.total}</td><td>${r.assigned}</td><td><span class="bdg ${r.bench>0?"bamber":"bgreen"}">${r.bench}</span></td><td><span class="bdg ${pctCls}" style="font-size:11px">${r.pct}%</span></td><td style="font-size:12px;color:var(--t2)">${r.caps}</td></tr>`;}).join("")}</tbody></table></div>`;
+    }
+  }
+  return"";
+}
+// ── DEMAND ────────────────────────────────────────────────────────────────
+function tDemand(){
+  const f=S.df2;
+  const allClients=[...new Set(S.demands.map(d=>d.client).filter(Boolean))].sort();
+  const fCount=f.statuses.length+f.caps.length+f.clients.length;
+
+  // demand filter dropdowns reuse tSF-like logic
+  const dfdd=(key,field,label,items)=>{const arr=f[field];const cnt=arr.length;return`<div class="fdd"><button class="fdd-btn${cnt>0?" active":""}" id="fddb-d${key}" onclick="tFDD('d${key}',event)">${label}${cnt>0?` <span class="fdd-cnt">${cnt}</span>`:""}<span class="fdd-arrow">▾</span></button><div class="fdd-panel" id="fddp-d${key}">${items.map(it=>`<div class="fdd-item" onclick="tDF('${field}','${it.replace(/'/g,"\\'")}');event.stopPropagation()"><div class="fdd-chk${arr.includes(it)?" on":""}"></div><span class="fdd-label">${it}</span></div>`).join("")}${cnt>0?`<div class="fdd-divider"></div><div class="fdd-clr" onclick="S.df2.${field}=[];render();event.stopPropagation()">× Limpiar</div>`:""}</div></div>`;};
+
+  const thD=(label,field)=>`<th onclick="dSortBy('${field}',event)" title="Shift+click para orden secundario" style="cursor:pointer">${label}${dSA(field)}</th>`;
+
+  let fd=S.demands.filter(d=>{
+    if(f.statuses.length&&!f.statuses.includes(d.status))return false;
+    if(f.caps.length&&!f.caps.includes(d.capability))return false;
+    if(f.clients.length&&!f.clients.includes(d.client))return false;
+    return true;
+  });
+  fd=sortedDemands(fd);
+
+  return`<div class="shdr" style="margin-bottom:16px">
+    <div><span class="scnt" style="margin-left:0">${fd.length} de ${S.demands.length} peticiones</span></div>
+    <button class="btn btnp btns" onclick="openDM(null)">+ Nueva petición</button>
+  </div>
+  <div class="fbar">
+    ${dfdd("st","statuses","Estado",STATUSES)}
+    ${dfdd("cap","caps","Capability",CAPS)}
+    ${dfdd("cli","clients","Cliente",allClients)}
+    ${fCount>0?`<button class="btn btns" style="color:var(--t3);border-color:transparent" onclick="S.df2={statuses:[],caps:[],clients:[]};render()">× ${fCount}</button>`:""}
+  </div>
+  <div class="tw" style="overflow-x:auto"><table style="min-width:1100px">
+    <thead><tr>
+      ${thD("Cliente","client")}
+      ${thD("Proyecto","project_reference")}
+      ${thD("Inicio","start_date")}
+      ${thD("Duración","duration_weeks")}
+      ${thD("Perfil","role")}
+      ${thD("Tipo","contract_type")}
+      ${thD("Carga","chargeability_required")}
+      ${thD("Estado","status")}
+      <th>Perfil propuesto</th>
+      <th>Comentarios</th>
+    </tr></thead>
+    <tbody>${fd.length===0?`<tr><td colspan="10" class="empty">Sin peticiones con los filtros actuales</td></tr>`:fd.map(d=>{
+      const lastNote=(d.notes||[]).slice(-1)[0];
+      const sub=d.contract_type==="Subcontractor";
+      return`<tr onclick="openDM('${d.id}')" style="cursor:pointer">
+        <td style="font-weight:500">${d.client||"—"}</td>
+        <td style="font-size:12px;color:var(--t2)">${d.project_reference||"—"}</td>
+        <td style="font-size:12px;color:var(--t2)">${d.start_date?new Date(d.start_date).toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric"}):"—"}</td>
+        <td style="font-size:12px;color:var(--t2)">${d.duration_weeks?d.duration_weeks+"sem":"—"}</td>
+        <td><div style="font-weight:500;font-size:13px">${d.role||"—"}</div><div style="font-size:11px;color:var(--t3)">${d.seniority||""} · ${d.capability||""}</div></td>
+        <td><span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${d.contract_type||"Interno"}</span></td>
+        <td style="font-size:12px">${d.chargeability_required?d.chargeability_required+"%":"—"}</td>
+        <td><span class="bdg ${scol(d.status)}">${d.status||"Vacío"}</span></td>
+        <td style="font-size:12px;color:var(--t2)">${d.proposed_profile||'<span style="color:var(--t3)">Sin propuesta</span>'}</td>
+        <td style="font-size:12px;color:var(--t2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${lastNote?lastNote.text:""}</td>
+      </tr>`;
+    }).join("")}</tbody>
+  </table></div>`;
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────
+function tDash(){const bench=S.profiles.filter(p=>pCharge(p.id)===0).length;const avg=S.profiles.length?Math.round(S.profiles.reduce((s,p)=>s+pCharge(p.id),0)/S.profiles.length):0;const openD=S.demands.filter(d=>d.status==="Abierta").length;const byS=STATUSES.reduce((a,s)=>{a[s]=S.demands.filter(d=>d.status===s).length;return a},{});const byCap=S.profiles.reduce((a,p)=>{const c=p.capability||"?";if(!a[c])a[c]={t:0,b:0,ch:0};a[c].t++;const ch=pCharge(p.id);if(ch===0)a[c].b++;a[c].ch+=ch;return a},{});const byLoc=S.profiles.reduce((a,p)=>{if(p.location)a[p.location]=(a[p.location]||0)+1;return a},{});const intN=S.profiles.filter(p=>p.contract_type!=="Subcontractor").length,subN=S.profiles.filter(p=>p.contract_type==="Subcontractor").length;return`<div class="shdr"><span class="stitle">Dashboard</span></div><div class="mgrid"><div class="mcard"><div class="mlbl">Perfiles activos</div><div class="mval">${S.profiles.length}</div><div class="msub">Internos: ${intN} · Sub: ${subN}</div></div><div class="mcard"><div class="mlbl">En banquillo</div><div class="mval" style="color:${bench>0?"var(--amber)":"var(--green)"}">${bench}</div><div class="msub">${S.profiles.length>0?Math.round(bench/S.profiles.length*100):0}% del equipo</div></div><div class="mcard"><div class="mlbl">Cargabilidad media</div><div class="mval" style="color:${avg>=80?"var(--green)":avg>=50?"var(--amber)":"var(--red)"}">${avg}%</div></div><div class="mcard"><div class="mlbl">Demanda abierta</div><div class="mval" style="color:${openD>0?"var(--acc)":"var(--t)"}">${openD}</div><div class="msub">sin cubrir</div></div></div><div class="sect-lbl">Demand por estado</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px">${STATUSES.map(s=>`<div class="mcard" style="flex:1 1 90px;padding:14px 16px"><div class="mlbl" style="margin-bottom:4px">${s}</div><div style="font-size:22px;font-weight:500">${byS[s]||0}</div></div>`).join("")}</div><div class="sect-lbl">Por capability</div><div class="tw" style="margin-bottom:28px"><table><thead><tr><th>Capability</th><th>Perfiles</th><th>Banquillo</th><th>Cargabilidad media</th></tr></thead><tbody>${Object.entries(byCap).map(([cap,d])=>{const ca=Math.round(d.ch/d.t);return`<tr><td style="font-weight:500">${cap}</td><td>${d.t}</td><td><span class="bdg ${d.b>0?"bamber":"bgreen"}">${d.b}</span></td><td><div class="cbar"><div class="ctrack" style="min-width:80px"><div class="cfill" style="width:${Math.min(ca,100)}%;background:${cc(ca)}"></div></div><span style="font-size:12px">${ca}%</span></div></td></tr>`}).join("")}</tbody></table></div><div class="sect-lbl">Por ubicación</div><div style="display:flex;gap:10px;flex-wrap:wrap">${Object.entries(byLoc).sort((a,b)=>b[1]-a[1]).map(([loc,n])=>`<div class="mcard" style="flex:1 1 100px;padding:14px 16px"><div class="mlbl" style="margin-bottom:4px">${loc}</div><div style="font-size:22px;font-weight:500">${n}</div></div>`).join("")}</div>`;}
+
+// ── PROFILE MODAL ─────────────────────────────────────────────────────────
+function openPM(id,defTab){
+  currentPid=id;
+  modalEditMode=!id; // New profile = edit mode; existing = read mode
+  modalTabState=defTab||"general";
+  const p=id?S.profiles.find(x=>x.id===id):null;
+  editSkills=p?p.skills.map(s=>({...s})):[];
+  editData=p?{...p}:{name:"",eid:"",capability:"",role:"",seniority:"Mid",level_accenture:"CL9",contract_type:"Interno",location:"",people_lead:"",lcr:"",current_project:"",next_assignment:"",employee_number:"",hire_date:"",agency:"",notes:"",performance_notes:""};
+  renderPM();
+}
+
+function switchMTab(t){
+  if(modalEditMode)captureEditData();
+  modalTabState=t;
+  renderPM();
+}
+function startEdit(){modalEditMode=true;renderPM();}
+function cancelEdit(){modalEditMode=false;const p=currentPid?S.profiles.find(x=>x.id===currentPid):null;editSkills=p?p.skills.map(s=>({...s})):[];editData=p?{...p}:{};renderPM();}
+
+function captureEditData(){
+  const g=(id,def="")=>{const el=document.getElementById(id);return el?el.value:def;};
+  const getTgg=gid=>{const b=document.querySelector(`#${gid} .tgb.on`);return b?b.textContent:editData[gid==="tgg-sen"?"seniority":gid==="tgg-lvl"?"level_accenture":"contract_type"]||"";};
+  Object.assign(editData,{name:g("pn"),eid:g("peid"),capability:g("pcap"),role:g("prol")==="__new__"?"":g("prol"),seniority:getTgg("tgg-sen"),level_accenture:getTgg("tgg-lvl"),contract_type:getTgg("tgg-ct"),location:g("ploc"),people_lead:g("ppl"),lcr:g("pl"),current_project:g("pcp"),next_assignment:g("pna"),employee_number:g("penum"),hire_date:g("phire"),agency:g("pagency"),notes:g("pno"),performance_notes:g("pperf")});
+}
+
+function renderPM(){
+  const p=currentPid?S.profiles.find(x=>x.id===currentPid):null;
+  const d=modalEditMode?editData:(p||{});
+  const sub=d.contract_type==="Subcontractor";
+  const tabs=[["asignacion","Asignación"],["general","General"],["skills","Skills"],["detail","Detalle"],["history","Historial"]];
+  document.getElementById("mroot").innerHTML=`
+  <div class="ov" id="pov" onclick="if(event.target.id==='pov')cm()">
+  <div class="modal">
+    <div class="mhdr">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="av" style="width:40px;height:40px;font-size:13px">${(p||d).name?ini((p||d).name||"?"):"+"}</div>
+        <div>
+          <div style="font-size:16px;font-weight:500">${(p||d).name||"Nuevo perfil"}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
+            <span style="font-size:12px;color:var(--t2)">${(p||d).role||"—"} · ${(p||d).capability||"—"}</span>
+            <span class="bdg bg" style="font-size:10px">${(p||d).level_accenture||"—"}</span>
+            <span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${(p||d).contract_type||"Interno"}</span>
+          </div>
+        </div>
+      </div>
+      <button onclick="cm()" style="background:none;border:none;color:var(--t2);cursor:pointer;font-size:22px;line-height:1">×</button>
+    </div>
+    <div class="mbdy" style="padding-top:0">
+      <div class="mtabs">${tabs.filter(([t])=>t!=="history"||p).map(([t,l])=>`<div class="mtab${modalTabState===t?" on":""}" onclick="switchMTab('${t}')">${l}</div>`).join("")}</div>
+      ${modalTabState==="asignacion"&&p?asigTab(p):""}
+      ${modalTabState==="general"?genTab(d):""}
+      ${modalTabState==="skills"?skillsTab(d):""}
+      ${modalTabState==="detail"?detailTab(d):""}
+      ${modalTabState==="history"&&p?histTab(p):""}
+    </div>
+    <div class="mftr">
+      <div style="flex:1"></div>
+      ${modalEditMode
+        ?`<button class="btn btns" onclick="cancelEdit()">${p?"Cancelar":"Cerrar"}</button><button class="btn btnp btns" onclick="saveP()">Guardar</button>`
+        :`${p?`<button class="btn btns btnd" onclick="archP('${p.id}')">Archivar</button>`:""}<button class="btn btnp btns" onclick="startEdit()">Editar</button>`
+      }
+    </div>
+  </div></div>`;
+
+  // Wire supply-tab window functions after DOM render
+  window._prRisk=async(pid,r)=>{
+    const rv=r==="auto"?null:r;
+    S.profiles=S.profiles.map(pr=>pr.id===pid?{...pr,risk_override:rv}:pr);
+    await save();render();currentPid=pid;renderPM();
+  };
+  window._prAddNote=async(pid)=>{
+    const txt=document.getElementById("pr-note-inp")?.value?.trim();if(!txt)return;
+    const now2=new Date();
+    const activeA=S.assigns.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===pid&&s<=now2&&(!e||e>=now2)&&!a.is_forecast;}).sort((a,b)=>b.chargeability-a.chargeability);
+    const mainA=activeA[0];
+    const note={id:uid(),ts:now2.toISOString(),text:txt,assignment_id:mainA?.id||"manual",project:mainA?.project_name||"—"};
+    S.profiles=S.profiles.map(pr=>pr.id===pid?{...pr,supply_notes:[...(pr.supply_notes||[]),note]}:pr);
+    await save();render();currentPid=pid;renderPM();
+  };
+  window._prDelNote=async(pid,nid)=>{
+    S.profiles=S.profiles.map(pr=>pr.id===pid?{...pr,supply_notes:(pr.supply_notes||[]).filter(n=>n.id!==nid)}:pr);
+    await save();render();currentPid=pid;renderPM();
+  };
+  window._prClearHist=async(pid)=>{
+    const now2=new Date();
+    const currIds=new Set(S.assigns.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===pid&&s<=now2&&(!e||e>=now2)&&!a.is_forecast;}).map(a=>a.id));
+    S.profiles=S.profiles.map(pr=>pr.id===pid?{...pr,supply_notes:(pr.supply_notes||[]).filter(n=>currIds.has(n.assignment_id))}:pr);
+    await save();render();currentPid=pid;renderPM();
+  };
+  window._LN=LN;
+  if(modalEditMode){
+    if(modalTabState==="general"||modalTabState==="skills"){rskl(modalTabState==="skills");}
+    const pl=document.getElementById("pl");if(pl)pl.addEventListener("input",updLL);
+    updLL();
+  }
+}
+
+// ── GENERAL TAB ───────────────────────────────────────────────────────────
+function ir(label,val){return`<div class="info-row"><span class="info-lbl">${label}</span><span class="info-val">${val||"—"}</span></div>`;}
+
+function genTab(d){
+  if(!modalEditMode){
+    const lcr=parseFloat(d.lcr)||0;
+    return`<div>
+      ${d.on_leave?`<div style="margin-bottom:10px"><span class="bdg bred" style="font-size:11px">● De baja</span></div>`:""}
+      ${ir("EID",`<span style="font-family:monospace;font-size:12px">${d.eid||"—"}</span>`)}
+      ${ir("Seniority",d.seniority)}
+      ${ir("Level",d.level_accenture?`<span class="bdg bg">${d.level_accenture}</span> <span style="color:var(--t3);font-size:12px">${LN[d.level_accenture]||""}</span>`:"")}
+      ${ir("Ubicación",d.location)}
+      ${ir("People Lead",d.people_lead)}
+      ${ir("LCR",lcr?`${lcr.toFixed(2)}€/h <span style="color:var(--t3);font-size:11px">≈ ${(lcr*6).toFixed(0)}€/día · ${(lcr*30).toFixed(0)}€/sem</span>`:"")}
+      ${ir("Proyecto actual",d.current_project)}
+      ${ir("Next assignment",d.next_assignment)}
+    </div>`;
+  }
+  // Edit mode
+  return`<div>
+    <div class="r2"><div class="fld"><label>Nombre completo</label><input id="pn" class="fi" value="${d.name||""}" placeholder="Ej: Álvaro Ruiz"/></div><div class="fld" style="max-width:155px"><label>EID</label><input id="peid" class="fi" value="${d.eid||""}" placeholder="alvaro.ruiz" style="font-family:monospace"/></div></div>
+    <div class="r2">
+      <div class="fld"><label>Capability</label><select id="pcap" class="fi" onchange="updRoleDd(this.value)"><option value="">Seleccionar...</option>${CAPS.map(c=>`<option${(d.capability||"")==c?" selected":""}>${c}</option>`).join("")}</select></div>
+      <div class="fld"><label>Rol</label><select id="prol" class="fi" onchange="tNR(this.value)"><option value="">Seleccionar...</option>${rolesForCap(d.capability).map(r=>`<option${(d.role||"")==r?" selected":""}>${r}</option>`).join("")}<option value="__new__">+ Nuevo rol...</option></select></div>
+    </div>
+    <div id="nrw" style="display:none;margin-bottom:16px"><div class="fld" style="margin:0"><label>Nombre del nuevo rol</label><div style="display:flex;gap:8px"><input id="nri" class="fi" placeholder="Ej: CGI Supervisor"/><button class="btn btns btnp" onclick="addNR()">+</button></div></div></div>
+    <div class="fld"><label>Tipo de contrato</label><div class="tgg" id="tgg-ct">${CONTRACT_TYPES.map(t=>`<button class="tgb${(d.contract_type||"Interno")==t?" on":""}" onclick="selTgg('tgg-ct',this)">${t}</button>`).join("")}</div></div>
+    <div class="r2">
+      <div class="fld"><label>Seniority</label><div class="tgg" id="tgg-sen">${SENIORITY.map(s=>`<button class="tgb${(d.seniority||"Mid")==s?" on":""}" onclick="selTgg('tgg-sen',this)">${s}</button>`).join("")}</div></div>
+      <div class="fld"><label>Level</label><div class="tgg" id="tgg-lvl">${LEVELS.map(l=>`<button class="tgb${(d.level_accenture||"CL9")==l?" on":""}" onclick="selTgg('tgg-lvl',this);document.getElementById('ln').textContent=window._LN[this.textContent]||''">${l}</button>`).join("")}</div><div id="ln" style="font-size:11px;color:var(--t3);margin-top:4px">${LN[d.level_accenture||"CL9"]||""}</div></div>
+    </div>
+    <div class="r2"><div class="fld"><label>Ubicación</label><select id="ploc" class="fi"><option value="">Seleccionar...</option>${LOCATIONS.map(l=>`<option${(d.location||"")==l?" selected":""}>${l}</option>`).join("")}</select></div><div class="fld"><label>People Lead</label><input id="ppl" class="fi" value="${d.people_lead||""}" placeholder="Ej: María García"/></div></div>
+    <div class="fld"><label>LCR · Coste/hora</label><div style="display:flex;align-items:center;gap:12px"><div class="lcri"><button class="lcrbtn" onclick="adjLCR(-0.5)">−</button><input id="pl" type="number" step="0.5" value="${d.lcr||""}" class="fi" style="width:90px;text-align:center"/><button class="lcrbtn" onclick="adjLCR(0.5)">+</button></div><span style="color:var(--t2)">€/h</span><span id="ll" style="font-size:11px;color:var(--t3)"></span></div></div>
+    <div class="r2"><div class="fld"><label>Proyecto actual</label><input id="pcp" class="fi" value="${d.current_project||""}" placeholder="Ej: Meta · Q3"/></div><div class="fld"><label>Next assignment</label><input id="pna" class="fi" value="${d.next_assignment||""}" placeholder="Ej: Marvel · Q4"/></div></div>
+  <div class="fld"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;color:var(--t2);font-weight:400"><input type="checkbox" id="p-leave" ${d.on_leave?"checked":""}/> <span>Perfil de baja <span style="font-size:11px;color:var(--t3)">(aparecerá en la vista Bajas del Supply)</span></span></label></div>
+  </div>`;}
+
+// ── SKILLS TAB ────────────────────────────────────────────────────────────
+function skillsTab(d){
+  if(!modalEditMode){
+    if(!editSkills.length)return`<div style="padding:20px 0;color:var(--t3);font-size:13px">Sin skills registradas.</div>`;
+    const hard=editSkills.filter(sk=>skType(sk)==="hard");
+    const soft=editSkills.filter(sk=>skType(sk)==="soft");
+    const skRow=sk=>`<div class="sdk"><span style="flex:1;font-size:13px">${sk.name}</span><span style="font-size:11px;color:var(--t3);width:65px">${SLVL[sk.level]||""}</span><div style="display:flex;gap:4px">${[1,2,3,4,5].map(n=>`<div class="sdot${sk.level>=n?" on":""}" style="cursor:default"></div>`).join("")}</div></div>`;
+    return`<div>${hard.length?`<div class="sect-lbl" style="margin-bottom:10px;margin-top:4px">Hard Skills</div>${hard.map(skRow).join("")}`:""}${soft.length?`<div class="sect-lbl" style="margin-bottom:10px;margin-top:${hard.length?16:4}px">Soft Skills</div>${soft.map(skRow).join("")}`:""}</div>`;
+  }
+  return`<div><div id="skl" style="margin-bottom:12px"></div><div style="display:flex;gap:8px"><input id="nsk" class="fi" placeholder="Añadir skill..." style="flex:1"/><button class="btn btns" onclick="addSk()">+</button></div></div>`;}
+
+// ── DETAIL TAB ────────────────────────────────────────────────────────────
+function detailTab(d){
+  const sub=d.contract_type==="Subcontractor";
+  if(!modalEditMode){return`<div>
+    ${ir("Nº empleado",`<span style="font-family:monospace;font-size:12px">${d.employee_number||"—"}</span>`)}
+    ${ir("Fecha de alta",d.hire_date?`${fdm(d.hire_date)} <span style="color:var(--t3);font-size:11px">(${calcAge(d.hire_date)})</span>`:"")}
+    ${sub?ir("Agencia",d.agency):""}
+    ${ir("Notas",d.notes?`<span style="font-size:12px;color:var(--t2);white-space:pre-wrap">${d.notes}</span>`:"")}
+    ${ir("Performance",d.performance_notes?`<span style="font-size:12px;color:var(--t2);white-space:pre-wrap">${d.performance_notes}</span>`:"")}
+  </div>`;}
+  return`<div>
+    <div class="r2"><div class="fld"><label>Nº empleado</label><input id="penum" class="fi" value="${d.employee_number||""}" placeholder="Ej: AC-0042" style="font-family:monospace"/></div><div class="fld"><label>Fecha de alta</label><input id="phire" type="date" class="fi" value="${d.hire_date||""}"/></div></div>
+    <div class="fld" ${!sub?"style='display:none'":""}><label>Agencia / empresa contratante</label><input id="pagency" class="fi" value="${d.agency||""}" placeholder="Ej: Studio Freelance SL"/></div>
+    <div class="fld"><label>Notas</label><textarea id="pno" class="fi" placeholder="Notas generales...">${d.notes||""}</textarea></div>
+    <div class="fld"><label>Notas de performance</label><textarea id="pperf" class="fi" style="min-height:100px" placeholder="Desempeño, feedback, aspiraciones de carrera...">${d.performance_notes||""}</textarea></div>
+  </div>`;}
+
+// ── HISTORY TAB ───────────────────────────────────────────────────────────
+function histTab(p){
+  const all=S.assigns.filter(a=>a.profile_id===p.id).sort((a,b)=>new Date(b.start_date)-new Date(a.start_date));
+  const now=new Date();
+  const active=all.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return s<=now&&(!e||e>=now)});
+  const past=all.filter(a=>a.end_date&&new Date(a.end_date)<now);
+  const future=all.filter(a=>new Date(a.start_date)>now);
+  const row=(a,col)=>`<div class="hist-item"><div class="hist-dot" style="background:${col}"></div><div style="flex:1"><div style="font-weight:500;font-size:13px">${a.project_name}</div><div style="font-size:11px;color:var(--t3);margin-top:2px">${fds(a.start_date)} → ${fds(a.end_date)} · ${a.chargeability}%${a.is_forecast?' <span style="color:var(--acc);font-size:10px">PREV</span>':""}</div></div></div>`;
+  return`<div>
+    ${active.length?`<div class="sect-lbl">Activo ahora</div>${active.map(a=>row(a,"var(--green)")).join("")}`:""}
+    ${future.length?`<div class="sect-lbl" style="margin-top:16px">Próximas</div>${future.map(a=>row(a,"var(--acc)")).join("")}`:""}
+    ${past.length?`<div class="sect-lbl" style="margin-top:16px">Historial</div>${past.map(a=>row(a,"var(--t3)")).join("")}`:""}
+    ${!all.length?`<div class="empty" style="padding:24px">Sin asignaciones registradas.</div>`:""}
+  </div>`;}
+
+// ── HELPERS MODAL ─────────────────────────────────────────────────────────
+function updRoleDd(cap){const sel=document.getElementById("prol");if(!sel)return;const cur=sel.value;sel.innerHTML=`<option value="">Seleccionar...</option>${rolesForCap(cap).map(r=>`<option${r===cur?" selected":""}>${r}</option>`).join("")}<option value="__new__">+ Nuevo rol...</option>`;}
+function selTgg(gid,btn){document.querySelectorAll(`#${gid} .tgb`).forEach(b=>b.classList.remove("on"));btn.classList.add("on");}
+function tNR(v){document.getElementById("nrw").style.display=v==="__new__"?"block":"none";}
+async function addNR(){const inp=document.getElementById("nri");const val=inp.value.trim();if(!val)return;const cap=document.getElementById("pcap")?.value||"";if(!S.customRoles.find(r=>r.name===val))S.customRoles.push({name:val,cap});await save();const sel=document.getElementById("prol");const opt=document.createElement("option");opt.value=val;opt.textContent=val;opt.selected=true;sel.insertBefore(opt,sel.querySelector("option[value='__new__']"));inp.value="";document.getElementById("nrw").style.display="none";}
+function updLL(){const v=parseFloat(document.getElementById("pl")?.value)||0;const l=document.getElementById("ll");if(l)l.textContent=v>0?`≈ ${(v*6).toFixed(0)}€/día · ${(v*30).toFixed(0)}€/sem`:"";}
+function adjLCR(d){const i=document.getElementById("pl");i.value=(Math.max(0,(parseFloat(i.value)||0)+d)).toFixed(2);updLL();}
+function rskl(editable=true){const sl=document.getElementById("skl");if(!sl)return;const sc=document.getElementById("skc");if(sc)sc.textContent=editSkills.length+" activos";
+  const hard=editSkills.filter((sk,idx)=>({...sk,_i:idx})||true).map((sk,i)=>({...sk,_i:i})).filter(sk=>skType(sk)==="hard");
+  const soft=editSkills.map((sk,i)=>({...sk,_i:i})).filter(sk=>skType(sk)==="soft");
+  const allWithIdx=editSkills.map((sk,i)=>({...sk,_i:i}));
+  const skRow=(sk,i)=>`<div class="sdk"><span style="flex:1;font-size:13px">${sk.name}</span><span onclick="toggleSkT(${i})" style="font-size:10px;padding:2px 6px;border-radius:3px;cursor:pointer;${skType(sk)==="soft"?"background:var(--accbg);color:var(--acc)":"background:rgba(255,255,255,0.06);color:var(--t3)"}">${skType(sk)==="soft"?"Soft":"Hard"}</span><span style="font-size:11px;color:var(--t3);width:55px;text-align:right">${SLVL[sk.level]||""}</span><div style="display:flex;gap:4px">${[1,2,3,4,5].map(n=>`<div class="sdot${sk.level>=n?" on":""}${editable?" click":""}" ${editable?`onclick="setSL(${i},${n})"`:""} style="${editable?"cursor:pointer":""}"></div>`).join("")}</div>${editable?`<button onclick="delSk(${i})" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;line-height:1;padding-left:4px">×</button>`:""}</div>`;
+  if(editable){
+    sl.innerHTML=allWithIdx.map((sk,i)=>skRow(sk,i)).join("");
+  } else {
+    const hRows=allWithIdx.filter(sk=>skType(sk)==="hard");const sRows=allWithIdx.filter(sk=>skType(sk)==="soft");
+    sl.innerHTML=(hRows.length?`<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Hard</div>${hRows.map((sk,i)=>skRow(sk,sk._i)).join("")}`:"")+(sRows.length?`<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;margin-top:10px">Soft</div>${sRows.map((sk,i)=>skRow(sk,sk._i)).join("")}`:"");
+  }
+}
+function toggleSkT(i){editSkills[i].type=skType(editSkills[i])==="soft"?"hard":"soft";rskl();}
+function addSk(){const i=document.getElementById("nsk");if(!i.value.trim())return;editSkills.push({name:i.value.trim(),level:3});i.value="";rskl();}
+function delSk(i){editSkills.splice(i,1);rskl();}
+function setSL(i,l){editSkills[i].level=l;rskl();}
+
+
+function asigTab(p){
+  const now=new Date();
+  const isActive=a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===p.id&&s<=now&&(!e||e>=now)&&!a.is_forecast;};
+  const activeA=S.assigns.filter(isActive).sort((a,b)=>b.chargeability-a.chargeability);
+  const currIds=new Set(activeA.map(a=>a.id));
+  const risk=getRisk(p.id);
+  const notes=(p.supply_notes||[]).slice().reverse();
+  const currNotes=notes.filter(n=>currIds.has(n.assignment_id));
+  const pastNotes=notes.filter(n=>!currIds.has(n.assignment_id));
+
+  // Assignment summary
+  const assignSum=activeA.length===0
+    ?`<div style="color:var(--t3);font-size:12px;padding:8px 0 16px">Sin asignación activa.</div>`
+    :activeA.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--b)"><div style="flex:1"><div style="font-weight:500;font-size:13px">${a.project_name}</div><div style="font-size:11px;color:var(--t3);margin-top:2px">${fds(a.start_date)} → ${fds(a.end_date)} <span class="bdg ${a.chargeability>=80?"bgreen":a.chargeability>=40?"bamber":"bg"}" style="font-size:11px;margin-left:4px">${a.chargeability}%</span>${a.is_forecast?` <span style="font-size:10px;color:var(--acc)">PREV</span>`:""}</div></div></div>`).join("");
+
+  // Risk section
+  const rBtns=["low","mid","high"].map(r=>`<button class="tgb${(p.risk_override||risk)===r?" on":""}" onclick="window._prRisk('${p.id}','${r}')">${r==="low"?"Low":r==="mid"?"Mid":"High"}</button>`).join("")+`<button class="tgb${!p.risk_override?" on":""}" onclick="window._prRisk('${p.id}','auto')">Auto</button>`;
+
+  // Note renderer
+  const noteRow=n=>`<div style="padding:10px 0;border-bottom:1px solid var(--b)"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><div style="flex:1"><div style="font-size:12px;line-height:1.5">${n.text}</div><div style="font-size:10px;color:var(--t3);margin-top:4px">${new Date(n.ts).toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})} · ${n.project}</div></div><button onclick="window._prDelNote('${p.id}','${n.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">×</button></div></div>`;
+
+  return`<div>
+    <div class="sect-lbl">Asignación actual</div>
+    ${assignSum}
+    <div class="fld" style="margin-top:16px">
+      <label>Riesgo</label>
+      <div class="tgg">${rBtns}</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:5px">Auto: Low &lt;15d · Mid 15–30d · High &gt;30d</div>
+    </div>
+    <div class="fld">
+      <label>Notas <span style="font-size:10px;color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(vinculadas a la asignación activa)</span></label>
+      ${currNotes.length===0?`<div style="color:var(--t3);font-size:12px;padding:4px 0 8px">Sin notas para esta asignación.</div>`:""}
+      ${currNotes.map(noteRow).join("")}
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <textarea id="pr-note-inp" class="fi" style="flex:1;min-height:60px;resize:vertical" placeholder="Añadir nota..."></textarea>
+        <button class="btn btns btnp" style="align-self:flex-end;white-space:nowrap" onclick="window._prAddNote('${p.id}')">+ Añadir</button>
+      </div>
+    </div>
+    ${pastNotes.length>0?`<div style="border-top:1px solid var(--b);margin-top:8px;padding-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Historial de notas (${pastNotes.length})</div>
+        <button class="btn btns" style="font-size:11px;color:var(--red);border-color:rgba(239,68,68,0.3)" onclick="window._prClearHist('${p.id}')">Limpiar historial</button>
+      </div>
+      <div style="opacity:.7">${pastNotes.map(noteRow).join("")}</div>
+    </div>`:""}
+  </div>`;
+}
+
+async function _prSaveAndRefresh(pid){await save();render();currentPid=pid;renderPM();}
+
+async function saveP(){
+  captureEditData();
+  const data={...editData,skills:editSkills,lcr:parseFloat(editData.lcr)||null};
+  if(!data.name)return;
+  if(currentPid){S.profiles=S.profiles.map(p=>p.id===currentPid?{...p,...data}:p);}
+  else{S.profiles.push({...data,id:uid(),is_active:true,created_at:new Date().toISOString()});}
+  await save();cm();render();
+}
+async function archP(id){S.profiles=S.profiles.filter(p=>p.id!==id);await save();cm();render();}
+
+// ── BAJAS MODAL ──────────────────────────────────────────────────────────
+function openBM(id){
+  const b=id?S.bajas.find(x=>x.id===id):null;
+  document.getElementById("mroot").innerHTML=`
+  <div class="ov" id="bmov" onclick="if(event.target.id==='bmov')cm()">
+  <div class="modal" style="max-width:460px">
+    <div class="mhdr">
+      <div style="font-size:15px;font-weight:500">${b?"Editar baja":"Nueva baja"}</div>
+      <button onclick="cm()" style="background:none;border:none;color:var(--t2);cursor:pointer;font-size:22px;line-height:1">×</button>
+    </div>
+    <div class="mbdy" style="padding-top:20px">
+      <div class="fld"><label>Perfil</label>
+        <select id="bm-pid" class="fi">
+          <option value="">Seleccionar perfil...</option>
+          ${S.profiles.map(p=>`<option value="${p.id}"${b&&b.profile_id===p.id?" selected":""}>${p.name} · ${p.role||""}</option>`).join("")}
+        </select>
+      </div>
+      <div class="fld"><label>Tipo de baja</label>
+        <div class="tgg" id="tgg-btype">
+          ${LEAVE_TYPES.map(t=>`<button class="tgb${(b?b.type:"Enfermedad")===t?" on":""}" onclick="selTgg('tgg-btype',this)">${t}</button>`).join("")}
+        </div>
+      </div>
+      <div class="r2">
+        <div class="fld"><label>Desde</label><input type="date" id="bm-desde" class="fi" value="${b?b.desde:""}"/></div>
+        <div class="fld"><label>Hasta</label><input type="date" id="bm-hasta" class="fi" value="${b?b.hasta:""}"/></div>
+      </div>
+      <div class="fld"><label>Comentarios</label><textarea id="bm-cm" class="fi" placeholder="Contexto, fechas de revisión, cobertura...">${b?b.comments||"":""}</textarea></div>
+    </div>
+    <div class="mftr">
+      ${b?`<button class="btn btns btnd" onclick="delBaja('${b.id}')">Eliminar</button>`:""}
+      <div style="flex:1"></div>
+      <button class="btn btns" onclick="cm()">Cancelar</button>
+      <button class="btn btnp btns" onclick="saveBaja('${b?b.id:""}')">Guardar</button>
+    </div>
+  </div></div>`;
+}
+
+async function saveBaja(id){
+  const getType=()=>{const b=document.querySelector("#tgg-btype .tgb.on");return b?b.textContent:"Enfermedad"};
+  const data={profile_id:document.getElementById("bm-pid").value,type:getType(),desde:document.getElementById("bm-desde").value,hasta:document.getElementById("bm-hasta").value||null,comments:document.getElementById("bm-cm").value};
+  if(!data.profile_id||!data.desde)return;
+  if(id){S.bajas=S.bajas.map(b=>b.id===id?{...b,...data}:b);}
+  else{S.bajas.push({...data,id:uid(),created_at:new Date().toISOString()});}
+  await save();cm();render();
+}
+async function delBaja(id){S.bajas=S.bajas.filter(b=>b.id!==id);await save();cm();render();}
+
+
+// ── DEMAND MODAL ──────────────────────────────────────────────────────────
+function openDM(id){
+  const d=id?S.demands.find(x=>x.id===id):null;
+  let noteIdx=0; // 0 = most recent
+
+  function buildHTML(){
+    const notesRev=(d&&d.notes||[]).slice().reverse();
+    const total=notesRev.length;
+    noteIdx=Math.max(0,Math.min(noteIdx,total-1));
+
+    // Profile dropdown: bench first, then assigned
+    const benchP=S.profiles.filter(p=>p.is_active&&pCharge(p.id)===0).sort((a,b)=>a.name.localeCompare(b.name));
+    const assignedP=S.profiles.filter(p=>p.is_active&&pCharge(p.id)>0).sort((a,b)=>a.name.localeCompare(b.name));
+    let ppOpts=`<option value="">Sin propuesta</option>`;
+    if(benchP.length){
+      ppOpts+=`<optgroup label="Disponibles (sin asignación)">`;
+      ppOpts+=benchP.map(p=>`<option value="${p.name}"${d&&d.proposed_profile===p.name?" selected":""}>${p.name} · ${p.role||""} · ${p.level_accenture||""}</option>`).join("");
+      ppOpts+=`</optgroup>`;
+    }
+    if(assignedP.length){
+      ppOpts+=`<optgroup label="Perfiles asignados">`;
+      ppOpts+=assignedP.map(p=>`<option value="${p.name}"${d&&d.proposed_profile===p.name?" selected":""}>${p.name} · ${p.role||""} · ${p.level_accenture||""} (${pCharge(p.id)}%)</option>`).join("");
+      ppOpts+=`</optgroup>`;
+    }
+
+    // Note navigator
+    let noteHTML="";
+    if(total===0){
+      noteHTML=`<div style="color:var(--t3);font-size:12px;padding:8px 0 4px">Sin comentarios aún.</div>`;
+    } else {
+      const n=notesRev[noteIdx];
+      const ts=new Date(n.ts).toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+      noteHTML=`<div style="background:var(--bg2);border:1px solid var(--b);border-radius:8px;overflow:hidden;margin-bottom:4px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--b)">
+          <button onclick="window._dmNav(${noteIdx+1})" ${noteIdx>=total-1?"disabled":""} style="background:none;border:none;cursor:pointer;color:${noteIdx>=total-1?"var(--t3)":"var(--t2)"};font-size:20px;line-height:1;padding:0 6px 2px">‹</button>
+          <span style="font-size:11px;color:var(--t3)">${noteIdx+1} / ${total}</span>
+          <button onclick="window._dmNav(${noteIdx-1})" ${noteIdx<=0?"disabled":""} style="background:none;border:none;cursor:pointer;color:${noteIdx<=0?"var(--t3)":"var(--t2)"};font-size:20px;line-height:1;padding:0 6px 2px">›</button>
+        </div>
+        <div style="padding:12px">
+          <div style="font-size:13px;line-height:1.6;color:var(--t)">${n.text}</div>
+          <div style="font-size:10px;color:var(--t3);margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+            <span>${ts}</span>
+            <button onclick="window._dmDelNote('${n.id}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;opacity:.7;padding:0">Eliminar</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    const stBtns=STATUSES.map(s=>`<button class="tgb${(d?d.status:"Vacío")===s?" on":""}" onclick="selTgg('tgg-dst',this)">${s}</button>`).join("");
+    const ctBtns=CONTRACT_TYPES.map(t=>`<button class="tgb${(d?d.contract_type:"Interno")===t?" on":""}" onclick="selTgg('tgg-dct',this)">${t}</button>`).join("");
+
+    return `<div class="ov" id="dmov" onclick="if(event.target.id==='dmov')cm()">
+    <div class="modal" style="max-width:560px">
+      <div class="mhdr">
+        <div><div style="font-weight:500;font-size:15px">${d?d.client+" — "+d.project_reference:"Nueva petición"}</div>${d?`<span class="bdg ${scol(d.status)}" style="margin-top:4px;display:inline-block">${d.status}</span>`:""}</div>
+        <button onclick="cm()" style="background:none;border:none;color:var(--t2);cursor:pointer;font-size:22px;line-height:1">×</button>
+      </div>
+      <div class="mbdy" style="padding-top:16px;max-height:70vh;overflow-y:auto">
+        <div class="r2">
+          <div class="fld"><label>Cliente</label><input id="dm-cli" class="fi" value="${d?d.client||"":""}" placeholder="Ej: Coca-Cola"/></div>
+          <div class="fld"><label>Proyecto</label><input id="dm-proj" class="fi" value="${d?d.project_reference||"":""}" placeholder="Ej: Q4 Campaign"/></div>
+        </div>
+        <div class="r2">
+          <div class="fld"><label>Fecha inicio</label><input type="date" id="dm-start" class="fi" value="${d?d.start_date||"":""}"/></div>
+          <div class="fld"><label>Duración (semanas)</label><input type="number" id="dm-dur" class="fi" value="${d?d.duration_weeks||"":""}" min="1" placeholder="Ej: 12"/></div>
+        </div>
+        <div class="r2">
+          <div class="fld"><label>Capability</label><select id="dm-cap" class="fi">${CAPS.map(cp=>`<option${d&&d.capability===cp?" selected":""}>${cp}</option>`).join("")}</select></div>
+          <div class="fld"><label>Rol</label><select id="dm-role" class="fi"><option value="">Seleccionar...</option>${[...new Set(Object.values(ROLES_BY_CAP).flat())].sort().map(r=>`<option${d&&d.role===r?" selected":""}>${r}</option>`).join("")}</select></div>
+        </div>
+        <div class="r2">
+          <div class="fld"><label>Seniority</label><select id="dm-sen" class="fi">${SENIORITY.map(s=>`<option${d&&d.seniority===s?" selected":""}>${s}</option>`).join("")}</select></div>
+          <div class="fld"><label>Cargabilidad — <span id="dm-clbl">${d?d.chargeability_required||100:100}%</span></label><input type="range" id="dm-ch" min="0" max="100" step="5" value="${d?d.chargeability_required||100:100}" oninput="document.getElementById('dm-clbl').textContent=this.value+'%'"/></div>
+        </div>
+        <div class="fld"><label>Tipo de contrato</label><div class="tgg" id="tgg-dct">${ctBtns}</div></div>
+        <div class="fld"><label>Estado</label><div class="tgg" id="tgg-dst">${stBtns}</div></div>
+        <div class="fld">
+          <label>Perfil propuesto</label>
+          <select id="dm-pp" class="fi">${ppOpts}</select>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px">Los perfiles disponibles aparecen primero. Los asignados pueden sobreescribirse.</div>
+        </div>
+        <div style="border-top:1px solid var(--b);margin-top:4px;padding-top:18px">
+          <div class="sect-lbl" style="margin-bottom:12px">Comentarios</div>
+          ${noteHTML}
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <textarea id="dm-note-inp" class="fi" style="flex:1;min-height:52px;resize:vertical" placeholder="Añadir comentario..."></textarea>
+            <button class="btn btns btnp" style="align-self:flex-end;white-space:nowrap" onclick="window._dmAddNote()">+ Añadir</button>
+          </div>
+        </div>
+      </div>
+      <div class="mftr">
+        ${id?`<button class="btn btns btnd" onclick="window._dmDel()">Eliminar</button>`:""}
+        <div style="flex:1"></div>
+        <button class="btn btns" onclick="cm()">Cancelar</button>
+        <button class="btn btnp btns" onclick="window._dmSave()">Guardar</button>
+      </div>
+    </div></div>`;
+  }
+
+  function render2(){
+    document.getElementById("mroot").innerHTML=buildHTML();
+    window._dmNav=(i)=>{noteIdx=i;render2();};
+    window._dmSave=async()=>{
+      const getT=gid=>{const b=document.querySelector("#"+gid+" .tgb.on");return b?b.textContent:"";};
+      const data={client:document.getElementById("dm-cli").value,project_reference:document.getElementById("dm-proj").value,start_date:document.getElementById("dm-start").value||null,duration_weeks:parseInt(document.getElementById("dm-dur").value)||null,capability:document.getElementById("dm-cap").value,role:document.getElementById("dm-role").value,seniority:document.getElementById("dm-sen").value,chargeability_required:parseInt(document.getElementById("dm-ch").value)||100,contract_type:getT("tgg-dct")||"Interno",status:getT("tgg-dst")||"Vacío",proposed_profile:document.getElementById("dm-pp").value};
+      if(!data.client||!data.role)return;
+      if(id){S.demands=S.demands.map(d=>d.id===id?{...d,...data}:d);}
+      else{S.demands.push({...data,id:uid(),notes:[],created_at:new Date().toISOString()});}
+      await save();cm();render();
+    };
+    window._dmDel=async()=>{S.demands=S.demands.filter(d=>d.id!==id);await save();cm();render();};
+    window._dmAddNote=async()=>{
+      const txt=document.getElementById("dm-note-inp")?.value?.trim();if(!txt)return;
+      const note={id:uid(),ts:new Date().toISOString(),text:txt};
+      if(id){S.demands=S.demands.map(d=>d.id===id?{...d,notes:[...(d.notes||[]),note]}:d);}
+      noteIdx=0; // jump to newest
+      await save();render();render2();
+    };
+    window._dmDelNote=async(nid)=>{
+      if(id){S.demands=S.demands.map(d=>d.id===id?{...d,notes:(d.notes||[]).filter(n=>n.id!==nid)}:d);}
+      const remaining=(S.demands.find(d=>d.id===id)?.notes||[]).length;
+      noteIdx=Math.max(0,Math.min(noteIdx,remaining-1));
+      await save();render();render2();
+    };
+  }
+  render2();
+}
+
+
+
+// ── ASSIGN MODAL ──────────────────────────────────────────────────────────
+function openAM(pid){const profile=S.profiles.find(p=>p.id===pid);const asgns=S.assigns.filter(a=>a.profile_id===pid).sort((a,b)=>new Date(b.start_date)-new Date(a.start_date));document.getElementById("mroot").innerHTML=`<div class="ov" id="aov" onclick="if(event.target.id==='aov')cm()"><div class="modal" style="max-width:540px"><div class="mhdr"><div style="display:flex;align-items:center;gap:12px"><div class="av">${ini(profile.name)}</div><div><div style="font-weight:500;font-size:15px">${profile.name}</div><div style="font-size:11px;color:var(--t3)">Gestión de asignaciones</div></div></div><button onclick="cm()" style="background:none;border:none;color:var(--t2);cursor:pointer;font-size:22px;line-height:1">×</button></div><div class="mbdy" style="padding-top:16px">${asgns.length>0?`<div style="margin-bottom:22px"><div class="sect-lbl">Asignaciones (${asgns.length})</div>${asgns.map(a=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--b)"><div style="flex:1"><div style="display:flex;align-items:center;gap:6px">${a.is_forecast?`<span style="font-size:10px;color:var(--acc)">PREV</span>`:""}<span style="font-weight:500">${a.project_name}</span><span class="bdg ${a.chargeability>=80?"bgreen":a.chargeability>=40?"bamber":"bg"}" style="font-size:11px">${a.chargeability}%</span></div><div style="font-size:11px;color:var(--t3);margin-top:2px">${fds(a.start_date)} → ${fds(a.end_date)}</div></div><button class="btn btns btnd" onclick="delA('${a.id}','${pid}')">×</button></div>`).join("")}</div>`:""}<div class="sect-lbl">Nueva asignación</div><div class="fld"><label>Proyecto</label><input id="ap" class="fi" placeholder="Ej: Meta · Q3 Campaign"/></div><div class="r2"><div class="fld"><label>Fecha inicio</label><input type="date" id="as" class="fi"/></div><div class="fld"><label>Fecha fin</label><input type="date" id="ae" class="fi"/></div></div><div class="fld"><label>Cargabilidad — <span id="aclbl">100%</span></label><input type="range" id="ach" min="0" max="100" step="5" value="100" oninput="document.getElementById('aclbl').textContent=this.value+'%'"/></div><div class="fld"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;color:var(--t2);font-weight:400"><input type="checkbox" id="afc"/> Marcar como previsión</label></div><div class="fld"><label>Notas</label><textarea id="ano" class="fi" style="min-height:55px" placeholder="Contexto..."></textarea></div></div><div class="mftr"><div style="flex:1"></div><button class="btn btns" onclick="cm()">Cerrar</button><button class="btn btnp btns" onclick="saveA('${pid}')">Añadir</button></div></div></div>`;}
+async function saveA(pid){const data={profile_id:pid,project_name:document.getElementById("ap").value,start_date:document.getElementById("as").value,end_date:document.getElementById("ae").value||null,chargeability:parseInt(document.getElementById("ach").value)||100,is_forecast:document.getElementById("afc").checked,notes:document.getElementById("ano").value,id:uid(),created_at:new Date().toISOString()};if(!data.project_name||!data.start_date)return;S.assigns.push(data);await save();cm();render();}
+async function delA(id,pid){S.assigns=S.assigns.filter(a=>a.id!==id);await save();openAM(pid);}
+function cm(){document.getElementById("mroot").innerHTML="";}
+
+showGate();
+</script>
+</body>
+</html>
