@@ -367,8 +367,13 @@ function applyTheme(dark){
   const moon=document.getElementById('icon-moon');
   if(track){track.classList.toggle('dark',dark);thumb.classList.toggle('dark',dark);}
   if(sun){sun.classList.toggle('active',!dark);moon.classList.toggle('active',dark);}
-  // Sync theme to embedded iframes
-  try{document.getElementById('tool-frame')?.contentWindow?.postMessage({theme:dark?'dark':'light'},'*');}catch(e){}
+  // Sync theme directly to iframe DOM (same-origin allows this)
+  try{
+    const f=document.getElementById('tool-frame');
+    if(f&&f.contentDocument){
+      f.contentDocument.documentElement.setAttribute('data-theme',dark?'dark':'light');
+    }
+  }catch(e){}
 }
 function toggleDark(){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
