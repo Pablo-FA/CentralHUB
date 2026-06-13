@@ -578,23 +578,21 @@ async function loadData(){const gt=async k=>{try{if(window.storage){const r=awai
 function showGate(){
   // If loaded from platform shell, skip PIN
   if(localStorage.getItem("mo_platform_auth")==="1"){
-    loadData().then(()=>{
-      showApp();render();
-      // Hash-based tab navigation (for sidebar sub-items)
-      var h=window.location.hash.replace('#','');
-      if(['roster','supply','demand','dashboard'].includes(h)){
-        S.tab=h;
-        document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x.dataset.tab===h);});
+    var _appReady=false;
+    function _applyTab(t){
+      if(!['roster','supply','demand','dashboard'].includes(t))return;
+      S.tab=t;
+      if(_appReady){
+        document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x.dataset.tab===t);});
         render();
       }
-    });
-    // Listen for hash changes (sidebar clicks while already loaded)
-    window.addEventListener('hashchange',function(){
-      var h=window.location.hash.replace('#','');
-      if(['roster','supply','demand','dashboard'].includes(h)){
-        S.tab=h;
-        document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x.dataset.tab===h);});
-        render();
+    }
+    loadData().then(()=>{
+      showApp();_appReady=true;render();
+      // Apply any pending tab from postMessage or hash
+      var pending=window._pendingTab||window.location.hash.replace('#','');
+      if(pending&&['roster','supply','demand','dashboard'].includes(pending)){
+        _applyTab(pending);window._pendingTab=null;
       }
     });
     return;
@@ -1349,13 +1347,14 @@ function cm(){document.getElementById("mroot").innerHTML="";}
 
 // Tab navigation via postMessage (from platform iframe parent)
 window.addEventListener('message',function(e){
+  if(e.data&&e.data.theme){
+    document.documentElement.setAttribute('data-theme',e.data.theme);return;
+  }
   if(!e.data||!e.data.tab)return;
   var t=e.data.tab;
-  if(['roster','supply','demand','dashboard'].includes(t)){
-    S.tab=t;
-    document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x.dataset.tab===t);});
-    render();
-  }
+  if(!['roster','supply','demand','dashboard'].includes(t))return;
+  if(typeof _applyTab==='function'){_applyTab(t);}
+  else{window._pendingTab=t;} // store until app is ready
 });
 
 
