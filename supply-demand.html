@@ -557,7 +557,26 @@ async function loadData(){const gt=async k=>{try{if(window.storage){const r=awai
 function showGate(){
   // If loaded from platform shell, skip PIN
   if(localStorage.getItem("mo_platform_auth")==="1"){
-    loadData().then(()=>{showApp();render();});return;
+    loadData().then(()=>{
+      showApp();render();
+      // Hash-based tab navigation (for sidebar sub-items)
+      var h=window.location.hash.replace('#','');
+      if(['roster','supply','demand','dashboard'].includes(h)){
+        S.tab=h;
+        document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x.dataset.tab===h);});
+        render();
+      }
+    });
+    // Listen for hash changes (sidebar clicks while already loaded)
+    window.addEventListener('hashchange',function(){
+      var h=window.location.hash.replace('#','');
+      if(['roster','supply','demand','dashboard'].includes(h)){
+        S.tab=h;
+        document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x.dataset.tab===h);});
+        render();
+      }
+    });
+    return;
   }document.getElementById("root").innerHTML=`<div class="pgate"><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)">Marketing Operations · Supply & Demand</div><div style="font-size:20px;font-weight:500">Acceso requerido</div><div style="display:flex;flex-direction:column;align-items:center;gap:12px"><input class="fi" type="password" id="pi" placeholder="Contraseña" style="width:220px;text-align:center;letter-spacing:.1em"/><button class="btn btnp" style="width:220px" onclick="doPin()">Entrar</button></div><div id="perr" style="color:var(--red);font-size:12px;display:none">Contraseña incorrecta</div></div>`;setTimeout(()=>{const p=document.getElementById("pi");if(p)p.addEventListener("keydown",e=>e.key==="Enter"&&doPin());},50);}
 async function doPin(){const v=document.getElementById("pi")?.value;if(v===PIN){await loadData();showApp();render();}else{const el=document.getElementById("perr");if(el)el.style.display="block";}}
 function showApp(){document.getElementById("root").innerHTML=`<div><div class="hdr"><div><div class="hdr-t">Supply &amp; Demand</div><div class="hdr-s">Marketing Operations</div></div><div></div></div><div class="tabs" id="tabs">${[["roster","Roster"],["supply","Supply"],["demand","Demand"],["dashboard","Dashboard"]].map(([id,l])=>`<div class="tab${S.tab===id?" on":""}" data-tab="${id}">${l}</div>`).join("")}</div><div class="content" id="mc"></div></div>`;document.getElementById("tabs").addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)return;S.tab=t.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab===S.tab));render();});document.addEventListener("click",e=>{if(!e.target.closest(".fdd"))closeFDD();});}
