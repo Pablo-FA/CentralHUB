@@ -1306,6 +1306,18 @@ async function saveA(pid){const data={profile_id:pid,project_name:document.getEl
 async function delA(id,pid){S.assigns=S.assigns.filter(a=>a.id!==id);await save();openAM(pid);}
 function cm(){document.getElementById("mroot").innerHTML="";}
 
+
+// Tab navigation via postMessage (from platform iframe parent)
+window.addEventListener('message',function(e){
+  if(!e.data||!e.data.tab)return;
+  var t=e.data.tab;
+  if(['roster','supply','demand','dashboard'].includes(t)){
+    S.tab=t;
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x.dataset.tab===t);});
+    render();
+  }
+});
+
 showGate();
 </script>
 </body>
