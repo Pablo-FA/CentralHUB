@@ -466,8 +466,14 @@ function loadConfig(){
   SKEY='sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk';
   localStorage.setItem('ch_url',SURL);
   localStorage.setItem('ch_key',SKEY);
+  // Auto-login from platform session
   var saved=localStorage.getItem('ch_user')||'';
-  if(saved){startApp(saved);}else{show('v-login');}
+  if(saved){startApp(saved);return;}
+  try{
+    var pu=JSON.parse(localStorage.getItem('mo_current_user')||'{}');
+    if(pu.name){localStorage.setItem('ch_user',pu.name);startApp(pu.name);return;}
+  }catch(e){}
+  show('v-login');
 }
 function saveConfig(){
   var u=document.getElementById('cfg-url').value.trim(),k=document.getElementById('cfg-key').value.trim(),e=document.getElementById('cfg-err');
