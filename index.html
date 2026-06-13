@@ -6,173 +6,150 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0d0d0d;--bg1:#141414;--bg2:#1c1c1c;--bg3:#242424;
-  --b:rgba(255,255,255,.07);--bh:rgba(255,255,255,.14);
-  --t:#f0f0f0;--t2:#999;--t3:#555;
-  --acc:#7c6ee8;--accbg:rgba(124,110,232,.12);--accborder:rgba(124,110,232,.3);
-  --green:#22c55e;--greenbg:rgba(34,197,94,.1);
-  --amber:#f59e0b;--amberbg:rgba(245,158,11,.1);
-  --red:#ef4444;--redbg:rgba(239,68,68,.1);
+  --bg:#f4f4f5;--bg1:#ffffff;--bg2:#f0f1f3;--bg3:#e8e9eb;
+  --b:rgba(0,0,0,.08);--bh:rgba(0,0,0,.14);
+  --t:#18181b;--t2:#52525b;--t3:#a1a1aa;
+  --acc:#7c6ee8;--accbg:rgba(124,110,232,.10);--accborder:rgba(124,110,232,.28);
+  --green:#16a34a;--greenbg:rgba(22,163,74,.08);
+  --amber:#d97706;--amberbg:rgba(217,119,6,.08);
+  --red:#dc2626;--redbg:rgba(220,38,38,.08);
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.05);
   --sb:240px;--sb-c:60px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0d0d0d;--bg1:#141414;--bg2:#1c1c1c;--bg3:#242424;
+    --b:rgba(255,255,255,.07);--bh:rgba(255,255,255,.14);
+    --t:#f0f0f0;--t2:#999;--t3:#555;
+    --green:#22c55e;--greenbg:rgba(34,197,94,.1);
+    --amber:#f59e0b;--amberbg:rgba(245,158,11,.1);
+    --red:#ef4444;--redbg:rgba(239,68,68,.1);
+    --shadow:none;--shadow-md:none;
+  }
 }
 body{background:var(--bg);color:var(--t);font-family:system-ui,-apple-system,sans-serif;font-size:14px;height:100vh;overflow:hidden}
 
-/* ── LOGIN ─────────────────────────────────────────────────── */
-#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200;flex-direction:column;gap:0}
-.login-box{background:var(--bg1);border:1px solid var(--b);border-radius:16px;padding:40px;width:380px;display:flex;flex-direction:column;gap:20px}
-.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.login-logo-mark{width:40px;height:40px;border-radius:10px;background:var(--accbg);border:1px solid var(--accborder);display:flex;align-items:center;justify-content:center}
-.login-title{font-size:20px;font-weight:500}
-.login-sub{font-size:12px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
-.fi{width:100%;padding:10px 13px;background:var(--bg2);border:1px solid var(--b);border-radius:8px;color:var(--t);font-size:13px;font-family:inherit;transition:border-color .15s;outline:none}
+/* LOGIN */
+#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200}
+.login-box{background:var(--bg1);border:1px solid var(--b);border-radius:16px;padding:40px;width:380px;display:flex;flex-direction:column;gap:18px;box-shadow:var(--shadow-md)}
+.login-mark{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+.login-mark svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.login-title{font-size:21px;font-weight:600;color:var(--t)}
+.login-sub{font-size:12px;color:var(--t3);margin-top:-12px}
+.fi{width:100%;padding:10px 13px;background:var(--bg2);border:1px solid var(--b);border-radius:8px;color:var(--t);font-size:13px;font-family:inherit;transition:border-color .15s;outline:none;-webkit-appearance:none}
 .fi:focus{border-color:var(--acc)}
-select.fi option{background:var(--bg2)}
-.btn-primary{width:100%;padding:11px;border-radius:8px;background:var(--acc);border:none;color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .15s}
-.btn-primary:hover{background:#6d5fd4}
+.btn-p{width:100%;padding:11px;border-radius:8px;background:var(--acc);border:none;color:#fff;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.btn-p:hover{opacity:.9}
 .err{color:var(--red);font-size:12px;text-align:center;display:none}
 
-/* ── APP SHELL ─────────────────────────────────────────────── */
+/* APP */
 #app{display:none;height:100vh;flex-direction:row}
-#app.visible{display:flex}
+#app.on{display:flex}
 
-/* ── SIDEBAR ───────────────────────────────────────────────── */
-#sidebar{width:var(--sb);background:var(--bg1);border-right:1px solid var(--b);display:flex;flex-direction:column;transition:width .2s ease;overflow:hidden;flex-shrink:0;position:relative;z-index:10}
-#sidebar.collapsed{width:var(--sb-c)}
-.sb-top{display:flex;align-items:center;gap:12px;padding:18px 16px;border-bottom:1px solid var(--b);min-height:64px;flex-shrink:0}
-.sb-logo{width:32px;height:32px;border-radius:8px;background:var(--accbg);border:1px solid var(--accborder);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:background .15s}
-.sb-logo:hover{background:rgba(124,110,232,.2)}
-.sb-logo svg{width:16px;height:16px;stroke:var(--acc);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.sb-brand{white-space:nowrap;overflow:hidden;transition:opacity .15s,width .15s}
-.sb-brand-name{font-size:14px;font-weight:600;color:var(--t)}
-.sb-brand-sub{font-size:10px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-top:1px}
-#sidebar.collapsed .sb-brand{opacity:0;width:0;pointer-events:none}
+/* SIDEBAR */
+#sb{width:var(--sb);background:var(--bg1);border-right:1px solid var(--b);display:flex;flex-direction:column;transition:width .2s ease;overflow:hidden;flex-shrink:0;position:relative;z-index:10;box-shadow:var(--shadow)}
+#sb.col{width:var(--sb-c)}
+.sb-top{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--b);min-height:60px;flex-shrink:0}
+.sb-logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:opacity .15s}
+.sb-logo:hover{opacity:.85}
+.sb-logo svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.sb-brand{white-space:nowrap;overflow:hidden;transition:opacity .15s}
+.sb-brand-name{font-size:14px;font-weight:600}
+.sb-brand-sub{font-size:10px;color:var(--t3);letter-spacing:.05em;text-transform:uppercase;margin-top:1px}
+#sb.col .sb-brand{opacity:0;pointer-events:none}
+.sb-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px}
+.ni{display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer;border-radius:8px;margin:1px 0;transition:background .12s;white-space:nowrap;min-height:38px}
+.ni:hover{background:var(--bg2)}
+.ni.on{background:var(--accbg)}
+.ni-ic{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ni-ic svg{width:17px;height:17px;stroke:var(--t3);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;transition:stroke .12s}
+.ni.on .ni-ic svg,.ni:hover .ni-ic svg{stroke:var(--acc)}
+.ni-lbl{font-size:13px;color:var(--t2);transition:opacity .15s}
+.ni.on .ni-lbl{color:var(--acc);font-weight:500}
+.ni-chv{margin-left:auto;font-size:10px;color:var(--t3);transition:transform .2s;flex-shrink:0}
+.ni-chv.op{transform:rotate(180deg)}
+#sb.col .ni-lbl,.ni-chv{pointer-events:none}
+#sb.col .ni-chv{display:none}
+.nsub{max-height:0;overflow:hidden;transition:max-height .2s}
+.nsub.op{max-height:180px}
+.nsi{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 40px;cursor:pointer;font-size:12px;color:var(--t3);border-radius:6px;margin:1px 0;transition:all .12s}
+.nsi:hover{color:var(--acc);background:var(--bg2)}
+.nsi.on{color:var(--acc);font-weight:500}
+.nsi-dot{width:4px;height:4px;border-radius:50%;background:currentColor;flex-shrink:0}
+#sb.col .nsub{display:none}
+.ni-badge{margin-left:auto;font-size:10px;padding:2px 6px;border-radius:8px;background:var(--bg3);color:var(--t3);flex-shrink:0}
+.sb-div{height:1px;background:var(--b);margin:6px 8px}
+.sb-user{padding:12px 16px;border-top:1px solid var(--b);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sb-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0}
+.sb-ui{overflow:hidden;transition:opacity .15s;min-width:0}
+.sb-un{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-ur{font-size:10px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+#sb.col .sb-ui{opacity:0;pointer-events:none}
+.sb-out{margin-left:auto;background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:4px;flex-shrink:0;transition:color .15s}
+.sb-out:hover{color:var(--red)}
+#sb.col .sb-out{display:none}
 
-.sb-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 0}
-.sb-nav::-webkit-scrollbar{width:3px}
-.sb-nav::-webkit-scrollbar-thumb{background:var(--b)}
-
-.nav-section{padding:4px 0}
-.nav-item{display:flex;align-items:center;gap:11px;padding:9px 16px;cursor:pointer;border-radius:6px;margin:1px 8px;transition:background .12s;position:relative;white-space:nowrap;min-height:40px}
-.nav-item:hover{background:var(--bg2)}
-.nav-item.active{background:var(--accbg);color:var(--acc)}
-.nav-item.active .nav-label{color:var(--acc)}
-.nav-icon{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.nav-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--t3)}
-.nav-item.active .nav-icon svg{color:var(--acc)}
-.nav-item:hover .nav-icon svg{color:var(--t2)}
-.nav-label{font-size:13px;font-weight:400;color:var(--t2);transition:opacity .15s;white-space:nowrap;overflow:hidden}
-.nav-item.active .nav-label{color:var(--acc);font-weight:500}
-.nav-chevron{margin-left:auto;font-size:11px;color:var(--t3);transition:transform .2s;flex-shrink:0}
-.nav-chevron.open{transform:rotate(180deg)}
-#sidebar.collapsed .nav-label,.sidebar.collapsed .nav-chevron{opacity:0;pointer-events:none}
-
-/* Sub-items */
-.nav-sub{overflow:hidden;transition:max-height .2s ease;max-height:0}
-.nav-sub.open{max-height:200px}
-.nav-sub-item{display:flex;align-items:center;gap:10px;padding:7px 16px 7px 42px;cursor:pointer;font-size:12px;color:var(--t3);transition:color .12s;white-space:nowrap;border-radius:4px;margin:1px 8px}
-.nav-sub-item:hover{color:var(--t2);background:var(--bg2)}
-.nav-sub-item.active{color:var(--acc)}
-.nav-sub-dot{width:4px;height:4px;border-radius:50%;background:currentColor;flex-shrink:0}
-#sidebar.collapsed .nav-sub{display:none}
-
-.nav-badge{margin-left:auto;font-size:10px;padding:2px 6px;border-radius:10px;background:var(--bg3);color:var(--t3);white-space:nowrap}
-.nav-soon{font-size:10px;color:var(--t3);opacity:.6;margin-left:auto;flex-shrink:0}
-
-.sb-divider{height:1px;background:var(--b);margin:6px 16px}
-
-/* User section at bottom */
-.sb-user{padding:12px 16px;border-top:1px solid var(--b);display:flex;align-items:center;gap:10px;flex-shrink:0;min-height:60px}
-.sb-av{width:32px;height:32px;border-radius:50%;background:var(--accbg);border:1px solid var(--accborder);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--acc);flex-shrink:0}
-.sb-uinfo{overflow:hidden;transition:opacity .15s}
-.sb-uname{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-urole{font-size:10px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-#sidebar.collapsed .sb-uinfo{opacity:0;pointer-events:none}
-.sb-logout{margin-left:auto;background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:4px;flex-shrink:0;transition:color .15s}
-.sb-logout:hover{color:var(--red)}
-#sidebar.collapsed .sb-logout{display:none}
-
-/* ── MAIN CONTENT ──────────────────────────────────────────── */
+/* MAIN */
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-
-/* Top bar */
-#topbar{height:56px;border-bottom:1px solid var(--b);background:var(--bg1);display:flex;align-items:center;padding:0 28px;gap:16px;flex-shrink:0}
-#topbar-title{font-size:15px;font-weight:500;color:var(--t)}
+#topbar{height:56px;border-bottom:1px solid var(--b);background:var(--bg1);display:flex;align-items:center;padding:0 24px;gap:12px;flex-shrink:0;box-shadow:var(--shadow)}
+#topbar-title{font-size:15px;font-weight:600}
 #topbar-sub{font-size:12px;color:var(--t3)}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
-.topbar-date{font-size:12px;color:var(--t3)}
-
-/* Content */
+.tb-r{margin-left:auto;font-size:12px;color:var(--t3)}
 #content{flex:1;overflow:hidden;position:relative}
-#home-view{height:100%;overflow-y:auto;padding:32px}
-#home-view::-webkit-scrollbar{width:5px}
-#home-view::-webkit-scrollbar-thumb{background:var(--b);border-radius:3px}
+#home-view{height:100%;overflow-y:auto;padding:32px 36px}
+#home-view::-webkit-scrollbar{width:4px}
+#home-view::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px}
 #tool-frame{width:100%;height:100%;border:none;display:none}
-#placeholder-view{height:100%;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
-#placeholder-view.visible{display:flex}
+#ph-view{height:100%;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+#ph-view.on{display:flex}
 
-/* ── HOME PAGE ─────────────────────────────────────────────── */
-.home-greeting{margin-bottom:32px}
-.home-greeting h1{font-size:26px;font-weight:500;margin-bottom:4px}
-.home-greeting p{font-size:14px;color:var(--t3)}
-.home-greeting .role-badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:4px;background:var(--accbg);color:var(--acc);border:1px solid var(--accborder);margin-top:8px}
-
-/* Stats row */
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:32px}
-.stat-card{background:var(--bg1);border:1px solid var(--b);border-radius:10px;padding:20px}
-.stat-label{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-.stat-val{font-size:28px;font-weight:500}
-.stat-sub{font-size:11px;color:var(--t3);margin-top:4px}
-
-.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
-@media(max-width:900px){.home-grid{grid-template-columns:1fr}}
-
-/* Cards */
-.card{background:var(--bg1);border:1px solid var(--b);border-radius:10px;padding:20px}
-.card-title{font-size:13px;font-weight:500;color:var(--t2);margin-bottom:16px;text-transform:uppercase;letter-spacing:.05em}
-
-/* Capability table */
-.cap-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--b)}
+/* HOME */
+.home-hero{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:14px;padding:28px 32px;margin-bottom:28px;color:#fff;position:relative;overflow:hidden}
+.home-hero::after{content:"";position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.06)}
+.home-hero h1{font-size:24px;font-weight:600;margin-bottom:4px;position:relative}
+.home-hero p{font-size:13px;opacity:.75;position:relative}
+.home-hero .role{display:inline-block;font-size:11px;padding:3px 10px;border-radius:4px;background:rgba(255,255,255,.18);margin-top:10px;position:relative}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:26px}
+.scard{background:var(--bg1);border:1px solid var(--b);border-radius:10px;padding:18px;box-shadow:var(--shadow)}
+.scard-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.scard-val{font-size:26px;font-weight:600}
+.scard-sub{font-size:11px;color:var(--t3);margin-top:3px}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:24px}
+@media(max-width:860px){.home-grid{grid-template-columns:1fr}}
+.card{background:var(--bg1);border:1px solid var(--b);border-radius:10px;padding:20px;box-shadow:var(--shadow)}
+.card-title{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px}
+.cap-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b)}
 .cap-row:last-child{border-bottom:none}
-.cap-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.cap-name{font-size:13px;min-width:100px}
-.cap-bar-wrap{flex:1;height:4px;background:var(--bg3);border-radius:2px}
-.cap-bar{height:100%;border-radius:2px;transition:width .3s}
-.cap-nums{font-size:11px;color:var(--t3);min-width:80px;text-align:right}
-
-/* Todo section */
-.todo-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--b)}
+.cap-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.cap-name{font-size:12px;min-width:90px;color:var(--t2)}
+.cap-bar-wrap{flex:1;height:3px;background:var(--bg3);border-radius:2px}
+.cap-bar{height:100%;border-radius:2px}
+.cap-nums{font-size:11px;color:var(--t3);min-width:90px;text-align:right}
+.todo-item{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--b)}
 .todo-item:last-child{border-bottom:none}
-.todo-check{width:16px;height:16px;border-radius:4px;border:1px solid var(--b);flex-shrink:0;margin-top:1px;cursor:pointer;background:var(--bg2);transition:all .15s;display:flex;align-items:center;justify-content:center}
-.todo-check.done{background:var(--acc);border-color:var(--acc)}
-.todo-check.done::after{content:"✓";font-size:10px;color:#fff;font-weight:700}
-.todo-text{font-size:13px;color:var(--t2);flex:1;line-height:1.4}
-.todo-text.done{text-decoration:line-through;color:var(--t3)}
-.todo-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;opacity:0;transition:opacity .15s}
+.todo-chk{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--b);flex-shrink:0;margin-top:1px;cursor:pointer;background:var(--bg2);transition:all .15s;display:flex;align-items:center;justify-content:center}
+.todo-chk.dn{background:var(--acc);border-color:var(--acc)}
+.todo-chk.dn::after{content:"✓";font-size:9px;color:#fff;font-weight:700}
+.todo-txt{font-size:12px;color:var(--t2);flex:1;line-height:1.4}
+.todo-txt.dn{text-decoration:line-through;color:var(--t3)}
+.todo-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;line-height:1;opacity:0;transition:opacity .12s}
 .todo-item:hover .todo-del{opacity:1}
-.todo-add{display:flex;gap:8px;margin-top:12px}
-.todo-input{flex:1;padding:8px 10px;background:var(--bg2);border:1px solid var(--b);border-radius:6px;color:var(--t);font-size:12px;font-family:inherit;outline:none}
-.todo-input:focus{border-color:var(--acc)}
-.todo-btn{padding:7px 14px;border-radius:6px;background:var(--bg3);border:1px solid var(--b);color:var(--t2);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
+.todo-add{display:flex;gap:8px;margin-top:10px}
+.todo-inp{flex:1;padding:7px 10px;background:var(--bg2);border:1px solid var(--b);border-radius:6px;color:var(--t);font-size:12px;font-family:inherit;outline:none;transition:border-color .15s}
+.todo-inp:focus{border-color:var(--acc)}
+.todo-btn{padding:7px 13px;border-radius:6px;background:var(--bg3);border:1px solid var(--b);color:var(--t2);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
 .todo-btn:hover{border-color:var(--bh);color:var(--t)}
-
-/* Tool access cards */
-.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px}
-.tool-card{background:var(--bg1);border:1px solid var(--b);border-radius:10px;padding:20px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:12px}
-.tool-card:hover{border-color:var(--bh);background:var(--bg2)}
-.tool-card.active-tool{border-color:var(--accborder);background:var(--accbg)}
-.tool-card-icon{width:36px;height:36px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center}
-.tool-card-icon svg{width:18px;height:18px;stroke:var(--t2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.tool-card.active-tool .tool-card-icon{background:var(--accbg)}
-.tool-card.active-tool .tool-card-icon svg{stroke:var(--acc)}
-.tool-card-name{font-size:14px;font-weight:500}
-.tool-card-stat{font-size:12px;color:var(--t3)}
-.tool-card-badge{font-size:10px;color:var(--t3);padding:2px 8px;border-radius:10px;background:var(--bg3);border:1px solid var(--b);width:fit-content}
-
-/* Placeholder */
-.ph-icon{width:60px;height:60px;border-radius:16px;background:var(--bg2);border:1px solid var(--b);display:flex;align-items:center;justify-content:center}
-.ph-icon svg{width:28px;height:28px;stroke:var(--t3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.ph-title{font-size:18px;font-weight:500;color:var(--t2)}
-.ph-sub{font-size:13px;color:var(--t3);text-align:center;max-width:300px;line-height:1.6}
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:28px}
+.tc{background:var(--bg1);border:1px solid var(--b);border-radius:10px;padding:18px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
+.tc:hover{border-color:var(--bh);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.tc-ic{width:34px;height:34px;border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center}
+.tc-ic svg{width:17px;height:17px;stroke:var(--t2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tc-name{font-size:13px;font-weight:500}
+.tc-stat{font-size:11px;color:var(--t3)}
+.tc-tag{font-size:10px;color:var(--t3);padding:2px 7px;border-radius:8px;background:var(--bg3);width:fit-content}
+.ph-ic{width:56px;height:56px;border-radius:14px;background:var(--bg2);border:1px solid var(--b);display:flex;align-items:center;justify-content:center}
+.ph-ic svg{width:26px;height:26px;stroke:var(--t3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 </style>
 </head>
 <body>
@@ -180,40 +157,32 @@ select.fi option{background:var(--bg2)}
 <!-- LOGIN -->
 <div id="login">
   <div class="login-box">
-    <div class="login-logo">
-      <div class="login-logo-mark">
-        <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--acc)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-        </svg>
-      </div>
-      <div>
-        <div class="login-title">MO Platform</div>
-        <div class="login-sub">Marketing Operations</div>
+    <div>
+      <div class="login-mark">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       </div>
     </div>
-    <select id="user-select" class="fi">
+    <div>
+      <div class="login-title">MO Platform</div>
+      <div class="login-sub">Marketing Operations · Creative</div>
+    </div>
+    <select id="user-sel" class="fi">
       <option value="">Selecciona tu perfil...</option>
-      <option value="Pablo|Strategy & Go-to-Market Lead">Pablo — Strategy & GTM Lead</option>
-      <option value="Carlos Rodríguez|Creative Director">Carlos Rodríguez — Creative Director</option>
-      <option value="Manuel Díaz|CGI Supervisor">Manuel Díaz — CGI Supervisor</option>
-      <option value="Cristina Romero|Content Producer">Cristina Romero — Content Producer</option>
-      <option value="Roberto Castro|Media Lead">Roberto Castro — Media Lead</option>
-      <option value="Javier Vargas|Data Science Lead">Javier Vargas — Data Science Lead</option>
-      <option value="Ricardo Guerrero|Tech Lead">Ricardo Guerrero — Tech Lead</option>
-      <option value="Pilar Cano|Program Manager">Pilar Cano — Program Manager</option>
+      <option value="Pablo F.|Strategy & GTM Lead">Pablo F. — Strategy & GTM Lead</option>
+      <option value="Conrado P.|Creative Lead">Conrado P. — Creative Lead</option>
+      <option value="Fabio H.G.|Creative Director">Fabio H.G. — Creative Director</option>
     </select>
-    <input type="password" id="pin-input" class="fi" placeholder="Contraseña de acceso" style="letter-spacing:.12em"/>
-    <button class="btn-primary" onclick="doLogin()">Entrar</button>
+    <input type="password" id="pin-in" class="fi" placeholder="Contraseña" style="letter-spacing:.1em"/>
+    <button class="btn-p" onclick="doLogin()">Entrar</button>
     <div id="login-err" class="err">Contraseña incorrecta o usuario no seleccionado.</div>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
-  <!-- SIDEBAR -->
-  <nav id="sidebar" class="">
+  <nav id="sb">
     <div class="sb-top">
-      <div class="sb-logo" onclick="toggleSidebar()" title="Colapsar menú">
+      <div class="sb-logo" onclick="toggleSB()" title="Colapsar">
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       </div>
       <div class="sb-brand">
@@ -221,90 +190,66 @@ select.fi option{background:var(--bg2)}
         <div class="sb-brand-sub">Marketing Operations</div>
       </div>
     </div>
-
     <div class="sb-nav">
-      <!-- Home -->
-      <div class="nav-item active" id="nav-home" onclick="navTo('home')">
-        <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 12L12 3L21 12V20H15V14H9V20H3V12Z"/></svg></div>
-        <span class="nav-label">Home</span>
+      <div class="ni on" id="ni-home" onclick="navTo('home')">
+        <div class="ni-ic"><svg viewBox="0 0 24 24"><path d="M3 12L12 3L21 12V20H15V14H9V20H3V12Z"/></svg></div>
+        <span class="ni-lbl">Home</span>
       </div>
-
-      <div class="sb-divider"></div>
-
-      <!-- Supply & Demand -->
-      <div class="nav-item" id="nav-sd" onclick="toggleSub('sd');navTo('supply-demand')">
-        <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
-        <span class="nav-label">Supply & Demand</span>
-        <span class="nav-chevron" id="chevron-sd">▾</span>
+      <div class="sb-div"></div>
+      <div class="ni" id="ni-sd" onclick="toggleSub('sd');navTo('sd')">
+        <div class="ni-ic"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <span class="ni-lbl">Supply & Demand</span>
+        <span class="ni-chv" id="chv-sd">▾</span>
       </div>
-      <div class="nav-sub" id="sub-sd">
-        <div class="nav-sub-item" onclick="navTo('supply-demand')"><div class="nav-sub-dot"></div>Roster</div>
-        <div class="nav-sub-item" onclick="navTo('supply-demand')"><div class="nav-sub-dot"></div>Supply</div>
-        <div class="nav-sub-item" onclick="navTo('supply-demand')"><div class="nav-sub-dot"></div>Demand</div>
-        <div class="nav-sub-item" onclick="navTo('supply-demand')"><div class="nav-sub-dot"></div>Dashboard</div>
+      <div class="nsub" id="sub-sd">
+        <div class="nsi" id="nsi-roster" onclick="navToTab('roster')"><div class="nsi-dot"></div>Roster</div>
+        <div class="nsi" id="nsi-supply" onclick="navToTab('supply')"><div class="nsi-dot"></div>Supply</div>
+        <div class="nsi" id="nsi-demand" onclick="navToTab('demand')"><div class="nsi-dot"></div>Demand</div>
+        <div class="nsi" id="nsi-dashboard" onclick="navToTab('dashboard')"><div class="nsi-dot"></div>Dashboard</div>
       </div>
-
-      <!-- Project Health -->
-      <div class="nav-item" onclick="navTo('placeholder','Project Health')">
-        <div class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="8" width="5" height="13" rx="1"/><rect x="17" y="5" width="5" height="16" rx="1"/></svg></div>
-        <span class="nav-label">Project Health</span>
-        <span class="nav-soon">Pronto</span>
+      <div class="ni" id="ni-hub" onclick="navTo('hub')">
+        <div class="ni-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+        <span class="ni-lbl">Executive Hub</span>
       </div>
-
-      <!-- Flex -->
-      <div class="nav-item" onclick="navTo('placeholder','Flex')">
-        <div class="nav-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg></div>
-        <span class="nav-label">Flex</span>
-        <span class="nav-soon">Pronto</span>
+      <div class="ni" onclick="navTo('ph','Project Health')">
+        <div class="ni-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="8" width="5" height="13" rx="1"/><rect x="17" y="5" width="5" height="16" rx="1"/></svg></div>
+        <span class="ni-lbl">Project Health</span>
+        <span class="ni-badge">Pronto</span>
       </div>
-
-      <div class="sb-divider"></div>
-
-      <!-- Sales Tracking -->
-      <div class="nav-item" onclick="navTo('placeholder','Sales Tracking')">
-        <div class="nav-icon"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
-        <span class="nav-label">Sales Tracking</span>
-        <span class="nav-soon">Pronto</span>
+      <div class="ni" onclick="navTo('ph','Flex')">
+        <div class="ni-ic"><svg viewBox="0 0 24 24"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg></div>
+        <span class="ni-lbl">Flex</span>
+        <span class="ni-badge">Pronto</span>
       </div>
-
-      <div class="sb-divider"></div>
-
-      <!-- Executive Hub -->
-      <div class="nav-item" onclick="navTo('exec-hub')">
-        <div class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-        <span class="nav-label">Executive Hub</span>
+      <div class="sb-div"></div>
+      <div class="ni" onclick="navTo('ph','Sales Tracking')">
+        <div class="ni-ic"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+        <span class="ni-lbl">Sales Tracking</span>
+        <span class="ni-badge">Pronto</span>
       </div>
     </div>
-
     <div class="sb-user">
       <div class="sb-av" id="sb-av">P</div>
-      <div class="sb-uinfo">
-        <div class="sb-uname" id="sb-uname">Usuario</div>
-        <div class="sb-urole" id="sb-urole">Rol</div>
+      <div class="sb-ui">
+        <div class="sb-un" id="sb-un">Usuario</div>
+        <div class="sb-ur" id="sb-ur">Rol</div>
       </div>
-      <button class="sb-logout" onclick="doLogout()" title="Cerrar sesión">⏻</button>
+      <button class="sb-out" onclick="doLogout()" title="Salir">⏻</button>
     </div>
   </nav>
-
-  <!-- MAIN -->
   <div id="main">
     <div id="topbar">
-      <div id="topbar-title">Home</div>
-      <div id="topbar-sub"></div>
-      <div class="topbar-right">
-        <div class="topbar-date" id="topbar-date"></div>
-      </div>
+      <div id="tb-title">Home</div>
+      <div id="tb-sub"></div>
+      <div class="tb-r" id="tb-date"></div>
     </div>
     <div id="content">
-      <!-- Home -->
       <div id="home-view"></div>
-      <!-- Tool iframe -->
       <iframe id="tool-frame" src="" allow="storage-access"></iframe>
-      <!-- Placeholder -->
-      <div id="placeholder-view">
-        <div class="ph-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div class="ph-title" id="ph-title">Próximamente</div>
-        <div class="ph-sub">Esta sección está en desarrollo y estará disponible en futuras versiones de la plataforma.</div>
+      <div id="ph-view">
+        <div class="ph-ic"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+        <p style="font-size:17px;font-weight:500;color:var(--t2)" id="ph-title">Próximamente</p>
+        <p style="font-size:13px;color:var(--t3);text-align:center;max-width:280px;line-height:1.6">Esta sección está en desarrollo y estará disponible próximamente.</p>
       </div>
     </div>
   </div>
@@ -312,307 +257,237 @@ select.fi option{background:var(--bg2)}
 
 <script>
 const PIN="estrategia";
-
-const USERS=[
-  {val:"Pablo|Strategy & Go-to-Market Lead",name:"Pablo",role:"Strategy & GTM Lead",cap:""},
-  {val:"Carlos Rodríguez|Creative Director",name:"Carlos Rodríguez",role:"Creative Director",cap:"Creative"},
-  {val:"Manuel Díaz|CGI Supervisor",name:"Manuel Díaz",role:"CGI Supervisor",cap:"CGI"},
-  {val:"Cristina Romero|Content Producer",name:"Cristina Romero",role:"Content Producer",cap:"Content"},
-  {val:"Roberto Castro|Media Lead",name:"Roberto Castro",role:"Media Lead",cap:"Media"},
-  {val:"Javier Vargas|Data Science Lead",name:"Javier Vargas",role:"Data Science Lead",cap:"Data"},
-  {val:"Ricardo Guerrero|Tech Lead",name:"Ricardo Guerrero",role:"Tech Lead",cap:"Development"},
-  {val:"Pilar Cano|Program Manager",name:"Pilar Cano",role:"Program Manager",cap:"DPM"}
-];
-
 const CAP_COLORS={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"};
+let currentUser=null,sbCol=false,currentTool=null;
 
-let currentUser=null;
-let sidebarCollapsed=false;
-let currentView="home";
-
-// ── DATE ─────────────────────────────────────────────────────
-function updateDate(){
-  const now=new Date();
-  const days=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-  const months=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-  document.getElementById("topbar-date").textContent=`${days[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
+// Date
+function updDate(){
+  const d=new Date(),days=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"],
+    months=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  document.getElementById("tb-date").textContent=`${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
 }
-updateDate();
-setInterval(updateDate,60000);
+updDate();setInterval(updDate,60000);
 
-// ── LOGIN ─────────────────────────────────────────────────────
-const pinInput=document.getElementById("pin-input");
-pinInput.addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
-
+// Login
+document.getElementById("pin-in").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
 function doLogin(){
-  const uval=document.getElementById("user-select").value;
-  const pin=document.getElementById("pin-input").value;
+  const uval=document.getElementById("user-sel").value;
+  const pin=document.getElementById("pin-in").value;
   if(!uval||pin!==PIN){document.getElementById("login-err").style.display="block";return;}
-  const u=USERS.find(x=>x.val===uval);
-  if(!u)return;
-  currentUser=u;
+  const [name,role]=uval.split("|");
+  currentUser={name,role};
   localStorage.setItem("mo_platform_auth","1");
-  localStorage.setItem("mo_current_user",JSON.stringify(u));
+  localStorage.setItem("mo_current_user",JSON.stringify(currentUser));
+  launchApp();
+}
+function launchApp(){
+  const u=currentUser;
   document.getElementById("login").style.display="none";
-  document.getElementById("app").classList.add("visible");
-  document.getElementById("sb-av").textContent=u.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-  document.getElementById("sb-uname").textContent=u.name;
-  document.getElementById("sb-urole").textContent=u.role;
+  document.getElementById("app").classList.add("on");
+  document.getElementById("sb-av").textContent=u.name.split(" ").map(w=>w[0]).join("").slice(0,2);
+  document.getElementById("sb-un").textContent=u.name;
+  document.getElementById("sb-ur").textContent=u.role;
   showHome();
 }
-
 function doLogout(){
   localStorage.removeItem("mo_platform_auth");
   localStorage.removeItem("mo_current_user");
   currentUser=null;
-  document.getElementById("app").classList.remove("visible");
+  document.getElementById("app").classList.remove("on");
   document.getElementById("login").style.display="flex";
-  document.getElementById("user-select").value="";
-  document.getElementById("pin-input").value="";
+  document.getElementById("user-sel").value="";
+  document.getElementById("pin-in").value="";
   document.getElementById("login-err").style.display="none";
 }
-
-// Check existing session
-(function(){
-  const stored=localStorage.getItem("mo_current_user");
-  if(localStorage.getItem("mo_platform_auth")==="1"&&stored){
-    currentUser=JSON.parse(stored);
-    const u=currentUser;
-    document.getElementById("login").style.display="none";
-    document.getElementById("app").classList.add("visible");
-    document.getElementById("sb-av").textContent=u.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-    document.getElementById("sb-uname").textContent=u.name;
-    document.getElementById("sb-urole").textContent=u.role;
-    showHome();
+// Auto-login
+(()=>{
+  if(localStorage.getItem("mo_platform_auth")==="1"){
+    const s=localStorage.getItem("mo_current_user");
+    if(s){currentUser=JSON.parse(s);launchApp();}
   }
 })();
 
-// ── SIDEBAR ───────────────────────────────────────────────────
-function toggleSidebar(){
-  sidebarCollapsed=!sidebarCollapsed;
-  document.getElementById("sidebar").classList.toggle("collapsed",sidebarCollapsed);
-}
-
+// Sidebar
+function toggleSB(){sbCol=!sbCol;document.getElementById("sb").classList.toggle("col",sbCol);}
 function toggleSub(id){
-  const sub=document.getElementById("sub-"+id);
-  const chev=document.getElementById("chevron-"+id);
-  if(!sub)return;
-  sub.classList.toggle("open");
-  if(chev)chev.classList.toggle("open");
+  document.getElementById("sub-"+id)?.classList.toggle("op");
+  document.getElementById("chv-"+id)?.classList.toggle("op");
 }
 
-// ── NAVIGATION ────────────────────────────────────────────────
-function navTo(view,subtitle){
-  // Update active nav items
-  document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
-  document.querySelectorAll(".nav-sub-item").forEach(n=>n.classList.remove("active"));
-  if(view==="home")document.getElementById("nav-home").classList.add("active");
-  if(view==="supply-demand")document.getElementById("nav-sd").classList.add("active");
+// Navigation
+function setActive(id){
+  document.querySelectorAll(".ni").forEach(n=>n.classList.remove("on"));
+  if(id)document.getElementById(id)?.classList.add("on");
+}
+function hideAll(){
+  document.getElementById("home-view").style.display="none";
+  document.getElementById("tool-frame").style.display="none";
+  document.getElementById("ph-view").classList.remove("on");
+}
 
-  currentView=view;
-  const frame=document.getElementById("tool-frame");
-  const homeView=document.getElementById("home-view");
-  const phView=document.getElementById("placeholder-view");
-
+function navTo(view,label){
+  hideAll();
   if(view==="home"){
-    homeView.style.display="block";
-    frame.style.display="none";
-    phView.classList.remove("visible");
-    document.getElementById("topbar-title").textContent="Home";
-    document.getElementById("topbar-sub").textContent="";
+    setActive("ni-home");
+    document.getElementById("home-view").style.display="block";
+    document.getElementById("tb-title").textContent="Home";
+    document.getElementById("tb-sub").textContent="";
     showHome();
-  } else if(view==="supply-demand"){
-    homeView.style.display="none";
-    phView.classList.remove("visible");
-    frame.style.display="block";
-    if(!frame.src||!frame.src.includes("supply-demand")){
-      frame.src="supply-demand.html";
-    }
-    document.getElementById("topbar-title").textContent="Supply & Demand";
-    document.getElementById("topbar-sub").textContent="Marketing Operations";
-  } else if(view==="exec-hub"){
-    window.open("https://pablo-fa.github.io/strategy-hub/","_blank");
-  } else if(view==="placeholder"){
-    homeView.style.display="none";
-    frame.style.display="none";
-    phView.classList.add("visible");
-    document.getElementById("topbar-title").textContent=subtitle||"Próximamente";
-    document.getElementById("topbar-sub").textContent="";
-    document.getElementById("ph-title").textContent=subtitle||"Próximamente";
+  } else if(view==="sd"){
+    setActive("ni-sd");
+    const f=document.getElementById("tool-frame");
+    if(!f.src||!f.src.includes("supply-demand")){f.src="supply-demand.html";}
+    f.style.display="block";
+    document.getElementById("tb-title").textContent="Supply & Demand";
+    document.getElementById("tb-sub").textContent="Marketing Operations";
+    currentTool="sd";
+    if(!document.getElementById("sub-sd").classList.contains("op"))toggleSub("sd");
+  } else if(view==="hub"){
+    setActive("ni-hub");
+    const f=document.getElementById("tool-frame");
+    f.src="executive-hub-cap.html";
+    f.style.display="block";
+    document.getElementById("tb-title").textContent="Executive Hub";
+    document.getElementById("tb-sub").textContent="Creative · Marketing Operations";
+    currentTool="hub";
+  } else if(view==="ph"){
+    setActive(null);
+    document.getElementById("ph-view").classList.add("on");
+    document.getElementById("tb-title").textContent=label||"Próximamente";
+    document.getElementById("tb-sub").textContent="";
+    document.getElementById("ph-title").textContent=label||"Próximamente";
   }
 }
 
-// ── METRICS FROM SUPPLY DATA ──────────────────────────────────
-function loadSDMetrics(){
+function navToTab(tab){
+  // Navigate supply & demand iframe to a specific tab
+  const f=document.getElementById("tool-frame");
+  if(currentTool==="sd"&&f.style.display!=="none"){
+    // Already loaded — send postMessage
+    try{f.contentWindow.postMessage({tab},"*");}catch(e){}
+  } else {
+    // Load S&D first, then send tab after load
+    navTo("sd");
+    f.onload=function(){
+      setTimeout(()=>{try{f.contentWindow.postMessage({tab},"*");}catch(e){}},300);
+      f.onload=null;
+    };
+  }
+  // Update active sub-item
+  document.querySelectorAll(".nsi").forEach(n=>n.classList.remove("on"));
+  document.getElementById("nsi-"+tab)?.classList.add("on");
+}
+
+// Metrics
+function loadMetrics(){
   try{
     const profiles=JSON.parse(localStorage.getItem("sd_p3")||"[]");
     const assigns=JSON.parse(localStorage.getItem("sd_a3")||"[]");
     const demands=JSON.parse(localStorage.getItem("sd_d3")||"[]");
     const now=new Date();
-    const getCharge=pid=>assigns.filter(a=>{
+    const charge=pid=>assigns.filter(a=>{
       const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
       return a.profile_id===pid&&s<=now&&(!e||e>=now)&&!a.is_forecast;
     }).reduce((t,a)=>t+(a.chargeability||0),0);
     const active=profiles.filter(p=>p.is_active);
-    const bench=active.filter(p=>getCharge(p.id)===0);
-    const avg=active.length?Math.round(active.reduce((s,p)=>s+getCharge(p.id),0)/active.length):0;
+    const bench=active.filter(p=>charge(p.id)===0);
+    const avg=active.length?Math.round(active.reduce((s,p)=>s+charge(p.id),0)/active.length):0;
     const openD=demands.filter(d=>d.status==="Vacío").length;
-    const activeProjs=new Set(assigns.filter(a=>{
+    const projs=new Set(assigns.filter(a=>{
       const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
       return s<=now&&(!e||e>=now)&&!a.is_forecast;
     }).map(a=>a.project_name)).size;
-    // Per capability
     const capData=["Creative","CGI","Content","Media","Data","Development","DPM"].map(cap=>{
       const cp=active.filter(p=>p.capability===cap);
-      const cb=cp.filter(p=>getCharge(p.id)===0).length;
-      const cavg=cp.length?Math.round(cp.reduce((s,p)=>s+getCharge(p.id),0)/cp.length):0;
-      return{cap,total:cp.length,bench:cb,avg:cavg};
+      const ca=cp.length?Math.round(cp.reduce((s,p)=>s+charge(p.id),0)/cp.length):0;
+      return{cap,total:cp.length,bench:cp.filter(p=>charge(p.id)===0).length,avg:ca};
     }).filter(c=>c.total>0);
-    return{total:active.length,bench:bench.length,avg,openD,activeProjs,capData,hasData:active.length>0};
-  }catch(e){return{total:0,bench:0,avg:0,openD:0,activeProjs:0,capData:[],hasData:false};}
+    return{total:active.length,bench:bench.length,avg,openD,projs,capData,ok:active.length>0};
+  }catch(e){return{total:0,bench:0,avg:0,openD:0,projs:0,capData:[],ok:false};}
 }
 
-// ── TODOS ─────────────────────────────────────────────────────
-function getTodos(){
-  if(!currentUser)return[];
-  return JSON.parse(localStorage.getItem("mo_todos_"+currentUser.name)||"[]");
-}
-function saveTodos(todos){
-  if(!currentUser)return;
-  localStorage.setItem("mo_todos_"+currentUser.name,JSON.stringify(todos));
-}
-function toggleTodo(id){
-  const todos=getTodos().map(t=>t.id===id?{...t,done:!t.done}:t);
-  saveTodos(todos);showHome();
-}
-function delTodo(id){
-  saveTodos(getTodos().filter(t=>t.id!==id));showHome();
-}
+// Todos
+function getTodos(){return JSON.parse(localStorage.getItem("mo_todos_"+(currentUser?.name||""))||"[]");}
+function saveTodos(t){localStorage.setItem("mo_todos_"+(currentUser?.name||""),JSON.stringify(t));}
+function toggleTodo(id){saveTodos(getTodos().map(t=>t.id===id?{...t,done:!t.done}:t));showHome();}
+function delTodo(id){saveTodos(getTodos().filter(t=>t.id!==id));showHome();}
 function addTodo(){
-  const inp=document.getElementById("todo-input");
+  const inp=document.getElementById("todo-inp");
   if(!inp||!inp.value.trim())return;
-  const todos=getTodos();
-  todos.push({id:Date.now().toString(),text:inp.value.trim(),done:false,ts:new Date().toISOString()});
-  saveTodos(todos);
-  inp.value="";
-  showHome();
+  saveTodos([...getTodos(),{id:Date.now()+"",text:inp.value.trim(),done:false}]);
+  inp.value="";showHome();
 }
 
-// ── HOME RENDER ───────────────────────────────────────────────
 function showHome(){
   if(!currentUser)return;
-  const m=loadSDMetrics();
-  const todos=getTodos();
-  const now=new Date();
-  const h=now.getHours();
-  const greeting=h<13?"Buenos días":"h<20"?"Buenas tardes":"Buenas noches";
-  const greet=h<13?"Buenos días ☀️":h<20?"Buenas tardes 🌤":"Buenas noches 🌙";
-  const months=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-
-  // User capability filter
-  const userCap=currentUser.cap;
-  const capLabel=userCap?` · ${userCap}`:"";
-
-  const homeHTML=`
-  <div class="home-greeting">
-    <h1>${greet}, ${currentUser.name.split(" ")[0]}</h1>
+  const m=loadMetrics(),todos=getTodos(),now=new Date();
+  const h=now.getHours(),gr=h<13?"Buenos días ☀️":h<20?"Buenas tardes 🌤":"Buenas noches 🌙";
+  document.getElementById("home-view").innerHTML=`
+  <div class="home-hero">
+    <h1>${gr}, ${currentUser.name.split(" ")[0]}</h1>
     <p>${now.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</p>
-    <span class="role-badge">${currentUser.role}</span>
+    <span class="role">${currentUser.role}</span>
   </div>
-
-  <!-- Stats -->
   <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-label">Headcount total</div>
-      <div class="stat-val">${m.total||"—"}</div>
-      <div class="stat-sub">${m.hasData?"Perfiles activos":"Sin datos de Supply"}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">En banquillo</div>
-      <div class="stat-val" style="color:${m.bench>0?"var(--amber)":"var(--green)"}">${m.bench||0}</div>
-      <div class="stat-sub">${m.total?Math.round(m.bench/m.total*100):0}% del equipo</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Cargabilidad media</div>
-      <div class="stat-val" style="color:${m.avg>=80?"var(--green)":m.avg>=50?"var(--amber)":"var(--red)"}">${m.avg||0}%</div>
-      <div class="stat-sub">Promedio del centro</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Proyectos activos</div>
-      <div class="stat-val">${m.activeProjs||0}</div>
-      <div class="stat-sub">Asignaciones confirmadas</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Demand abierta</div>
-      <div class="stat-val" style="color:${m.openD>0?"var(--acc)":"var(--t)"}">${m.openD||0}</div>
-      <div class="stat-sub">Peticiones sin cubrir</div>
-    </div>
+    <div class="scard"><div class="scard-lbl">Headcount</div><div class="scard-val">${m.total||"—"}</div><div class="scard-sub">Perfiles activos</div></div>
+    <div class="scard"><div class="scard-lbl">Banquillo</div><div class="scard-val" style="color:${m.bench>0?"var(--amber)":"var(--green)"}">${m.bench||0}</div><div class="scard-sub">${m.total?Math.round(m.bench/m.total*100):0}% del equipo</div></div>
+    <div class="scard"><div class="scard-lbl">Cargabilidad</div><div class="scard-val" style="color:${m.avg>=80?"var(--green)":m.avg>=50?"var(--amber)":"var(--red)"}">${m.avg||0}%</div><div class="scard-sub">Media del centro</div></div>
+    <div class="scard"><div class="scard-lbl">Proyectos</div><div class="scard-val">${m.projs||0}</div><div class="scard-sub">Activos ahora</div></div>
+    <div class="scard"><div class="scard-lbl">Demand abierta</div><div class="scard-val" style="color:${m.openD>0?"var(--acc)":"var(--t)"}">${m.openD||0}</div><div class="scard-sub">Sin cubrir</div></div>
   </div>
-
-  <!-- Grid: Capabilities + To-dos -->
   <div class="home-grid">
-
-    <!-- Capability dashboard -->
     <div class="card">
       <div class="card-title">Headcount por Capability</div>
-      ${m.capData.length===0?`<div style="color:var(--t3);font-size:13px">Abre Supply & Demand para cargar datos.</div>`:
-        m.capData.map(c=>`
-        <div class="cap-row">
-          <div class="cap-dot" style="background:${CAP_COLORS[c.cap]||"#666"}"></div>
+      ${m.capData.length===0?`<p style="color:var(--t3);font-size:12px">Abre Supply & Demand para ver los datos.</p>`:
+        m.capData.map(c=>`<div class="cap-row">
+          <div class="cap-dot" style="background:${CAP_COLORS[c.cap]||"#888"}"></div>
           <div class="cap-name">${c.cap}</div>
           <div class="cap-bar-wrap"><div class="cap-bar" style="width:${c.avg}%;background:${c.avg>=80?"var(--green)":c.avg>=50?"var(--amber)":"var(--red)"}"></div></div>
-          <div class="cap-nums">${c.total} perfiles · ${c.bench>0?`<span style="color:var(--amber)">${c.bench} bench</span>`:`<span style="color:var(--green)">✓</span>`}</div>
-        </div>`).join("")
-      }
+          <div class="cap-nums">${c.total} · ${c.bench>0?`<span style="color:var(--amber)">${c.bench} bench</span>`:`<span style="color:var(--green)">✓</span>`}</div>
+        </div>`).join("")}
     </div>
-
-    <!-- To-dos -->
     <div class="card">
       <div class="card-title">Pendientes</div>
-      ${todos.length===0?`<div style="color:var(--t3);font-size:13px;padding:8px 0">Sin pendientes registrados.</div>`:""}
-      ${todos.map(t=>`
-        <div class="todo-item">
-          <div class="todo-check${t.done?" done":""}" onclick="toggleTodo('${t.id}')"></div>
-          <div class="todo-text${t.done?" done":""}">${t.text}</div>
-          <button class="todo-del" onclick="delTodo('${t.id}')">×</button>
-        </div>`).join("")}
+      ${todos.length===0?`<p style="color:var(--t3);font-size:12px;padding:4px 0">Sin pendientes.</p>`:""}
+      ${todos.map(t=>`<div class="todo-item">
+        <div class="todo-chk${t.done?" dn":""}" onclick="toggleTodo('${t.id}')"></div>
+        <div class="todo-txt${t.done?" dn":""}">${t.text}</div>
+        <button class="todo-del" onclick="delTodo('${t.id}')">×</button>
+      </div>`).join("")}
       <div class="todo-add">
-        <input id="todo-input" class="todo-input" placeholder="Añadir pendiente..." onkeydown="if(event.key==='Enter')addTodo()"/>
+        <input id="todo-inp" class="todo-inp" placeholder="Añadir pendiente..." onkeydown="if(event.key==='Enter')addTodo()"/>
         <button class="todo-btn" onclick="addTodo()">+</button>
       </div>
     </div>
   </div>
-
-  <!-- Quick access tools -->
-  <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Acceso rápido</div>
+  <div style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Acceso rápido</div>
   <div class="tools-grid">
-    <div class="tool-card active-tool" onclick="navTo('supply-demand')">
-      <div class="tool-card-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
-      <div><div class="tool-card-name">Supply & Demand</div><div class="tool-card-stat">${m.hasData?`${m.total} perfiles · ${m.bench} bench · ${m.openD} demand`:"Haz clic para cargar datos"}</div></div>
+    <div class="tc" onclick="navTo('sd')">
+      <div class="tc-ic"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+      <div class="tc-name">Supply & Demand</div>
+      <div class="tc-stat">${m.ok?`${m.total} perfiles · ${m.bench} bench`:"Cargar datos"}</div>
     </div>
-    <div class="tool-card" onclick="navTo('placeholder','Project Health')">
-      <div class="tool-card-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="8" width="5" height="13" rx="1"/><rect x="17" y="5" width="5" height="16" rx="1"/></svg></div>
-      <div><div class="tool-card-name">Project Health</div></div>
-      <div class="tool-card-badge">Próximamente</div>
+    <div class="tc" onclick="navTo('hub')">
+      <div class="tc-ic" style="background:var(--accbg)"><svg viewBox="0 0 24 24" style="stroke:var(--acc)"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+      <div class="tc-name">Executive Hub</div>
+      <div class="tc-stat">Inputs · Acciones · Roadmap</div>
     </div>
-    <div class="tool-card" onclick="navTo('placeholder','Flex')">
-      <div class="tool-card-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg></div>
-      <div><div class="tool-card-name">Flex</div></div>
-      <div class="tool-card-badge">Por definir</div>
+    <div class="tc" onclick="navTo('ph','Project Health')">
+      <div class="tc-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="8" width="5" height="13" rx="1"/><rect x="17" y="5" width="5" height="16" rx="1"/></svg></div>
+      <div class="tc-name">Project Health</div>
+      <div class="tc-tag">Próximamente</div>
     </div>
-    <div class="tool-card" onclick="navTo('placeholder','Sales Tracking')">
-      <div class="tool-card-icon"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
-      <div><div class="tool-card-name">Sales Tracking</div></div>
-      <div class="tool-card-badge">Próximamente</div>
+    <div class="tc" onclick="navTo('ph','Flex')">
+      <div class="tc-ic"><svg viewBox="0 0 24 24"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg></div>
+      <div class="tc-name">Flex</div>
+      <div class="tc-tag">Por definir</div>
     </div>
-    <div class="tool-card" onclick="window.open('https://pablo-fa.github.io/strategy-hub/','_blank')">
-      <div class="tool-card-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-      <div><div class="tool-card-name">Executive Hub</div><div class="tool-card-stat">Strategic planning & OKRs</div></div>
-      <div class="tool-card-badge">Externo →</div>
+    <div class="tc" onclick="navTo('ph','Sales Tracking')">
+      <div class="tc-ic"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+      <div class="tc-name">Sales Tracking</div>
+      <div class="tc-tag">Próximamente</div>
     </div>
   </div>`;
-
-  document.getElementById("home-view").innerHTML=homeHTML;
 }
 </script>
 </body>
