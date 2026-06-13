@@ -485,16 +485,18 @@ function applyDark(dark){
 }
 function toggleDark(){darkMode=!darkMode;applyDark(darkMode);}
 
-// Sync theme from parent platform
-(function(){
+// Sync theme from parent platform on load
+function syncThemeFromParent(){
   try{
     var ph=window.parent.document.documentElement.getAttribute('data-theme');
     if(ph){applyDark(ph==='dark');darkMode=(ph==='dark');return;}
   }catch(e){}
-  // Fallback: system preference
   var sys=window.matchMedia('(prefers-color-scheme: dark)').matches;
   applyDark(sys);darkMode=sys;
-})();
+}
+// Run immediately and also on DOMContentLoaded to be safe
+syncThemeFromParent();
+document.addEventListener('DOMContentLoaded',syncThemeFromParent);
 window.addEventListener('message',function(e){
   if(e.data&&e.data.theme){
     applyDark(e.data.theme==='dark');
