@@ -423,16 +423,12 @@ function navTo(view,label){
   if(view==="home"){
     setActive("ni-home");
     document.getElementById("home-view").style.display="block";
-    document.getElementById("tb-title").textContent="Home";
-    document.getElementById("tb-sub").textContent="";
     showHome();
   } else if(view==="sd"){
     setActive("ni-sd");
     const f=document.getElementById("tool-frame");
     if(!f.src||!f.src.includes("supply-demand")){f.src="supply-demand.html";}
     f.style.display="block";
-    document.getElementById("tb-title").textContent="Supply & Demand";
-    document.getElementById("tb-sub").textContent="Marketing Operations";
     currentTool="sd";
     if(!document.getElementById("sub-sd").classList.contains("op"))toggleSub("sd");
   } else if(view==="hub"){
@@ -440,14 +436,10 @@ function navTo(view,label){
     const f=document.getElementById("tool-frame");
     f.src="executive-hub-cap.html";
     f.style.display="block";
-    document.getElementById("tb-title").textContent="Executive Hub";
-    document.getElementById("tb-sub").textContent="Creative · Marketing Operations";
     currentTool="hub";
   } else if(view==="ph"){
     setActive(null);
     document.getElementById("ph-view").classList.add("on");
-    document.getElementById("tb-title").textContent=label||"Próximamente";
-    document.getElementById("tb-sub").textContent="";
     document.getElementById("ph-title").textContent=label||"Próximamente";
   }
 }
