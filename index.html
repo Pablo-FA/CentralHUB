@@ -360,22 +360,24 @@ function navTo(view,label){
 }
 
 function navToTab(tab){
-  // Navigate supply & demand iframe to a specific tab
   const f=document.getElementById("tool-frame");
-  if(currentTool==="sd"&&f.style.display!=="none"){
-    // Already loaded — send postMessage
-    try{f.contentWindow.postMessage({tab},"*");}catch(e){}
-  } else {
-    // Load S&D first, then send tab after load
-    navTo("sd");
-    f.onload=function(){
-      setTimeout(()=>{try{f.contentWindow.postMessage({tab},"*");}catch(e){}},300);
-      f.onload=null;
-    };
-  }
   // Update active sub-item
   document.querySelectorAll(".nsi").forEach(n=>n.classList.remove("on"));
   document.getElementById("nsi-"+tab)?.classList.add("on");
+
+  if(currentTool==="sd"&&f.style.display!=="none"){
+    // Already on S&D — change hash directly (no reload, same-origin)
+    try{
+      f.contentWindow.location.hash=tab;
+    }catch(e){
+      // Fallback: reload with hash
+      f.src="supply-demand.html#"+tab;
+    }
+  } else {
+    // Load S&D with hash
+    navTo("sd");
+    f.src="supply-demand.html#"+tab;
+  }
 }
 
 // Metrics
