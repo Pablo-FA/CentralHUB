@@ -259,9 +259,10 @@ body{background:var(--bg)}
         <div class="nsi" id="nsi-demand" onclick="navToTab('demand')"><div class="nsi-dot"></div>Demand</div>
         <div class="nsi" id="nsi-dashboard" onclick="navToTab('dashboard')"><div class="nsi-dot"></div>Dashboard</div>
       </div>
-      <div class="ni" id="ni-hub" onclick="navTo('hub')">
-        <i class="ti ti-chart-arrows-vertical"></i>
-        <span class="ni-lbl">Executive Hub</span>
+      <div class="ni" onclick="navTo('ph','Sales Tracking')">
+        <i class="ti ti-trending-up"></i>
+        <span class="ni-lbl">Sales Tracking</span>
+        <span class="ni-badge">Pronto</span>
       </div>
       <div class="ni" onclick="navTo('ph','Project Health')">
         <i class="ti ti-chart-bar"></i>
@@ -274,12 +275,10 @@ body{background:var(--bg)}
         <span class="ni-badge">Pronto</span>
       </div>
       <div class="sb-div"></div>
-      <div class="ni" onclick="navTo('ph','Sales Tracking')">
-        <i class="ti ti-trending-up"></i>
-        <span class="ni-lbl">Sales Tracking</span>
-        <span class="ni-badge">Pronto</span>
-      </div>
-    </div>
+      <div class="ni" id="ni-hub" onclick="navTo('hub')">
+        <i class="ti ti-chart-arrows-vertical"></i>
+        <span class="ni-lbl">Executive Hub</span>
+      </div></div>
     <div class="sb-user">
       <div class="sb-av" id="sb-av">P</div>
       <div class="sb-ui">
@@ -368,6 +367,8 @@ function applyTheme(dark){
   const moon=document.getElementById('icon-moon');
   if(track){track.classList.toggle('dark',dark);thumb.classList.toggle('dark',dark);}
   if(sun){sun.classList.toggle('active',!dark);moon.classList.toggle('active',dark);}
+  // Sync theme to embedded iframes
+  try{document.getElementById('tool-frame')?.contentWindow?.postMessage({theme:dark?'dark':'light'},'*');}catch(e){}
 }
 function toggleDark(){
   const isDark=document.documentElement.getAttribute('data-theme')==='dark';
