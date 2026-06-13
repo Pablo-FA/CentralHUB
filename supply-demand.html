@@ -1,12 +1,33 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="UTF-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Supply & Demand · Marketing Operations</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0d;--bg1:#141414;--bg2:#1c1c1c;--bg3:#242424;--b:rgba(255,255,255,.08);--bh:rgba(255,255,255,.16);--t:#f0f0f0;--t2:#999;--t3:#555;--acc:#7c6ee8;--accbg:rgba(124,110,232,.12);--green:#22c55e;--greenbg:rgba(34,197,94,.1);--amber:#f59e0b;--amberbg:rgba(245,158,11,.1);--red:#ef4444;--redbg:rgba(239,68,68,.1);--blue:#3b82f6;--bluebg:rgba(59,130,246,.1)}
-body{background:var(--bg);color:var(--t);font-family:system-ui,-apple-system,sans-serif;font-size:14px;min-height:100vh}
+:root{
+  --font:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  --bg:#f4f4f7;--bg1:#fff;--bg2:#f8f8fb;--bg3:#eff0f3;
+  --b:rgba(0,0,0,.08);--bh:rgba(0,0,0,.14);
+  --t:#18182a;--t2:#4a4a6c;--t3:#8888a8;
+  --acc:rgb(99,102,241);--accbg:rgba(99,102,241,.08);
+  --green:#166534;--greenbg:#f0fdf4;
+  --amber:#92400e;--amberbg:#fffbeb;
+  --red:#991b1b;--redbg:#fef2f2;
+  --blue:#1d4ed8;--bluebg:#eff6ff;
+}
+[data-theme="dark"]{
+  --bg:#0c0c14;--bg1:#14141f;--bg2:#1c1c2a;--bg3:#242433;
+  --b:rgba(255,255,255,.07);--bh:rgba(255,255,255,.14);
+  --t:#e2e2f0;--t2:#8888aa;--t3:#44445a;
+  --green:#6ee7a0;--greenbg:rgba(110,231,160,.1);
+  --amber:#f0c060;--amberbg:rgba(240,192,96,.1);
+  --red:#f08080;--redbg:rgba(240,128,128,.1);
+  --blue:#7eb3f7;--bluebg:rgba(126,179,247,.1);
+}
+body{background:var(--bg);color:var(--t);font-family:var(--font);font-family:system-ui,-apple-system,sans-serif;font-size:14px;min-height:100vh}
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:72px;border-bottom:1px solid var(--b);background:var(--bg1);position:sticky;top:0;z-index:20}
 .hdr-t{font-size:22px;font-weight:500;letter-spacing:-0.01em}.hdr-s{font-size:11px;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
 .tabs{display:flex;border-bottom:1px solid var(--b);background:var(--bg1);padding:0 28px;position:sticky;top:72px;z-index:19}
@@ -1334,6 +1355,20 @@ window.addEventListener('message',function(e){
     S.tab=t;
     document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x.dataset.tab===t);});
     render();
+  }
+});
+
+
+// Sync dark/light theme with parent platform
+(function(){
+  try{
+    var ph=window.parent.document.documentElement.getAttribute('data-theme');
+    if(ph)document.documentElement.setAttribute('data-theme',ph);
+  }catch(e){}
+})();
+window.addEventListener('message',function(e){
+  if(e.data&&e.data.theme){
+    document.documentElement.setAttribute('data-theme',e.data.theme);
   }
 });
 
