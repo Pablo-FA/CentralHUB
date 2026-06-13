@@ -479,9 +479,28 @@ function resetConfig(){localStorage.removeItem('ch_url');localStorage.removeItem
 function changeUser(){if(confirm('Cambiar de usuario?')){localStorage.removeItem('ch_user');show('v-login');}}
 function show(id){['v-config','v-login','v-app'].forEach(function(x){document.getElementById(x).classList.add('hidden');});document.getElementById(id).classList.remove('hidden');}
 
-var darkMode=localStorage.getItem('sh_dark')==='1';
-function applyDark(){document.documentElement.setAttribute('data-theme',darkMode?'dark':'');var ic=document.getElementById('dark-icon');if(ic)ic.className='ti ti-'+(darkMode?'sun':'moon');}
-function toggleDark(){darkMode=!darkMode;localStorage.setItem('sh_dark',darkMode?'1':'0');applyDark();}
+var darkMode=false; // theme controlled by parent platform
+function applyDark(dark){
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+}
+function toggleDark(){darkMode=!darkMode;applyDark(darkMode);}
+
+// Sync theme from parent platform
+(function(){
+  try{
+    var ph=window.parent.document.documentElement.getAttribute('data-theme');
+    if(ph){applyDark(ph==='dark');darkMode=(ph==='dark');return;}
+  }catch(e){}
+  // Fallback: system preference
+  var sys=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyDark(sys);darkMode=sys;
+})();
+window.addEventListener('message',function(e){
+  if(e.data&&e.data.theme){
+    applyDark(e.data.theme==='dark');
+    darkMode=(e.data.theme==='dark');
+  }
+});
 applyDark();
 
 var DISCUSSED=JSON.parse(localStorage.getItem('sh_discussed')||'{}');
