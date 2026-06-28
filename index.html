@@ -592,7 +592,8 @@ async function showHome(){
           <th style="text-align:right;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">FTEs</th>
           <th style="text-align:right;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Hasta</th>
         </tr></thead><tbody>
-        ${activeProjects.map(p=>{const cap=p.capability||"";const col={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"}[cap]||"#888";return`<tr style="cursor:pointer" onclick="navTo('pm')"><td style="padding:8px 0;border-bottom:1px solid var(--border);font-weight:500;font-size:13px">${p.name||"—"}</td><td style="padding:8px 0;border-bottom:1px solid var(--border)">${cap?`<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${col}22;color:${col};font-weight:600">${cap}</span>`:"—"}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:12px;font-weight:500">${(p.team||[]).length}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:11px;color:var(--text3)">${p.endDate?new Date(p.endDate+"T12:00:00").toLocaleDateString("es-ES",{day:"2-digit",month:"short"}):"—"}</td></tr>`;}).join("")}
+        ${activeProjects.map(p=>{const cap=p.capability||"";const col={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"}[cap]||"#888";return`<tr class="proj-row" style="cursor:pointer"><td style="padding:8px 0;border-bottom:1px solid var(--border);font-weight:500;font-size:13px">${p.name||"—"}</td><td style="padding:8px 0;border-bottom:1px solid var(--border)">${cap?`<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${col}22;color:${col};font-weight:600">${cap}</span>`:"—"}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:12px;font-weight:500">${(p.team||[]).length}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:11px;color:var(--text3)">${p.endDate?new Date(p.endDate+"T12:00:00").toLocaleDateString("es-ES",{day:"2-digit",month:"short"}):"—"}</td></tr>`;
+}).join("")}
         </tbody></table>`}
     </div>
     <div class="card">
@@ -637,6 +638,10 @@ async function showHome(){
       <div class="tc-tag">Próximamente</div>
     </div>
   </div>`;
+  // Project row click delegation (must run after innerHTML is set)
+  document.querySelectorAll('#home-view .proj-row').forEach(tr=>{
+    tr.addEventListener('click',()=>navTo('pm'));
+  });
 }
 </script>
 </body>
