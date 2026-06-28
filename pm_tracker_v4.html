@@ -487,8 +487,19 @@ function dbSave(entity,id){
 
 // Loads Pablo's roster + assignments, projects them into our working model.
 async function chLoad(){
-  const rawProfiles = await CH.get("sd_p3");
-  const rawAssigns  = await CH.get("sd_a3");
+  // Load S&D profiles and assignments from Supabase
+  let rawProfiles=[], rawAssigns=[];
+  try{
+    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/sd_data?select=key,data&key=in.(profiles,assigns)',{
+      headers:{'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk'}
+    });
+    if(r.ok){
+      const rows=await r.json();
+      const bk={};rows.forEach(row=>bk[row.key]=row.data);
+      rawProfiles=bk.profiles||[];
+      rawAssigns=bk.assigns||[];
+    }
+  }catch(e){}
   if(rawProfiles && rawProfiles.length){
     // Map his profile shape → ours (keep originals on _raw)
     S.profiles = rawProfiles.filter(p=>p.is_active!==false).map(p=>({
