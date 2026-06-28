@@ -460,6 +460,22 @@ function navTo(view,label){
   }
 }
 
+function navToSD(tab, subView){
+  const f=document.getElementById("tool-frame");
+  document.querySelectorAll(".nsi").forEach(n=>n.classList.remove("on"));
+  document.getElementById("nsi-"+tab)?.classList.add("on");
+  const msg={tab};
+  if(subView)msg.supplyView=subView;
+  if(currentTool==="sd"&&f.style.display!=="none"){
+    try{f.contentWindow.postMessage(msg,"*");}catch(e){}
+  } else {
+    navTo("sd");
+    f.addEventListener("load",function onLoad(){
+      try{f.contentWindow.postMessage(msg,"*");}catch(e){}
+      f.removeEventListener("load",onLoad);
+    });
+  }
+}
 function navToTab(tab){
   const f=document.getElementById("tool-frame");
   document.querySelectorAll(".nsi").forEach(n=>n.classList.remove("on"));
@@ -537,12 +553,12 @@ async function showHome(){
     <span class="role">${currentUser.role}</span>
   </div>
   <div class="stats-row">
-    <div class="scard" style="border-left:3px solid ${m.fteUtil>90?"var(--red)":m.fteUtil>70?"var(--ok)":"var(--warn)"}">
+    <div class="scard" style="border-left:3px solid ${m.fteUtil>90?"var(--red)":m.fteUtil>70?"var(--ok)":"var(--warn)"};cursor:pointer" onclick="navToSD('supply')">
       <div class="scard-lbl">Utilización</div>
       <div class="scard-val" style="color:${m.fteUtil>70?"var(--ok)":m.fteUtil>40?"var(--warn)":"var(--danger)"}">${m.fteUtil||0}%</div>
       <div class="scard-sub">${m.allocatedFte||0} de ${m.total||0} FTEs asignados</div>
     </div>
-    <div class="scard" style="border-left:3px solid var(--acc)">
+    <div class="scard" style="border-left:3px solid var(--acc);cursor:pointer" onclick="navToSD('supply','disponibles')">
       <div class="scard-lbl">Current Capacity</div>
       <div class="scard-val">${m.bench||0}</div>
       <div class="scard-sub">${(m.bench||0)===1?"persona disponible":"personas disponibles"}</div>
