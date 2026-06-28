@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Content HUB · Command Hub</title>
+<title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
@@ -200,14 +200,14 @@ body{background:var(--bg)}
   <div class="login-box">
     <div class="login-mark"><i class="ti ti-layout-dashboard"></i></div>
     <div>
-      <div class="login-title">Content engine</div>
-      <div class="login-sub">Command Hub</div>
+      <div class="login-title">MO Platform</div>
+      <div class="login-sub">Marketing Operations · Creative</div>
     </div>
     <select id="user-sel" class="fi">
       <option value="">Selecciona tu perfil...</option>
       <option value="Pablo F.|Strategy & GTM Lead">Pablo F. — Strategy & GTM Lead</option>
-      <option value="Conrado P.|Creative Lead">Conrado P. — Production Lead</option>
-      <option value="Fabio H.G.|Creative Director">Fabio H.G. — Account Lead</option>
+      <option value="Conrado P.|Creative Lead">Conrado P. — Creative Lead</option>
+      <option value="Fabio H.G.|Creative Director">Fabio H.G. — Creative Director</option>
     </select>
     <input type="password" id="pin-in" class="fi" placeholder="Contraseña" style="letter-spacing:.1em"/>
     <button class="btn-p" onclick="doLogin()">Entrar</button>
@@ -223,9 +223,9 @@ body{background:var(--bg)}
       <div class="tb-brand-logo" onclick="toggleSB()" title="Colapsar menú">
         <i class="ti ti-layout-sidebar"></i>
       </div>
-      <span class="tb-brand-name">Content engine</span>
+      <span class="tb-brand-name">MO Platform</span>
       <div class="tb-brand-sep"></div>
-      <span class="tb-brand-sub">Command HUB</span>
+      <span class="tb-brand-sub">Marketing Operations</span>
     </div>
     <div class="tb-r">
       <div class="tb-date" id="tb-date"></div>
@@ -264,10 +264,9 @@ body{background:var(--bg)}
         <span class="ni-lbl">Sales Tracking</span>
         <span class="ni-badge">Pronto</span>
       </div>
-      <div class="ni" onclick="navTo('ph','Project Health')">
+      <div class="ni" id="ni-pm" onclick="navTo('pm')">
         <i class="ti ti-chart-bar"></i>
         <span class="ni-lbl">Project Health</span>
-        <span class="ni-badge">Pronto</span>
       </div>
       <div class="ni" onclick="navTo('ph','Flex')">
         <i class="ti ti-hexagon"></i>
@@ -431,6 +430,12 @@ function navTo(view,label){
     f.style.display="block";
     currentTool="sd";
     if(!document.getElementById("sub-sd").classList.contains("op"))toggleSub("sd");
+  } else if(view==="pm"){
+    setActive("ni-pm");
+    const f=document.getElementById("tool-frame");
+    if(!f.src||!f.src.includes("pm_tracker")){f.src="pm_tracker_v4.html";}
+    f.style.display="block";
+    currentTool="pm";
   } else if(view==="hub"){
     setActive("ni-hub");
     const f=document.getElementById("tool-frame");
@@ -555,10 +560,10 @@ function showHome(){
       <div class="tc-name">Executive Hub</div>
       <div class="tc-stat">Inputs · Acciones · Roadmap</div>
     </div>
-    <div class="tc" onclick="navTo('ph','Project Health')">
+    <div class="tc" onclick="navTo('pm')">
       <div class="tc-ic"><i class="ti ti-chart-bar"></i></div>
       <div class="tc-name">Project Health</div>
-      <div class="tc-tag">Próximamente</div>
+      <div class="tc-stat">Projects · Financials · Governance</div>
     </div>
     <div class="tc" onclick="navTo('ph','Flex')">
       <div class="tc-ic"><i class="ti ti-hexagon"></i></div>
