@@ -466,9 +466,16 @@ function navToSD(tab, subView){
   document.getElementById("nsi-"+tab)?.classList.add("on");
   const msg={tab};
   if(subView)msg.supplyView=subView;
+  const sdAlreadyLoaded=f.src&&f.src.includes("supply-demand");
   if(currentTool==="sd"&&f.style.display!=="none"){
+    // S&D visible — send directly
     try{f.contentWindow.postMessage(msg,"*");}catch(e){}
+  } else if(sdAlreadyLoaded){
+    // S&D loaded but hidden (e.g. came from Home) — show it, then send
+    navTo("sd");
+    setTimeout(()=>{try{f.contentWindow.postMessage(msg,"*");}catch(e){}},80);
   } else {
+    // S&D not loaded yet — load and wait
     navTo("sd");
     f.addEventListener("load",function onLoad(){
       try{f.contentWindow.postMessage(msg,"*");}catch(e){}
