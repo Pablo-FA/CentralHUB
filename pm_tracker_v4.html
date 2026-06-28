@@ -513,10 +513,23 @@ async function chLoad(){
       SB.get('pm_time_reports','order=updated_at.asc')
     ]);
     if(sbP.length){S.projects=sbP.map(r=>({...r.data,id:r.id}));}
+    else{
+      // First load — seed demo projects to Supabase
+      const demoProjs=S.projects.filter(p=>p.unit!=='Internal');
+      if(demoProjs.length){
+        SB.upsert('pm_projects', demoProjs.map(p=>({id:p.id,data:p,updated_at:new Date().toISOString()})));
+      }
+    }
     if(sbW.length){
       const sys=S.wbsCodes.filter(w=>w.system);
       const usr=sbW.map(r=>({...r.data,id:r.id})).filter(w=>!w.system);
       S.wbsCodes=[...sys,...usr];
+    } else {
+      // Seed non-system WBS codes
+      const userWbs=S.wbsCodes.filter(w=>!w.system);
+      if(userWbs.length){
+        SB.upsert('pm_wbs_codes', userWbs.map(w=>({id:w.id,data:w,updated_at:new Date().toISOString()})));
+      }
     }
     if(sbT.length){S.timeReports=sbT.map(r=>({...r.data,id:r.id}));}
   }catch(e){console.warn('PM Supabase load error:',e);}
