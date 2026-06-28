@@ -478,11 +478,16 @@ function navToTab(tab){
 }
 
 // Metrics
-function loadMetrics(){
+async function loadMetrics(){
   try{
-    const profiles=JSON.parse(localStorage.getItem("sd_p3")||"[]");
-    const assigns=JSON.parse(localStorage.getItem("sd_a3")||"[]");
-    const demands=JSON.parse(localStorage.getItem("sd_d3")||"[]");
+    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/sd_data?select=key,data&key=in.(profiles,assigns,demands)',{
+      headers:{'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk'}
+    });
+    const rows=r.ok?await r.json():[];
+    const bk={};rows.forEach(row=>bk[row.key]=row.data);
+    const profiles=bk.profiles||[];
+    const assigns=bk.assigns||[];
+    const demands=bk.demands||[];
     const now=new Date();
     const charge=pid=>assigns.filter(a=>{
       const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
@@ -496,15 +501,15 @@ function loadMetrics(){
       const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
       return s<=now&&(!e||e>=now)&&!a.is_forecast;
     }).map(a=>a.project_name)).size;
-    const allocatedFte=total-bench.length;
-    const fteUtil=total>0?Math.round(allocatedFte/total*100):0;
+    const allocatedFte=active.length-bench.length;
+    const fteUtil=active.length>0?Math.round(allocatedFte/active.length*100):0;
     const capData=["Creative","CGI","Content","Media","Data","Development","DPM"].map(cap=>{
       const cp=active.filter(p=>p.capability===cap);
       const ca=cp.length?Math.round(cp.reduce((s,p)=>s+charge(p.id),0)/cp.length):0;
       return{cap,total:cp.length,bench:cp.filter(p=>charge(p.id)===0).length,avg:ca};
     }).filter(c=>c.total>0);
     return{total:active.length,bench:bench.length,avg,openD,projs,capData,ok:active.length>0,allocatedFte,fteUtil};
-  }catch(e){return{total:0,bench:0,avg:0,openD:0,projs:0,capData:[],ok:false};}
+  }catch(e){return{total:0,bench:0,avg:0,openD:0,projs:0,capData:[],ok:false,allocatedFte:0,fteUtil:0};}
 }
 
 // Todos
@@ -521,7 +526,7 @@ function addTodo(){
 
 async function showHome(){
   if(!currentUser)return;
-  const m=loadMetrics(),todos=getTodos(),now=new Date();
+  const m=await loadMetrics(),todos=getTodos(),now=new Date();
   const activeProjects=await loadActiveProjects();
   const capColors={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"};
   const h=now.getHours(),gr=h<13?"Buenos días ☀️":h<20?"Buenas tardes 🌤":"Buenas noches 🌙";
