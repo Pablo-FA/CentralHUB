@@ -571,8 +571,47 @@ function calcLog(){
 function calcAge(d){if(!d)return"—";const dt=new Date(d),now=new Date();let y=now.getFullYear()-dt.getFullYear(),m=now.getMonth()-dt.getMonth();if(m<0){y--;m+=12;}return y>0?`${y}a ${m>0?m+"m":""}`:`${m>0?m+" mes":"<1 mes"}`;}
 
 // ── STORAGE ───────────────────────────────────────────────────────────────
-async function save(){const sv=async(k,v)=>{try{if(window.storage)await window.storage.set(k,JSON.stringify(v));else localStorage.setItem(k,JSON.stringify(v));}catch{}};await sv("sd_p3",S.profiles);await sv("sd_a3",S.assigns);await sv("sd_d3",S.demands);await sv("sd_cr3",S.customRoles);await sv("sd_b3",S.bajas);}
-async function loadData(){const gt=async k=>{try{if(window.storage){const r=await window.storage.get(k);return JSON.parse(r.value);}const v=localStorage.getItem(k);return v?JSON.parse(v):[];}catch{return[];}};S.profiles=await gt("sd_p3");S.assigns=await gt("sd_a3");S.demands=await gt("sd_d3");S.customRoles=await gt("sd_cr3");S.bajas=await gt("sd_b3");const demoB=[{id:"b01",profile_id:"d05",type:"Embarazo",desde:"2026-04-01",hasta:"2026-11-30",comments:"Baja maternal. Reincorporación prevista noviembre 2026"},{id:"b02",profile_id:"d11",type:"Enfermedad",desde:"2026-05-01",hasta:"2026-06-15",comments:"Baja médica temporal"},{id:"b03",profile_id:"d20",type:"Paternidad",desde:"2026-06-01",hasta:"2026-06-15",comments:"Paternidad 15 días"}];const existBIds=new Set(S.bajas.map(b=>b.id));const missB=demoB.filter(b=>!existBIds.has(b.id));if(missB.length){S.bajas=[...S.bajas,...missB];}const existDIds=new Set(S.demands.map(d=>d.id));const missD=DD.filter(d=>!existDIds.has(d.id));if(missD.length){S.demands=[...S.demands,...missD];}const eIds=new Set(S.profiles.map(p=>p.id));const miss=DP.filter(p=>!eIds.has(p.id));if(miss.length){S.profiles=[...S.profiles,...miss];}const eAIds=new Set(S.assigns.map(a=>a.id));const missA=DA.filter(a=>!eAIds.has(a.id));if(missA.length){S.assigns=[...S.assigns,...missA];}if(miss.length||missA.length)await save();}
+async function save(){
+  const now=new Date().toISOString();
+  const rows=[
+    {key:'profiles',data:S.profiles,updated_at:now},
+    {key:'assigns',data:S.assigns,updated_at:now},
+    {key:'demands',data:S.demands,updated_at:now},
+    {key:'custom_roles',data:S.customRoles,updated_at:now},
+    {key:'bajas',data:S.bajas,updated_at:now}
+  ];
+  try{
+    await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/sd_data',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify(rows)
+    });
+  }catch(e){console.warn('S&D save error:',e);}
+}
+async function loadData(){
+  // Load from Supabase
+  try{
+    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/sd_data?select=key,data',{
+      headers:{'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk'}
+    });
+    if(r.ok){
+      const rows=await r.json();
+      const bk={};rows.forEach(row=>bk[row.key]=row.data);
+      if(bk.profiles&&bk.profiles.length)S.profiles=bk.profiles;
+      if(bk.assigns)S.assigns=bk.assigns;
+      if(bk.demands&&bk.demands.length)S.demands=bk.demands;
+      if(bk.custom_roles)S.customRoles=bk.custom_roles;
+      if(bk.bajas)S.bajas=bk.bajas;
+    }
+  }catch(e){console.warn('S&D load error:',e);}
+  // Seed demo data if tables were empty
+  const demoB=[{id:"b01",profile_id:"d05",type:"Embarazo",desde:"2026-04-01",hasta:"2026-11-30",comments:"Baja maternal. Reincorporación prevista noviembre 2026"},{id:"b02",profile_id:"d11",type:"Enfermedad",desde:"2026-05-01",hasta:"2026-06-15",comments:"Baja médica temporal"},{id:"b03",profile_id:"d20",type:"Paternidad",desde:"2026-06-01",hasta:"2026-06-15",comments:"Paternidad 15 días"}];
+  const existBIds=new Set(S.bajas.map(b=>b.id));const missB=demoB.filter(b=>!existBIds.has(b.id));if(missB.length){S.bajas=[...S.bajas,...missB];}
+  const existDIds=new Set(S.demands.map(d=>d.id));const missD=DD.filter(d=>!existDIds.has(d.id));if(missD.length){S.demands=[...S.demands,...missD];}
+  const eIds=new Set(S.profiles.map(p=>p.id));const miss=DP.filter(p=>!eIds.has(p.id));if(miss.length){S.profiles=[...S.profiles,...miss];}
+  const eAIds=new Set(S.assigns.map(a=>a.id));const missA=DA.filter(a=>!eAIds.has(a.id));if(missA.length){S.assigns=[...S.assigns,...missA];}
+  if(miss.length||missA.length||missB.length||missD.length)await save();
+}
 
 // ── GATE + APP ────────────────────────────────────────────────────────────
 function showGate(){
