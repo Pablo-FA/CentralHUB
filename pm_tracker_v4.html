@@ -460,7 +460,29 @@ const CH = {
   mapLevel(cl){ return cl||"\u2014"; },
   // capability → colour (Pablo's palette)
   capColor(c){ return ({Creative:"#7c6ee8",CGI:"#22c55e",Content:"#f59e0b",Media:"#3b82f6",Data:"#ef4444",Development:"#06b6d4",DPM:"#ec4899"})[c]||"#8888a8"; }
+
+// ── Supabase client for PM data ──────────────────────────────────────
+const SB_URL='https://xqqgqbkesicymfukkmnq.supabase.co';
+const SB_KEY='sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk';
+const SB={
+  _h(){return{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};},
+  async get(table,q=''){
+    try{const r=await fetch(SB_URL+'/rest/v1/'+table+'?'+q,{headers:this._h()});return r.ok?await r.json():[];}catch(e){return[];}
+  },
+  async upsert(table,data){
+    const arr=Array.isArray(data)?data:[data];
+    fetch(SB_URL+'/rest/v1/'+table,{method:'POST',headers:{...this._h(),'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(arr)}).catch(()=>{});
+  },
+  async ins(table,data){
+    fetch(SB_URL+'/rest/v1/'+table,{method:'POST',headers:{...this._h(),'Prefer':'return=minimal'},body:JSON.stringify(data)}).catch(()=>{});
+  }
 };
+function dbSave(entity,id){
+  const now=new Date().toISOString();
+  if(entity==='project'){const p=S.projects.find(x=>x.id===id);if(p)SB.upsert('pm_projects',{id:p.id,data:p,updated_at:now});}
+  else if(entity==='wbs'){const w=S.wbsCodes.find(x=>x.id===id);if(w&&!w.system)SB.upsert('pm_wbs_codes',{id:w.id,data:w,updated_at:now});}
+  else if(entity==='tr'){const tr=S.timeReports.find(x=>x.id===id);if(tr)SB.upsert('pm_time_reports',{id:tr.id,data:tr,updated_at:now});}
+}
 
 // Loads Pablo's roster + assignments, projects them into our working model.
 async function chLoad(){
@@ -482,6 +504,21 @@ async function chLoad(){
   } else {
     S._chConnected = false; // fall back to built-in demo data already in S
   }
+  // Load PM-specific data from Supabase
+  try{
+    const [sbP,sbW,sbT]=await Promise.all([
+      SB.get('pm_projects','order=updated_at.asc'),
+      SB.get('pm_wbs_codes','order=updated_at.asc'),
+      SB.get('pm_time_reports','order=updated_at.asc')
+    ]);
+    if(sbP.length){S.projects=sbP.map(r=>({...r.data,id:r.id}));}
+    if(sbW.length){
+      const sys=S.wbsCodes.filter(w=>w.system);
+      const usr=sbW.map(r=>({...r.data,id:r.id})).filter(w=>!w.system);
+      S.wbsCodes=[...sys,...usr];
+    }
+    if(sbT.length){S.timeReports=sbT.map(r=>({...r.data,id:r.id}));}
+  }catch(e){console.warn('PM Supabase load error:',e);}
 }
 
 // Turn flat sd_a3 rows into per-profile assignment entries + derive projects
@@ -622,7 +659,11 @@ const holHrs=(prof,s,e)=>{ // hours of public holidays within [s,e] for this per
 const periodHrsFor=(prof,s,e)=>Math.max(0, periodHrs(s,e)-holHrs(prof,s,e)); // available hours after holidays
 const uid=()=>"w"+Date.now()+Math.random().toString(36).slice(2,5);
 const toast=msg=>{const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800)};
-const log=a=>S.auditLog.unshift({id:Date.now(),user:"Fabio Pereira",action:a,ts:new Date().toISOString()});
+const log=a=>{
+  const entry={id:Date.now(),user:S._currentUser||'Unknown',action:a,ts:new Date().toISOString()};
+  S.auditLog.unshift(entry);
+  SB.ins('pm_audit_log',{user_name:entry.user,action:a});
+};
 function projLogNav(projId, dir){
   // dir +1 = older (left arrow), -1 = newer (right arrow)
   const p=S.projects.find(x=>x.id===projId); if(!p||!p.log)return;
@@ -668,6 +709,7 @@ function cycleHealth(projId, kind){
   p.health[kind]=next;
   plog(projId,"Marcador "+kind+" \u2192 "+next);
   log("Health "+kind+" \u2192 "+next+" en "+p.name);
+  dbSave("project",projId);
   render();
 }
 function healthTag(p, kind, label){
@@ -690,7 +732,7 @@ function timelineColor(pct){
 }
 function profWbsTags(p,profId){ if(!p.wbsTags)p.wbsTags={}; return p.wbsTags[profId]||[]; }
 function toggleProfWbs(projId,profId,wbsId){const p=S.projects.find(x=>x.id===projId);if(!p)return;if(!p.wbsTags)p.wbsTags={};if(!p.wbsTags[profId])p.wbsTags[profId]=[];const i=p.wbsTags[profId].indexOf(wbsId);if(i>=0)p.wbsTags[profId].splice(i,1);else p.wbsTags[profId].push(wbsId);render();}
-function addProjWbs(projId,wbsId){const p=S.projects.find(x=>x.id===projId);if(!p||!wbsId)return;if(!p.wbsIds)p.wbsIds=p.wbsId?[p.wbsId]:[];if(!p.wbsIds.includes(wbsId))p.wbsIds.push(wbsId);plog(projId,"WBS a\u00f1adido: "+(wbsById(wbsId)?.code||wbsId));log("A\u00f1adido WBS "+(wbsById(wbsId)?.code||wbsId)+" a "+p.name);render();}
+function addProjWbs(projId,wbsId){const p=S.projects.find(x=>x.id===projId);if(!p||!wbsId)return;if(!p.wbsIds)p.wbsIds=p.wbsId?[p.wbsId]:[];if(!p.wbsIds.includes(wbsId))p.wbsIds.push(wbsId);plog(projId,"WBS a\u00f1adido: "+(wbsById(wbsId)?.code||wbsId));log("A\u00f1adido WBS "+(wbsById(wbsId)?.code||wbsId)+" a "+p.name);dbSave("project",projId);render();}
 function whoChargesWbs(wbsId){
   const out=[];
   S.projects.forEach(p=>{
@@ -717,7 +759,7 @@ function openWbsUsage(wbsId){
     ${rows.length?`<div style="overflow-x:auto"><table><thead><tr><th>Persona</th><th>Proyecto</th><th>Asignaci\u00f3n</th><th>Tarifa</th></tr></thead><tbody>${rows.map(({proj,profile,alloc})=>`<tr><td><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="closeModal();openProfilePanel('${profile.id}')"><div class="av" style="width:24px;height:24px;font-size:9px;background:${profile.color}22;color:${profile.color};border:1px solid ${profile.color}44">${profile.initials}</div><span style="font-weight:600">${profile.name}</span></div></td><td style="color:var(--text2)">${proj.name}</td><td style="font-family:'JetBrains Mono',monospace">${alloc}%</td><td style="font-family:'JetBrains Mono',monospace">${fmt(profile.lcr)}/h</td></tr>`).join("")}</tbody></table></div>`:`<div style="padding:16px 0;color:var(--text3);font-size:13px">Nadie etiquetado a este WBS todav\u00eda. Asigna el WBS a un proyecto y marca a las personas en la columna WBS.</div>`}
   `, 600);
 }
-function removeProjWbs(projId,wbsId){const p=S.projects.find(x=>x.id===projId);if(!p)return;const _wc=wbsById(wbsId)?.code||wbsId;if(p.wbsIds)p.wbsIds=p.wbsIds.filter(w=>w!==wbsId);if(p.wbsTags)Object.keys(p.wbsTags).forEach(pid=>{p.wbsTags[pid]=p.wbsTags[pid].filter(w=>w!==wbsId);});plog(projId,"WBS eliminado: "+_wc);render();}
+function removeProjWbs(projId,wbsId){const p=S.projects.find(x=>x.id===projId);if(!p)return;const _wc=wbsById(wbsId)?.code||wbsId;if(p.wbsIds)p.wbsIds=p.wbsIds.filter(w=>w!==wbsId);if(p.wbsTags)Object.keys(p.wbsTags).forEach(pid=>{p.wbsTags[pid]=p.wbsTags[pid].filter(w=>w!==wbsId);});plog(projId,"WBS eliminado: "+_wc);dbSave("project",projId);render();}
 const wbsOpts=sel=>S.wbsCodes.map(w=>`<option value="${w.id}"${w.id===sel?" selected":""}>${w.code} \u2014 ${w.label}</option>`).join("");
 const profById=id=>S.profiles.find(p=>p.id===id);
 const profileAlloc=p=>(p.assignments||[]).reduce((a,x)=>a+(x.pct||0),0);
@@ -1541,15 +1583,15 @@ function updateAlloc(projId,profId,val){
   }
 }
 function updateLic(id,val){const p=S.projects.find(x=>x.id===id);if(p){p.licensesHardware=+val||0;log("Updated licences");toast("Saved");}}
-function saveF(id,field,val){const p=S.projects.find(x=>x.id===id);if(!p||p[field]===val)return;p[field]=val;log("Updated "+field+" on \""+p.name+"\"");toast("Saved");}
-function toggleProjStatus(id){const p=S.projects.find(x=>x.id===id);if(!p)return;p.status=p.status==="active"?"inactive":"active";plog(id,"Estado del proyecto cambiado a "+p.status);log("\""+p.name+"\" \u2192 "+p.status);toast("Marked "+p.status);render();}
+function saveF(id,field,val){const p=S.projects.find(x=>x.id===id);if(!p||p[field]===val)return;p[field]=val;p.updated_at=new Date().toISOString();log("Updated "+field+" on \""+p.name+"\"");dbSave("project",id);toast("Saved");}
+function toggleProjStatus(id){const p=S.projects.find(x=>x.id===id);if(!p)return;p.status=p.status==="active"?"inactive":"active";plog(id,"Estado del proyecto cambiado a "+p.status);log("\""+p.name+"\" \u2192 "+p.status);dbSave("project",id);toast("Marked "+p.status);render();}
 function removeMember(projId,profId){const p=S.projects.find(x=>x.id===projId);const pr=profById(profId);if(!p||!pr)return;
   if(S._chConnected){chWriteAllocation(profId,p.name,0,p.startDate,p.endDate);}
-  p.team=p.team.filter(x=>x!==profId);pr.assignments=(pr.assignments||[]).filter(x=>x.projectId!==projId);if(p.allocations)delete p.allocations[profId];log("Removed "+pr.name+" from \""+p.name+"\"");toast("Removed"+(S._chConnected?" \u2014 synced":""));render();}
+  p.team=p.team.filter(x=>x!==profId);pr.assignments=(pr.assignments||[]).filter(x=>x.projectId!==projId);if(p.allocations)delete p.allocations[profId];dbSave("project",projId);log("Removed "+pr.name+" from \""+p.name+"\"");toast("Removed"+(S._chConnected?" \u2014 synced":""));render();}
 function uploadFiles(id,input){const p=S.projects.find(x=>x.id===id);if(!p)return;Array.from(input.files).forEach(f=>{p.files.push({name:f.name,size:(f.size/1024).toFixed(0)+" KB"});log("Uploaded \""+f.name+"\"")});toast(input.files.length+" file(s) attached");render();}
 function removeFile(id,idx){const p=S.projects.find(x=>x.id===id);if(!p)return;const f=p.files.splice(idx,1)[0];log("Removed \""+f.name+"\"");toast("Removed");render();}
 function openNewProject(){showModal(`<div class="mtitle">New Project / Unit <span class="mclose" onclick="closeModal()">\u2715</span></div><div class="frow"><div class="fg"><label>Name</label><input id="np-n" placeholder="e.g. JLR L462"></div><div class="fg"><label>Type</label><select id="np-t"><option value="project">Project</option><option value="unit">Unit</option></select></div></div><div class="frow"><div class="fg"><label>WBS Code</label><select id="np-w"><option value="">\u2014 Select \u2014</option>${wbsOpts("")}</select></div><div class="fg"><label>Unit / Client</label><select id="np-u"><option value="">\u2014</option>${UNITS.map(u=>`<option>${u}</option>`).join("")}</select></div></div><div class="frow"><div class="fg"><label>Approved Budget (\u20ac)</label><input id="np-b" type="number"></div><div class="fg"><label>Status</label><select id="np-s"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div><div class="frow"><div class="fg"><label>Start Date</label><input id="np-sd" type="date"></div><div class="fg"><label>End Date</label><input id="np-ed" type="date"></div></div><div class="mfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createProject()">Create</button></div>`);}
-function createProject(){const name=$("np-n").value.trim();if(!name){toast("Name required");return}const p={id:"proj-"+Date.now(),name,type:$("np-t").value,unit:$("np-u").value,wbsId:$("np-w").value,status:$("np-s").value,approvedBudget:+$("np-b").value||0,startDate:$("np-sd").value,endDate:$("np-ed").value,team:[],allocations:{},observations:"",assumptions:"",notes:"",files:[],licensesHardware:0};S.projects.push(p);log("Created project: "+name);closeModal();toast("Created");render();}
+function createProject(){const name=$("np-n").value.trim();if(!name){toast("Name required");return}const p={id:"proj-"+Date.now(),name,type:$("np-t").value,unit:$("np-u").value,wbsId:$("np-w").value,status:$("np-s").value,approvedBudget:+$("np-b").value||0,startDate:$("np-sd").value,endDate:$("np-ed").value,team:[],allocations:{},observations:"",assumptions:"",notes:"",files:[],licensesHardware:0};S.projects.push(p);log("Created project: "+name);dbSave("project",p.id);closeModal();toast("Created");render();}
 function openEditProj(id){const p=S.projects.find(x=>x.id===id);if(!p)return;showModal(`<div class="mtitle">Edit Project <span class="mclose" onclick="closeModal()">\u2715</span></div><div class="frow"><div class="fg"><label>Name</label><input id="ep-n" value="${p.name}"></div><div class="fg"><label>Type</label><select id="ep-t"><option value="project"${p.type==="project"?" selected":""}>Project</option><option value="unit"${p.type==="unit"?" selected":""}>Unit</option></select></div></div><div class="frow"><div class="fg"><label>WBS</label><select id="ep-w">${wbsOpts(p.wbsId)}</select></div><div class="fg"><label>Unit</label><select id="ep-u"><option value="">\u2014</option>${UNITS.map(u=>`<option${p.unit===u?" selected":""}>${u}</option>`).join("")}</select></div></div><div class="frow"><div class="fg"><label>Budget (\u20ac)</label><input id="ep-b" type="number" value="${p.approvedBudget||0}"></div><div class="fg"><label>Estado</label><select id="ep-s"><option value="active"${(p.status==="active"||p.status==="activo")?" selected":""}>Activo</option><option value="hold"${(p.status==="hold"||p.status==="on hold")?" selected":""}>On Hold</option><option value="cerrado"${(p.status==="inactive"||p.status==="closed"||p.status==="cerrado")?" selected":""}>Cerrado</option></select></div></div><div class="frow"><div class="fg"><label>Start</label><input id="ep-sd" type="date" value="${p.startDate||""}"></div><div class="fg"><label>End</label><input id="ep-ed" type="date" value="${p.endDate||""}"></div></div><div class="mfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="commitEditProj('${id}')">Save</button></div>`);}
 function commitEditProj(id){const p=S.projects.find(x=>x.id===id);if(!p)return;p.name=$("ep-n").value;p.type=$("ep-t").value;p.wbsId=$("ep-w").value;p.unit=$("ep-u").value;p.approvedBudget=+$("ep-b").value||0;p.status=$("ep-s").value;p.startDate=$("ep-sd").value;p.endDate=$("ep-ed").value;log("Edited: "+p.name);closeModal();toast("Saved");render();}
 function openAddMember(projId){const p=S.projects.find(x=>x.id===projId);if(!p)return;const avail=S.profiles.filter(pr=>!p.team.includes(pr.id)&&profileAvailable(pr,p.startDate,p.endDate));const all=S.profiles.filter(pr=>!p.team.includes(pr.id));showModal(`<div class="mtitle">Add Team Member <span class="mclose" onclick="closeModal()">\u2715</span></div><div style="font-size:11px;color:var(--text2);margin-bottom:10px">Period: ${fmtDs(p.startDate)} \u2013 ${fmtDs(p.endDate)}</div><div class="fg" style="margin-bottom:12px"><label>Profile</label><select id="am-s">${avail.length?avail.map(pr=>`<option value="${pr.id}">${pr.name} \u2014 ${pr.role} (${fmt(pr.lcr)}/hr) \u00b7 ${apl(profileAlloc(pr))}</option>`).join(""):""}${!avail.length&&all.length?`<optgroup label="\u26a0 Fully booked">${all.map(pr=>`<option value="${pr.id}">${pr.name}</option>`).join("")}</optgroup>`:""}${!all.length?"<option disabled>No profiles</option>":""}</select></div><div class="fg"><label>Allocation %</label><div style="display:flex;align-items:center;gap:10px"><input type="range" id="am-p" min="0" max="100" step="10" value="100" oninput="$('am-pl').textContent=this.value+'%'" style="flex:1"><span id="am-pl" style="min-width:36px;font-size:12px">100%</span></div></div><div class="mfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="confirmAddMember('${projId}')">Add</button></div>`);}
@@ -1560,7 +1602,7 @@ function vTR(){return`<div class="card" style="margin-bottom:14px;padding:12px 1
 function renderTR(tr){const totalHrs=periodHrs(tr.startDate,tr.endDate);const summer=isVerano(tr.startDate);return`<div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div><div style="font-size:14px;font-weight:700;color:var(--accent)">Period ${tr.period} \u00b7 ${tr.month}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">${fmtD(tr.startDate)} \u2192 ${fmtD(tr.endDate)}</div></div><div style="display:flex;gap:6px;align-items:center"><span class="chip">${totalHrs.toFixed(1)}h available</span><span class="badge ${summer?"b-yellow":"b-blue"}">${summer?"Verano":"Regular"}</span><button class="btn btn-xs btn-danger" onclick="delTR('${tr.id}')">Eliminar</button></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">${["FP001","PF001","CP001"].map(pid=>{const prof=profById(pid);if(!prof)return"";const rows=(tr.rows||[]).filter(r=>r.pid===pid);const assigned=rows.reduce((a,r)=>a+(+r.hours||0),0);const cost=rows.reduce((a,r)=>a+(+r.hours||0)*prof.lcr,0);const delta=totalHrs-assigned;const vacHrs=vacHrsInRange(prof,tr.startDate,tr.endDate);return`<div style="background:var(--bg3);border-radius:var(--r);padding:12px;border:1px solid var(--border)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><div class="av" style="width:30px;height:30px;font-size:10px;background:${prof.color}22;color:${prof.color};border:1px solid ${prof.color}44">${prof.initials}</div><div style="flex:1"><div style="font-size:12px;font-weight:700">${prof.name.split(" ")[0]}</div><div style="font-size:10px;color:var(--text3)">${fmt(prof.lcr)}/hr</div></div>${vacHrs>0?`<span class="badge b-yellow" style="font-size:9px">\u{1F334} ${vacHrs.toFixed(1)}h</span>`:""}</div><div style="display:grid;grid-template-columns:80px 1fr 50px 78px;gap:4px;margin-bottom:5px">${["WBS","Project","Hrs","Cost"].map(h=>`<div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.6px">${h}</div>`).join("")}</div>${rows.map((row,i)=>`<div style="display:grid;grid-template-columns:80px 1fr 50px 78px;gap:4px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)"><code style="font-size:9px">${row.wbsCode||""}</code><div style="font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${row.label||""}</div><input type="number" value="${row.hours}" min="0" step="0.5" style="padding:2px 5px;font-size:11px" oninput="updateTRRow('${tr.id}','${pid}',${i},this.value)"><div class="rtcost" style="padding:2px 6px;font-size:10px" id="trc-${tr.id}-${pid}-${i}">${fmt((+row.hours||0)*prof.lcr)}</div></div>`).join("")}<button class="btn btn-xs" style="margin-top:7px;width:100%;justify-content:center;font-size:10px" onclick="addTRRow('${tr.id}','${pid}')">+ Añadir fila WBS</button><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)"><div><div style="font-size:9px;color:var(--text3)">ASSIGNED</div><div style="font-size:12px;font-weight:700">${assigned.toFixed(1)}h</div></div><div><div style="font-size:9px;color:var(--text3)">AVAIL</div><div style="font-size:12px;font-weight:700">${totalHrs.toFixed(1)}h</div></div><div><div style="font-size:9px;color:var(--text3)">DELTA</div><div style="font-size:12px;font-weight:700;color:${delta>0?"var(--green)":delta<0?"var(--red)":"var(--text)"}">${delta>0?"+":""}${delta.toFixed(1)}h</div></div><div><div style="font-size:9px;color:var(--text3)">COST</div><div style="font-size:12px;font-weight:700;color:var(--accent)">${fmt(cost)}</div></div></div></div>`;}).join("")}</div></div>`;}
 function openNewTR(){const now=new Date(),y=now.getFullYear(),m=now.getMonth(),day=now.getDate();const period=day<=15?1:2,mn=String(m+1).padStart(2,"0");const start=period===1?`${y}-${mn}-01`:`${y}-${mn}-16`;const end=period===1?`${y}-${mn}-15`:new Date(y,m+1,0).toISOString().split("T")[0];showModal(`<div class="mtitle">New Time Report <span class="mclose" onclick="closeModal()">\u2715</span></div><div class="frow"><div class="fg"><label>Month</label><input id="tr-m" value="${now.toLocaleString("en-GB",{month:"long",year:"numeric"})}"></div><div class="fg"><label>Period</label><select id="tr-p"><option value="1"${period===1?" selected":""}>Period 1 (1\u201315)</option><option value="2"${period===2?" selected":""}>Period 2 (16\u2013end)</option></select></div></div><div class="frow"><div class="fg"><label>Start Date</label><input type="date" id="tr-s" value="${start}"></div><div class="fg"><label>End Date</label><input type="date" id="tr-e" value="${end}"></div></div><div class="mfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="createTR()">Create</button></div>`);}
 function createTR(){const tr={id:"tr-"+Date.now(),month:$("tr-m").value,period:$("tr-p").value,startDate:$("tr-s").value,endDate:$("tr-e").value,rows:[]};S.timeReports.unshift(tr);log("Created time report: "+tr.month+" P"+tr.period);closeModal();toast("Report created");render();}
-function addTRRow(trId,pid){const tr=S.timeReports.find(t=>t.id===trId);if(!tr)return;const wbs=S.wbsCodes.find(w=>!w.system)||S.wbsCodes[0];tr.rows.push({pid,wbsCode:wbs?.code||"",wbsId:wbs?.id||"",label:wbs?.label||"",hours:0});render();}
+function addTRRow(trId,pid){const tr=S.timeReports.find(t=>t.id===trId);if(!tr)return;const wbs=S.wbsCodes.find(w=>!w.system)||S.wbsCodes[0];tr.rows.push({pid,wbsCode:wbs?.code||"",wbsId:wbs?.id||"",label:wbs?.label||"",hours:0});dbSave("tr",trId);render();}
 function updateTRRow(trId,pid,idx,val){
   const tr=S.timeReports.find(t=>t.id===trId);if(!tr)return;
   const rows=tr.rows.filter(r=>r.pid===pid);
