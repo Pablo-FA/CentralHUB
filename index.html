@@ -189,6 +189,9 @@ body{background:var(--bg)}
 .ph-wrap span{font-size:12px;color:var(--text3)}
 .dark-btn{width:26px;height:26px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3)}
 .dark-btn:hover{border-color:var(--border2);color:var(--text2)}
+.todo-owner{font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);cursor:pointer;font-family:var(--font);outline:none;-webkit-appearance:none;flex-shrink:0;transition:all .15s}
+.todo-owner:hover{border-color:var(--border2)}
+.todo-owner.assigned{background:var(--acc-bg);color:var(--acc);border-color:var(--acc-border)}
 .dark-btn i{font-size:14px}
 </style>
 </head>
@@ -254,10 +257,10 @@ body{background:var(--bg)}
         <span class="ni-chv" id="chv-sd">▾</span>
       </div>
       <div class="nsub" id="sub-sd">
+        <div class="nsi" id="nsi-dashboard" onclick="navToTab('dashboard')"><div class="nsi-dot"></div>Dashboard</div>
         <div class="nsi" id="nsi-roster" onclick="navToTab('roster')"><div class="nsi-dot"></div>Roster</div>
         <div class="nsi" id="nsi-supply" onclick="navToTab('supply')"><div class="nsi-dot"></div>Supply</div>
         <div class="nsi" id="nsi-demand" onclick="navToTab('demand')"><div class="nsi-dot"></div>Demand</div>
-        <div class="nsi" id="nsi-dashboard" onclick="navToTab('dashboard')"><div class="nsi-dot"></div>Dashboard</div>
       </div>
       <div class="ni" onclick="navTo('ph','Sales Tracking')">
         <i class="ti ti-trending-up"></i>
@@ -540,6 +543,11 @@ function getTodos(){return JSON.parse(localStorage.getItem("mo_todos_"+(currentU
 function saveTodos(t){localStorage.setItem("mo_todos_"+(currentUser?.name||""),JSON.stringify(t));}
 function toggleTodo(id){saveTodos(getTodos().map(t=>t.id===id?{...t,done:!t.done}:t));showHome();}
 function delTodo(id){saveTodos(getTodos().filter(t=>t.id!==id));showHome();}
+const TODO_USERS=['Pablo F.','Conrado P.','Fabio H.G.'];
+function setTodoOwner(id,owner){
+  saveTodos(getTodos().map(t=>t.id===id?{...t,owner}:t));
+  showHome();
+}
 function addTodo(){
   const inp=document.getElementById("todo-inp");
   if(!inp||!inp.value.trim())return;
@@ -602,6 +610,10 @@ async function showHome(){
       ${todos.map(t=>`<div class="todo-item">
         <div class="todo-chk${t.done?" dn":""}" onclick="toggleTodo('${t.id}')"></div>
         <div class="todo-txt${t.done?" dn":""}">${t.text}</div>
+        <select class="todo-owner${t.owner?" assigned":""}" onchange="setTodoOwner('${t.id}',this.value)" onclick="event.stopPropagation()">
+          <option value="">— owner</option>
+          ${TODO_USERS.map(u=>`<option value="${u}"${t.owner===u?" selected":""}>${u}</option>`).join("")}
+        </select>
         <button class="todo-del" onclick="delTodo('${t.id}')">×</button>
       </div>`).join("")}
       <div class="todo-add">
