@@ -553,21 +553,21 @@ async function showHome(){
     <span class="role">${currentUser.role}</span>
   </div>
   <div class="stats-row">
-    <div class="scard" style="border-left:3px solid ${m.fteUtil>90?"var(--red)":m.fteUtil>70?"var(--ok)":"var(--warn)"};cursor:pointer" onclick="navToSD('supply')">
+    <div class="scard" style="border-left:3px solid ${m.fteUtil>90?"var(--red)":m.fteUtil>70?"var(--ok)":"var(--warn)"}">
       <div class="scard-lbl">Utilización</div>
-      <div class="scard-val" style="color:${m.fteUtil>70?"var(--ok)":m.fteUtil>40?"var(--warn)":"var(--danger)"}">${m.fteUtil||0}%</div>
+      <div class="scard-val" style="color:${m.fteUtil>70?"var(--ok)":m.fteUtil>40?"var(--warn)":"var(--danger)"};cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:currentColor;text-decoration-style:dashed" onclick="navToSD('supply','asignacion')">${m.fteUtil||0}%</div>
       <div class="scard-sub">${m.allocatedFte||0} de ${m.total||0} FTEs asignados</div>
     </div>
-    <div class="scard" style="border-left:3px solid var(--acc);cursor:pointer" onclick="navToSD('supply','disponibles')">
+    <div class="scard" style="border-left:3px solid var(--acc)">
       <div class="scard-lbl">Current Capacity</div>
-      <div class="scard-val">${m.bench||0}</div>
+      <div class="scard-val" style="cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--acc-border);text-decoration-style:dashed" onclick="navToSD('supply','disponibles')">${m.bench||0}</div>
       <div class="scard-sub">${(m.bench||0)===1?"persona disponible":"personas disponibles"}</div>
     </div>
     <div class="scard"><div class="scard-lbl">Cargabilidad media</div><div class="scard-val" style="color:${m.avg>=80?"var(--ok)":m.avg>=50?"var(--warn)":"var(--danger)"}">${m.avg||0}%</div><div class="scard-sub">Promedio del centro</div></div>
     <div class="scard"><div class="scard-lbl">Proyectos activos</div><div class="scard-val">${m.projs||0}</div><div class="scard-sub">Asignaciones confirmadas</div></div>
-    <div class="scard" style="cursor:pointer" onclick="navToTab('demand')">
+    <div class="scard">
       <div class="scard-lbl">Demand abierta</div>
-      <div class="scard-val" style="color:${m.openD>0?"var(--acc)":"var(--text)"};text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--acc-border)">${m.openD||0}</div>
+      <div class="scard-val" style="color:${m.openD>0?"var(--acc)":"var(--text)"};cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--acc-border);text-decoration-style:dashed" onclick="navToTab('demand')">${m.openD||0}</div>
       <div class="scard-sub">Sin asignar · ver →</div>
     </div>
   </div>
