@@ -632,6 +632,7 @@ function showGate(){
       showApp();window._appReady=true;render();
       var pending=window._pendingTab;
       if(pending){window._applyTab(pending);window._pendingTab=null;}
+      if(window._pendingSupplyView){S.supplyView=window._pendingSupplyView;window._pendingSupplyView=null;render();}
     });
     return;
   }document.getElementById("root").innerHTML=`<div class="pgate"><div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)">Marketing Operations · Supply & Demand</div><div style="font-size:20px;font-weight:500">Acceso requerido</div><div style="display:flex;flex-direction:column;align-items:center;gap:12px"><input class="fi" type="password" id="pi" placeholder="Contraseña" style="width:220px;text-align:center;letter-spacing:.1em"/><button class="btn btnp" style="width:220px" onclick="doPin()">Entrar</button></div><div id="perr" style="color:var(--red);font-size:12px;display:none">Contraseña incorrecta</div></div>`;setTimeout(()=>{const p=document.getElementById("pi");if(p)p.addEventListener("keydown",e=>e.key==="Enter"&&doPin());},50);}
@@ -1391,6 +1392,10 @@ window.addEventListener('message',function(e){
   if(!e.data||!e.data.tab)return;
   var t=e.data.tab;
   if(!['roster','supply','demand','dashboard'].includes(t))return;
+  if(e.data.supplyView){
+    if(S&&S.supplyView!==undefined)S.supplyView=e.data.supplyView;
+    else window._pendingSupplyView=e.data.supplyView;
+  }
   if(typeof window._applyTab==='function'){window._applyTab(t);}
   else{window._pendingTab=t;}
 });
