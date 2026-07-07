@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 17:07" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-07 17:31" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 17:07"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 17:31"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -333,6 +333,9 @@ function isOnLeave(p){
   if(p.on_leave)return true;
   return S.bajas.some(b=>b.profile_id===p.id);
 }
+// The demand "owner" must match the Home's user names (short form used at login),
+// not the roster's full names. These are the management users who can own demands.
+const OWNER_USERS=["Pablo F.","Conrado P.","Fabio H.G."];
 function isOverhead(p){return (p.role||"").toLowerCase()==="management"||(p.role||"").toLowerCase()==="overhead";}
 function normStr(s){return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
 function pCharge(pid){const now=new Date();return S.assigns.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===pid&&s<=now&&(!e||e>=now)&&!a.is_forecast;}).reduce((t,a)=>t+(a.chargeability||0),0);}
@@ -692,6 +695,12 @@ async function loadData(){
   }catch(e){console.warn('S&D load error:',e);}
   // Seed demo data ONLY on a completely fresh/empty database (first run ever).
   // Once real data exists, never re-inject demo records.
+  // One-time migration: normalize demand owners from roster full-names to short login names
+  const OWNER_MAP={"Pablo Fajardo Aneas":"Pablo F.","Conrado Pittari Volcán":"Conrado P.","Fabio Gil Pereira":"Fabio H.G."};
+  let ownerMigrated=false;
+  S.demands.forEach(d=>{if(d.owner&&OWNER_MAP[d.owner]){d.owner=OWNER_MAP[d.owner];ownerMigrated=true;}});
+  if(ownerMigrated){save();}
+
   const isEmpty = S.profiles.length===0 && S.assigns.length===0 && S.demands.length===0;
   if(isEmpty){
     S.profiles=[...DP];
@@ -1680,7 +1689,7 @@ function openDM(id){
           <label>Owner <span style="font-size:10px;color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(responsable de cubrir esta demanda)</span></label>
           <select id="dm-owner" class="fi">
             <option value="">— Sin owner</option>
-            ${S.profiles.filter(p=>isOverhead(p)).map(p=>`<option value="${p.name}"${d&&d.owner===p.name?" selected":""}>${p.name}</option>`).join("")}
+            ${OWNER_USERS.map(u=>`<option value="${u}"${d&&d.owner===u?" selected":""}>${u}</option>`).join("")}
           </select>
           <div style="font-size:11px;color:var(--t3);margin-top:4px">Se creará un pendiente en el Home del owner.</div>
         </div>
