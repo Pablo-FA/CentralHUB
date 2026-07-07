@@ -763,7 +763,7 @@ function tSupply(){
   }
 
   if(S.supplyView==="disponibles"){
-    const bench=S.profiles.filter(p=>sfF(p)&&pCharge(p.id)<100);
+    const bench=S.profiles.filter(p=>sfF(p)&&p.is_active!==false&&pCharge(p.id)===0);
     const rFiltered=f.risks.length?bench.filter(p=>f.risks.includes(getRisk(p.id))):bench;
     const sorted=sortedSupply(rFiltered);
     const fCount=f.caps.length+f.levels.length+f.risks.length+f.ctypes.length+(f.q?1:0);
@@ -967,6 +967,11 @@ function captureEditData(){
   const g=(id,def="")=>{const el=document.getElementById(id);return el?el.value:def;};
   const getTgg=gid=>{const b=document.querySelector(`#${gid} .tgb.on`);return b?b.textContent:editData[gid==="tgg-sen"?"seniority":gid==="tgg-lvl"?"level_accenture":"contract_type"]||"";};
   Object.assign(editData,{name:g("pn"),eid:g("peid"),capability:g("pcap"),role:g("prol")==="__new__"?"":g("prol"),seniority:getTgg("tgg-sen"),level_accenture:getTgg("tgg-lvl"),contract_type:getTgg("tgg-ct"),location:g("ploc"),people_lead:g("ppl"),lcr:g("pl"),current_project:g("pcp"),next_assignment:g("pna"),employee_number:g("penum"),hire_date:g("phire"),agency:g("pagency"),notes:g("pno"),performance_notes:g("pperf")});
+  // Capture "Perfil de baja" checkbox + leave type
+  const leaveEl=document.getElementById("p-leave");
+  if(leaveEl)editData.on_leave=leaveEl.checked;
+  const btypeB=document.querySelector("#tgg-btype .tgb.on");
+  if(btypeB)editData.leave_type=btypeB.textContent;
 }
 
 function renderPM(){
@@ -1461,6 +1466,15 @@ function openAM(pid){const profile=S.profiles.find(p=>p.id===pid);const asgns=S.
 async function saveA(pid){const data={profile_id:pid,project_name:document.getElementById("ap").value,start_date:document.getElementById("as").value,end_date:document.getElementById("ae").value||null,chargeability:parseInt(document.getElementById("ach").value)||100,is_forecast:document.getElementById("afc").checked,notes:document.getElementById("ano").value,id:uid(),created_at:new Date().toISOString()};if(!data.project_name||!data.start_date)return;S.assigns.push(data);await save();cm();render();}
 async function delA(id,pid){S.assigns=S.assigns.filter(a=>a.id!==id);await save();openAM(pid);}
 function cm(){document.getElementById("mroot").innerHTML="";}
+
+// ESC closes modals (confirm dialog first, then main modal)
+document.addEventListener("keydown",function(e){
+  if(e.key!=="Escape")return;
+  const del=document.getElementById("del-confirm");
+  if(del){del.remove();return;}
+  const mroot=document.getElementById("mroot");
+  if(mroot&&mroot.innerHTML.trim()){cm();}
+});
 
 
 // Tab navigation via postMessage (from platform iframe parent)
