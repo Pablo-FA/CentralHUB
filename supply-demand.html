@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 16:32" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-07 16:50" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 16:32"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 16:50"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -260,6 +260,36 @@ const rolesForCap=cap=>{const custom=S.customRoles.filter(r=>!cap||r.cap===cap).
 // Normalize strings for accent-insensitive sorting (Ángela sorts with A)
 // Overhead/Management profiles — excluded from staffing views & capacity metrics
 // Get the display project for a profile (active assignment, else upcoming, else "")
+function getForecast(horizonDays){
+  // Profiles currently assigned that will free up (load drops) within the horizon.
+  const now=new Date();
+  const horizon=new Date(now.getTime()+horizonDays*86400000);
+  const out=[];
+  S.profiles.forEach(p=>{
+    if(isOverhead(p)||isOnLeave(p)||p.is_active===false)return;
+    const curLoad=pCharge(p.id);
+    if(curLoad===0)return; // already on bench, not a forecast
+    // Build timeline of this profile's non-forecast assignments
+    const asgs=S.assigns.filter(a=>a.profile_id===p.id&&!a.is_forecast);
+    if(!asgs.length)return;
+    // For each day boundary (assignment end dates), compute load just after
+    // Find the earliest future date where load drops below current (someone ends and nobody replaces)
+    const endDates=asgs.filter(a=>a.end_date).map(a=>new Date(a.end_date)).filter(d=>d>now&&d<=horizon).sort((a,b)=>a-b);
+    if(!endDates.length)return; // nothing ends within horizon
+    // Load on a given date
+    const loadOn=d=>asgs.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return s<=d&&(!e||e>=d);}).reduce((t,a)=>t+(a.chargeability||0),0);
+    // Check the day after each end date; find first drop
+    for(const ed of endDates){
+      const dayAfter=new Date(ed.getTime()+86400000);
+      const loadAfter=loadOn(dayAfter);
+      if(loadAfter<curLoad){
+        out.push({profile:p,freeDate:dayAfter,loadAfter,curLoad,freedPct:curLoad-loadAfter});
+        break; // first drop only
+      }
+    }
+  });
+  return out.sort((a,b)=>a.freeDate-b.freeDate);
+}
 function supplyProjects(){
   const set=new Set();
   S.profiles.filter(p=>!isOverhead(p)).forEach(p=>{const pr=getProjectName(p);if(pr)set.add(pr);});
@@ -759,32 +789,11 @@ function tSupply(){
   const nameCell=(p)=>`<td style="min-width:280px;width:280px"><div style="display:flex;align-items:center;gap:9px"><div class="av" style="flex-shrink:0">${ini(p.name)}</div><div><div style="font-weight:500">${p.name}${p.on_leave?` <span class="bdg bred" style="font-size:9px">Baja</span>`:""}</div><div style="font-size:11px;color:var(--t3)">${p.role||""}</div></div></div></td>`;
 
   if(S.supplyView==="asignacion"){
-    const fp=sortedSupply(S.profiles.filter(sfF));
+    const allFiltered=sortedSupply(S.profiles.filter(sfF));
+    const fp=allFiltered.filter(p=>!isOnLeave(p));
+    const bajaP=allFiltered.filter(p=>isOnLeave(p));
     const fCount=f.caps.length+f.levels.length+f.ctypes.length+(f.projects?f.projects.length:0)+(f.q?1:0);
-    return`<div class="shdr" style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:16px">${vt}<span class="scnt" style="margin-left:0">${fp.length} perfiles</span></div>
-    </div>
-    <div class="fbar">
-      <input id="sf-q" class="fsearch" placeholder="Buscar perfil..." value="${f.q}" oninput="S.sf.q=this.value;render()"/>
-      <span class="cap-col">${sfddM("cp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}</span>
-      ${sfddM("lv","levels","Nivel",LEVELS.map(l=>({val:l,label:l,sub:LN[l]})))}
-      ${sfddM("ct","ctypes","Tipo",CONTRACT_TYPES.map(t=>({val:t,label:t})))}
-      ${sfddM("pj","projects","Proyecto",supplyProjects().map(pr=>({val:pr,label:pr})))}
-      ${fCount>0?`<button class="btn btns" style="color:var(--t3);border-color:transparent" onclick="S.sf={q:'',caps:[],levels:[],risks:[],ctypes:[]};render()">× ${fCount}</button>`:""}
-    </div>
-    <div class="tw" style="overflow-x:auto"><table style="min-width:800px">
-      <thead><tr>
-        ${thS("Nombre","name")}
-        <span class="cap-col">${thS("Capability","capability")}</span>
-        ${thS("Level","level_accenture")}
-        ${thS("Tipo","contract_type")}
-        ${thS("Proyecto","project")}
-        ${thS("Asig.","cargabilidad")}
-        ${thS("Desde","desde")}
-        ${thS("Hasta","hasta")}
-        <th></th>
-      </tr></thead>
-      <tbody>${fp.length===0?`<tr><td colspan="9" class="empty">Sin perfiles</td></tr>`:fp.map(p=>{
+    const asgRow=p=>{
         const active=[...S.assigns.filter(a=>a.profile_id===p.id)].filter(ia);
         const upcoming=S.assigns.filter(a=>a.profile_id===p.id&&new Date(a.start_date)>now&&!a.is_forecast).sort((a,b)=>new Date(a.start_date)-new Date(b.start_date));
         const c2=pCharge(p.id);const sub=p.contract_type==="Subcontractor";
@@ -802,8 +811,52 @@ function tSupply(){
           <td style="font-size:12px;color:var(--t2)">${hasta}</td>
           ${editBtn(p.id)}
         </tr>`;
-      }).join("")}</tbody>
-    </table></div>`;
+    };
+    const headRow=`<thead><tr>
+        ${thS("Nombre","name")}
+        <span class="cap-col">${thS("Capability","capability")}</span>
+        ${thS("Level","level_accenture")}
+        ${thS("Tipo","contract_type")}
+        ${thS("Proyecto","project")}
+        ${thS("Asig.","cargabilidad")}
+        ${thS("Desde","desde")}
+        ${thS("Hasta","hasta")}
+        <th></th>
+      </tr></thead>`;
+    // Baja row: simplified, no project/charge
+    const bajaRow=p=>`<tr onclick="openPM('${p.id}','asignacion')">
+        ${nameCell(p)}
+        <td class="cap-col" style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
+        <td><span class="bdg bg">${p.level_accenture||"—"}</span></td>
+        <td><span class="bdg ${p.contract_type==="Subcontractor"?"bamber":"bgreen"}" style="font-size:10px">${p.contract_type||"Interno"}</span></td>
+        <td colspan="4" style="font-size:12px;color:var(--t3)">De baja${(()=>{const b=S.bajas.find(x=>x.profile_id===p.id);return b&&b.hasta?` · hasta ${fds(b.hasta)}`:"";})()}</td>
+        ${editBtn(p.id)}
+      </tr>`;
+    return`<div class="shdr" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:16px">${vt}<span class="scnt" style="margin-left:0">${fp.length} perfiles</span></div>
+    </div>
+    <div class="fbar">
+      <input id="sf-q" class="fsearch" placeholder="Buscar perfil..." value="${f.q}" oninput="S.sf.q=this.value;render()"/>
+      <span class="cap-col">${sfddM("cp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}</span>
+      ${sfddM("lv","levels","Nivel",LEVELS.map(l=>({val:l,label:l,sub:LN[l]})))}
+      ${sfddM("ct","ctypes","Tipo",CONTRACT_TYPES.map(t=>({val:t,label:t})))}
+      ${sfddM("pj","projects","Proyecto",supplyProjects().map(pr=>({val:pr,label:pr})))}
+      ${fCount>0?`<button class="btn btns" style="color:var(--t3);border-color:transparent" onclick="S.sf={q:'',caps:[],levels:[],risks:[],ctypes:[],projects:[]};render()">× ${fCount}</button>`:""}
+    </div>
+    <div class="tw" style="overflow-x:auto"><table style="min-width:800px">
+      ${headRow}
+      <tbody>${fp.length===0?`<tr><td colspan="9" class="empty">Sin perfiles</td></tr>`:fp.map(asgRow).join("")}</tbody>
+    </table></div>
+    ${bajaP.length?`<div style="margin-top:28px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div class="sect-lbl" style="margin:0">De baja</div>
+        <span style="font-size:11px;color:var(--t3)">${bajaP.length} · no computa en capacidad ni disponibilidad</span>
+      </div>
+      <div class="tw" style="overflow-x:auto"><table style="min-width:800px">
+        ${headRow}
+        <tbody>${bajaP.map(bajaRow).join("")}</tbody>
+      </table></div>
+    </div>`:""}`;
   }
 
   if(S.supplyView==="disponibles"){
@@ -852,7 +905,42 @@ function tSupply(){
           ${editBtn(p.id)}
         </tr>`;
       }).join("")}</tbody>
-    </table></div>`;
+    </table></div>
+    ${(()=>{
+      const fc=getForecast(90);
+      if(!fc.length)return"";
+      return`<div style="margin-top:28px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div class="sect-lbl" style="margin:0">Forecast</div>
+          <span style="font-size:11px;color:var(--t3)">${fc.length} · previsión de banquillo · próximos 90 días</span>
+        </div>
+        <div class="tw" style="overflow-x:auto"><table style="min-width:700px">
+          <thead><tr>
+            <th>Nombre</th>
+            <th class="cap-col">Capability</th>
+            <th>Level</th>
+            <th>Proyecto actual</th>
+            <th>Queda libre</th>
+            <th>En</th>
+            <th>Libera</th>
+          </tr></thead>
+          <tbody>${fc.map(item=>{
+            const p=item.profile;
+            const daysUntil=Math.ceil((item.freeDate-now)/86400000);
+            const curProj=getProjectName(p);
+            return`<tr onclick="openPM('${p.id}','asignacion')" style="cursor:pointer">
+              ${nameCell(p)}
+              <td class="cap-col" style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
+              <td><span class="bdg bg">${p.level_accenture||"—"}</span></td>
+              <td style="font-size:12px;color:var(--t2)">${curProj||"—"}</td>
+              <td style="font-size:12px"><span style="color:var(--acc);font-weight:500">${fds(item.freeDate.toISOString())}</span></td>
+              <td><span class="bdg ${daysUntil<=15?"bamber":"bg"}" style="font-size:11px">${daysUntil}d</span></td>
+              <td><span class="bdg ${item.loadAfter===0?"bred":"bamber"}" style="font-size:10px">${item.freedPct}%${item.loadAfter===0?" · full bench":""}</span></td>
+            </tr>`;
+          }).join("")}</tbody>
+        </table></div>
+      </div>`;
+    })()}`;
   }
 
   if(S.supplyView==="bajas"){
