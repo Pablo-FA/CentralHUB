@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 17:11" data-file="index"/>
+<meta name="build-stamp" content="2026-07-07 17:23" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -199,7 +199,7 @@ body{background:var(--bg)}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-07-07 17:11"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-07-07 17:23"};</script>
 </head>
 <body>
 
@@ -330,14 +330,16 @@ document.addEventListener('DOMContentLoaded',function(){
 
 // Date
 function updDate(){
+  const el=document.getElementById("tb-date");
+  if(!el)return; // element removed in topbar redesign — guard prevents crash
   const d=new Date(),days=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"],
     months=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-  document.getElementById("tb-date").textContent=`${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+  el.textContent=`${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
 }
 updDate();setInterval(updDate,60000);
 
 // Login
-document.getElementById("pin-in").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+document.getElementById("pin-in")?.addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
 function doLogin(){
   const uval=document.getElementById("user-sel").value;
   const pin=document.getElementById("pin-in").value;
