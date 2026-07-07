@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 14:26" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-07 14:42" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 14:26"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 14:42"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -1020,6 +1020,7 @@ function renderPM(){
   </div></div>`;
 
   // Wire supply-tab window functions after DOM render
+window._addAsgLine=_addAsgLine;window._delAsgLine=_delAsgLine;
   window._prRisk=async(pid,r)=>{
     const rv=r==="auto"?null:r;
     S.profiles=S.profiles.map(pr=>pr.id===pid?{...pr,risk_override:rv}:pr);
@@ -1159,108 +1160,210 @@ function setSL(i,l){editSkills[i].level=l;rskl();}
 
 function asigTab(p){
   const now=new Date();
-  const isActive=a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===p.id&&s<=now&&(!e||e>=now)&&!a.is_forecast;};
-  const activeA=S.assigns.filter(isActive).sort((a,b)=>b.chargeability-a.chargeability);
+  const isActiveNow=a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===p.id&&s<=now&&(!e||e>=now)&&!a.is_forecast;};
+  const activeA=S.assigns.filter(isActiveNow).sort((a,b)=>b.chargeability-a.chargeability);
   const currIds=new Set(activeA.map(a=>a.id));
   const risk=getRisk(p.id);
   const notes=(p.supply_notes||[]).slice().reverse();
   const currNotes=notes.filter(n=>currIds.has(n.assignment_id));
   const pastNotes=notes.filter(n=>!currIds.has(n.assignment_id));
 
-  // Assignment summary — read-only when viewing, editable fields when editing
-  const mainA=activeA[0]||null;
-  let assignSum;
-  if(modalEditMode){
-    // Editable current-assignment form
-    assignSum=`<div style="padding:4px 0 8px">
-      <div class="fld"><label>Proyecto actual</label>
-        <input id="aa-proj" class="fi" value="${mainA?String(mainA.project_name||"").replace(/"/g,"&quot;"):""}" placeholder="Nombre del proyecto"/>
+  // All assignments for this profile, sorted by start date
+  const allA=S.assigns.filter(a=>a.profile_id===p.id).sort((a,b)=>new Date(a.start_date||0)-new Date(b.start_date||0));
+
+  const fmtD=d=>d?new Date(d+"T12:00:00").toLocaleDateString("es-ES",{day:"2-digit",month:"short"}):"—";
+
+  // ── VIEW MODE: read-only list of assignment lines ──
+  if(!modalEditMode){
+    const lineRows=allA.length===0
+      ?`<div style="color:var(--t3);font-size:12px;padding:8px 0 16px">Sin asignaciones.</div>`
+      :allA.map(a=>{
+        const isNow=isActiveNow(a);
+        const isFuture=new Date(a.start_date)>now;
+        return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--b)">
+          <div style="flex:1">
+            <div style="font-weight:500;font-size:13px">${a.project_name}${isNow?` <span style="font-size:9px;color:var(--green);font-weight:600;letter-spacing:.04em;margin-left:4px">ACTIVA</span>`:isFuture?` <span style="font-size:9px;color:var(--acc);font-weight:600;letter-spacing:.04em;margin-left:4px">FUTURA</span>`:` <span style="font-size:9px;color:var(--t3);font-weight:600;letter-spacing:.04em;margin-left:4px">PASADA</span>`}</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:2px">${fmtD(a.start_date)} → ${fmtD(a.end_date)}</div>
+          </div>
+          <span class="bdg ${a.chargeability>=80?"bgreen":a.chargeability>=40?"bamber":"bg"}" style="font-size:11px">${a.chargeability}%</span>
+        </div>`;
+      }).join("");
+
+    // Total current load indicator
+    const curLoad=activeA.reduce((s,a)=>s+(a.chargeability||0),0);
+    const loadColor=curLoad>100?"var(--red)":curLoad>=80?"var(--green)":curLoad>0?"var(--amber)":"var(--t3)";
+
+    return`<div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="sect-lbl" style="margin:0">Asignaciones</div>
+        <span style="font-size:11px;color:${loadColor};font-weight:600">Carga actual: ${curLoad}%</span>
       </div>
-      <div style="display:flex;gap:10px">
-        <div class="fld" style="flex:1"><label>Desde</label>
-          <input id="aa-start" type="date" class="fi" value="${mainA&&mainA.start_date?mainA.start_date:""}"/>
+      ${lineRows}
+      <div class="fld" style="margin-top:16px">
+        <label>Riesgo</label>
+        <div class="tgg">${["low","mid","high"].map(r=>`<button class="tgb${(p.risk_override||risk)===r?" on":""}" onclick="window._prRisk('${p.id}','${r}')">${r==="low"?"Low":r==="mid"?"Mid":"High"}</button>`).join("")}<button class="tgb${!p.risk_override?" on":""}" onclick="window._prRisk('${p.id}','auto')">Auto</button></div>
+        <div style="font-size:11px;color:var(--t3);margin-top:5px">Auto: Low &lt;15d · Mid 15–30d · High &gt;30d</div>
+      </div>
+      <div class="fld">
+        <label>Notas <span style="font-size:10px;color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(vinculadas a la asignación activa)</span></label>
+        ${currNotes.length===0?`<div style="color:var(--t3);font-size:12px;padding:4px 0 8px">Sin notas para esta asignación.</div>`:""}
+        ${currNotes.map(noteRow).join("")}
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <textarea id="pr-note-inp" class="fi" style="flex:1;min-height:60px;resize:vertical" placeholder="Añadir nota..."></textarea>
+          <button class="btn btns btnp" style="align-self:flex-end;white-space:nowrap" onclick="window._prAddNote('${p.id}')">+ Añadir</button>
         </div>
-        <div class="fld" style="flex:1"><label>Hasta (fin previsto)</label>
-          <input id="aa-end" type="date" class="fi" value="${mainA&&mainA.end_date?mainA.end_date:""}"/>
+      </div>
+      ${pastNotes.length>0?`<div style="border-top:1px solid var(--b);margin-top:8px;padding-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Historial de notas (${pastNotes.length})</div>
+          <button class="btn btns" style="font-size:11px;color:var(--red);border-color:rgba(239,68,68,0.3)" onclick="window._prClearHist('${p.id}')">Limpiar historial</button>
         </div>
-      </div>
-      <div class="fld"><label>Carga (%)</label>
-        <input id="aa-charge" type="number" min="0" max="100" class="fi" value="${mainA?(mainA.chargeability!=null?mainA.chargeability:100):100}" style="max-width:120px"/>
-      </div>
-      <div style="font-size:11px;color:var(--t3);margin-top:2px">Deja el proyecto vacío para quitar la asignación actual.</div>
+        <div style="opacity:.7">${pastNotes.map(noteRow).join("")}</div>
+      </div>`:""}
     </div>`;
-  } else {
-    assignSum=activeA.length===0
-      ?`<div style="color:var(--t3);font-size:12px;padding:8px 0 16px">Sin asignación activa.</div>`
-      :activeA.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--b)"><div style="flex:1"><div style="font-weight:500;font-size:13px">${a.project_name}</div><div style="font-size:11px;color:var(--t3);margin-top:2px">${fds(a.start_date)} → ${fds(a.end_date)} <span class="bdg ${a.chargeability>=80?"bgreen":a.chargeability>=40?"bamber":"bg"}" style="font-size:11px;margin-left:4px">${a.chargeability}%</span>${a.is_forecast?` <span style="font-size:10px;color:var(--acc)">PREV</span>`:""}</div></div></div>`).join("");
+
+    function noteRow(n){return`<div style="padding:10px 0;border-bottom:1px solid var(--b)"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><div style="flex:1"><div style="font-size:12px;line-height:1.5">${n.text}</div><div style="font-size:10px;color:var(--t3);margin-top:4px">${new Date(n.ts).toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})} · ${n.project}</div></div><button onclick="window._prDelNote('${p.id}','${n.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">×</button></div></div>`;}
   }
 
-  // Risk section
-  const rBtns=["low","mid","high"].map(r=>`<button class="tgb${(p.risk_override||risk)===r?" on":""}" onclick="window._prRisk('${p.id}','${r}')">${r==="low"?"Low":r==="mid"?"Mid":"High"}</button>`).join("")+`<button class="tgb${!p.risk_override?" on":""}" onclick="window._prRisk('${p.id}','auto')">Auto</button>`;
-
-  // Note renderer
-  const noteRow=n=>`<div style="padding:10px 0;border-bottom:1px solid var(--b)"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><div style="flex:1"><div style="font-size:12px;line-height:1.5">${n.text}</div><div style="font-size:10px;color:var(--t3);margin-top:4px">${new Date(n.ts).toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})} · ${n.project}</div></div><button onclick="window._prDelNote('${p.id}','${n.id}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">×</button></div></div>`;
+  // ── EDIT MODE: editable assignment lines ──
+  const lineForm=(a,i)=>`<div class="asg-line" data-idx="${i}" style="border:1px solid var(--b);border-radius:8px;padding:12px;margin-bottom:10px;background:var(--bg2)">
+    <div style="display:flex;gap:8px;align-items:flex-start">
+      <div class="fld" style="flex:1;margin:0"><label style="font-size:10px">Proyecto</label>
+        <input class="fi asg-proj" value="${a?String(a.project_name||"").replace(/"/g,"&quot;"):""}" placeholder="Proyecto"/>
+      </div>
+      <button onclick="window._delAsgLine(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;line-height:1;margin-top:18px;flex-shrink:0" title="Eliminar línea">×</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <div class="fld" style="flex:1;margin:0"><label style="font-size:10px">Desde</label>
+        <input type="date" class="fi asg-start" value="${a&&a.start_date?a.start_date:""}"/>
+      </div>
+      <div class="fld" style="flex:1;margin:0"><label style="font-size:10px">Hasta</label>
+        <input type="date" class="fi asg-end" value="${a&&a.end_date?a.end_date:""}"/>
+      </div>
+      <div class="fld" style="width:80px;margin:0"><label style="font-size:10px">Carga %</label>
+        <input type="number" min="0" max="100" class="fi asg-charge" value="${a?(a.chargeability!=null?a.chargeability:100):100}"/>
+      </div>
+    </div>
+  </div>`;
 
   return`<div>
-    <div class="sect-lbl">Asignación actual</div>
-    ${assignSum}
-    ${modalEditMode?"":`
-    <div class="fld" style="margin-top:16px">
-      <label>Riesgo</label>
-      <div class="tgg">${rBtns}</div>
-      <div style="font-size:11px;color:var(--t3);margin-top:5px">Auto: Low &lt;15d · Mid 15–30d · High &gt;30d</div>
+    <div class="sect-lbl">Asignaciones</div>
+    <div id="asg-lines">
+      ${allA.length?allA.map((a,i)=>lineForm(a,i)).join(""):lineForm(null,0)}
     </div>
-    <div class="fld">
-      <label>Notas <span style="font-size:10px;color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(vinculadas a la asignación activa)</span></label>
-      ${currNotes.length===0?`<div style="color:var(--t3);font-size:12px;padding:4px 0 8px">Sin notas para esta asignación.</div>`:""}
-      ${currNotes.map(noteRow).join("")}
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <textarea id="pr-note-inp" class="fi" style="flex:1;min-height:60px;resize:vertical" placeholder="Añadir nota..."></textarea>
-        <button class="btn btns btnp" style="align-self:flex-end;white-space:nowrap" onclick="window._prAddNote('${p.id}')">+ Añadir</button>
-      </div>
-    </div>
-    ${pastNotes.length>0?`<div style="border-top:1px solid var(--b);margin-top:8px;padding-top:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em">Historial de notas (${pastNotes.length})</div>
-        <button class="btn btns" style="font-size:11px;color:var(--red);border-color:rgba(239,68,68,0.3)" onclick="window._prClearHist('${p.id}')">Limpiar historial</button>
-      </div>
-      <div style="opacity:.7">${pastNotes.map(noteRow).join("")}</div>
-    </div>`:""}
-    `}
+    <button class="btn btns" style="width:100%;margin-top:4px" onclick="window._addAsgLine()">+ Añadir asignación</button>
+    <div id="asg-warn" style="margin-top:10px;font-size:12px;color:var(--red);display:none"></div>
+    <div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.5">La suma de cargas solapadas no puede superar el 100%. Deja una línea sin proyecto para eliminarla.</div>
   </div>`;
 }
 
 async function _prSaveAndRefresh(pid){await save();render();currentPid=pid;renderPM();}
 
-async function captureAssignEdit(pid){
-  // Only if the assignment edit fields are present in the DOM (asignacion tab was open in edit mode)
-  const projEl=document.getElementById("aa-proj");
-  if(!projEl)return; // assignment tab not rendered — nothing to capture
-  const proj=projEl.value.trim();
-  const start=document.getElementById("aa-start")?.value||"";
-  const end=document.getElementById("aa-end")?.value||"";
-  const charge=parseInt(document.getElementById("aa-charge")?.value)||0;
-  const now=new Date();
-  const isActive=a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===pid&&s<=now&&(!e||e>=now)&&!a.is_forecast;};
-  const current=S.assigns.filter(isActive).sort((a,b)=>b.chargeability-a.chargeability);
-  const mainA=current[0]||null;
-  if(!proj){
-    // Empty project → remove the current active assignment if any
-    if(mainA)S.assigns=S.assigns.filter(a=>a.id!==mainA.id);
-    return;
+async function _addAsgLine(){
+  const container=document.getElementById("asg-lines");
+  if(!container)return;
+  const i=container.querySelectorAll(".asg-line").length;
+  const div=document.createElement("div");
+  div.innerHTML=`<div class="asg-line" data-idx="${i}" style="border:1px solid var(--b);border-radius:8px;padding:12px;margin-bottom:10px;background:var(--bg2)">
+    <div style="display:flex;gap:8px;align-items:flex-start">
+      <div class="fld" style="flex:1;margin:0"><label style="font-size:10px">Proyecto</label>
+        <input class="fi asg-proj" placeholder="Proyecto"/>
+      </div>
+      <button onclick="window._delAsgLine(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;line-height:1;margin-top:18px;flex-shrink:0" title="Eliminar línea">×</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <div class="fld" style="flex:1;margin:0"><label style="font-size:10px">Desde</label><input type="date" class="fi asg-start"/></div>
+      <div class="fld" style="flex:1;margin:0"><label style="font-size:10px">Hasta</label><input type="date" class="fi asg-end"/></div>
+      <div class="fld" style="width:80px;margin:0"><label style="font-size:10px">Carga %</label><input type="number" min="0" max="100" class="fi asg-charge" value="100"/></div>
+    </div>
+  </div>`;
+  container.appendChild(div.firstElementChild);
+}
+function _delAsgLine(i){
+  const lines=document.querySelectorAll("#asg-lines .asg-line");
+  if(lines[i])lines[i].remove();
+}
+// Read all assignment lines from the DOM into objects
+function readAsgLines(){
+  const out=[];
+  document.querySelectorAll("#asg-lines .asg-line").forEach(el=>{
+    const proj=el.querySelector(".asg-proj")?.value.trim()||"";
+    const start=el.querySelector(".asg-start")?.value||"";
+    const end=el.querySelector(".asg-end")?.value||"";
+    const charge=parseInt(el.querySelector(".asg-charge")?.value)||0;
+    if(proj)out.push({project_name:proj,start_date:start,end_date:end,chargeability:charge});
+  });
+  return out;
+}
+// Validate overlap: for any day, summed load <=100; and no same-project overlap
+function validateAsgLines(lines){
+  // Check each line has dates
+  for(const l of lines){
+    if(!l.start_date)return {ok:false,msg:`"${l.project_name}" necesita fecha de inicio.`};
   }
-  if(mainA){
-    // Update existing
-    S.assigns=S.assigns.map(a=>a.id===mainA.id?{...a,project_name:proj,start_date:start||a.start_date,end_date:end||null,chargeability:charge}:a);
-  } else {
-    // Create new active assignment
-    S.assigns.push({id:uid(),profile_id:pid,project_name:proj,start_date:start||new Date().toISOString().slice(0,10),end_date:end||null,chargeability:charge,is_forecast:false});
+  const overlaps=(a,b)=>{
+    const as=new Date(a.start_date),ae=a.end_date?new Date(a.end_date):new Date("2999-12-31");
+    const bs=new Date(b.start_date),be=b.end_date?new Date(b.end_date):new Date("2999-12-31");
+    return as<=be&&bs<=ae;
+  };
+  for(let i=0;i<lines.length;i++){
+    for(let j=i+1;j<lines.length;j++){
+      if(overlaps(lines[i],lines[j])){
+        // Same project overlapping = error
+        if(lines[i].project_name.toLowerCase()===lines[j].project_name.toLowerCase()){
+          return {ok:false,msg:`Dos asignaciones a "${lines[i].project_name}" se solapan en fechas.`};
+        }
+      }
+    }
   }
+  // Build day-by-day load check using boundary sweep
+  const events=[];
+  lines.forEach(l=>{
+    events.push({t:new Date(l.start_date).getTime(),d:l.chargeability});
+    const endT=l.end_date?new Date(l.end_date).getTime()+86400000:new Date("2999-12-31").getTime();
+    events.push({t:endT,d:-l.chargeability});
+  });
+  events.sort((a,b)=>a.t-b.t||a.d-b.d);
+  let load=0;
+  for(const e of events){
+    load+=e.d;
+    if(load>100){
+      return {ok:false,msg:`La carga combinada supera el 100% en algún periodo (llega al ${load}%). Ajusta fechas o porcentajes.`};
+    }
+  }
+  return {ok:true};
+}
+function captureAssignEdit(pid){
+  const container=document.getElementById("asg-lines");
+  if(!container)return true; // assignment tab not open — nothing to do
+  const lines=readAsgLines();
+  const v=validateAsgLines(lines);
+  if(!v.ok){
+    const w=document.getElementById("asg-warn");
+    if(w){w.textContent="⚠ "+v.msg;w.style.display="block";}
+    return false; // block save
+  }
+  // Passed validation — replace this profile's assignments with the new set
+  S.assigns=S.assigns.filter(a=>a.profile_id!==pid);
+  lines.forEach(l=>{
+    S.assigns.push({id:uid(),profile_id:pid,project_name:l.project_name,start_date:l.start_date,end_date:l.end_date||null,chargeability:l.chargeability,is_forecast:false});
+  });
+  return true;
 }
 async function saveP(){
   captureEditData();
   const data={...editData,skills:editSkills,lcr:parseFloat(editData.lcr)||null};
   if(!data.name)return;
+  // Validate assignment lines BEFORE mutating anything (only if assignment tab is open)
+  const container=document.getElementById("asg-lines");
+  if(container){
+    const v=validateAsgLines(readAsgLines());
+    if(!v.ok){
+      const w=document.getElementById("asg-warn");
+      if(w){w.textContent="⚠ "+v.msg;w.style.display="block";}
+      return; // keep modal open, nothing mutated
+    }
+  }
   let savedPid=currentPid;
   if(currentPid){S.profiles=S.profiles.map(p=>p.id===currentPid?{...p,...data}:p);}
   else{const np={...data,id:uid(),is_active:true,created_at:new Date().toISOString()};S.profiles.push(np);savedPid=np.id;}
