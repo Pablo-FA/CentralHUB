@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 14:47" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-07 15:04" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 14:47"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 15:04"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -258,6 +258,16 @@ const cc=c=>c>=80?"var(--green)":c>=40?"var(--amber)":"var(--red)";
 const scol=s=>({Asignado:"bgreen",Entrevistas:"bblue",Entrevistado:"bblue",Propuesto:"bacc",Esperando:"bamber","En revisión":"bamber",Vacío:"bg"})[s]||"bg";
 const rolesForCap=cap=>{const custom=S.customRoles.filter(r=>!cap||r.cap===cap).map(r=>r.name);const base=cap&&ROLES_BY_CAP[cap]?ROLES_BY_CAP[cap]:[...new Set(Object.values(ROLES_BY_CAP).flat())];return[...new Set([...base,...custom])].sort();};
 // Normalize strings for accent-insensitive sorting (Ángela sorts with A)
+// Overhead/Management profiles — excluded from staffing views & capacity metrics
+// Get the display project for a profile (active assignment, else upcoming, else "")
+function getProjectName(p){
+  const now=new Date();
+  const active=S.assigns.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===p.id&&s<=now&&(!e||e>=now)&&!a.is_forecast;}).sort((a,b)=>b.chargeability-a.chargeability);
+  if(active.length)return active[0].project_name||"";
+  const upcoming=S.assigns.filter(a=>a.profile_id===p.id&&new Date(a.start_date)>now&&!a.is_forecast).sort((a,b)=>new Date(a.start_date)-new Date(b.start_date));
+  return upcoming.length?(upcoming[0].project_name||""):"";
+}
+function isOverhead(p){return (p.role||"").toLowerCase()==="management"||(p.role||"").toLowerCase()==="overhead";}
 function normStr(s){return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
 function pCharge(pid){const now=new Date();return S.assigns.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===pid&&s<=now&&(!e||e>=now)&&!a.is_forecast;}).reduce((t,a)=>t+(a.chargeability||0),0);}
 
@@ -528,6 +538,7 @@ function sortedSupply(list){
       }
       else if(field==="lcr"){va=parseFloat(a.lcr)||0;vb=parseFloat(b.lcr)||0;}
       else if(field==="level_accenture"){va=parseInt((a.level_accenture||"").replace(/\D/g,""))||999;vb=parseInt((b.level_accenture||"").replace(/\D/g,""))||999;}
+      else if(field==="project"){va=normStr(getProjectName(a));vb=normStr(getProjectName(b));}
       else{va=normStr(a[field]);vb=normStr(b[field]);}
       if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;
     }
@@ -694,20 +705,36 @@ function applyRF(list){const f=S.rf;return list.filter(p=>{if(f.q){const q=f.q.t
 
 // ── ROSTER ────────────────────────────────────────────────────────────────
 function tRoster(){
-  const fp=sortedProfiles(applyRF(S.profiles));
+  const allFiltered=sortedProfiles(applyRF(S.profiles));
+  const fp=allFiltered.filter(p=>!isOverhead(p));
+  const ohp=allFiltered.filter(p=>isOverhead(p));
   const th=(label,field)=>`<th class="${field==='capability'?'cap-col':''}" onclick="sortBy('${field}')" style="cursor:pointer">${label}${sa(field)}</th>`;
-  return`<div class="shdr"><span class="scnt" style="margin-left:0">${fp.length} de ${S.profiles.length} perfiles</span><button class="btn btnp btns" onclick="openPM(null)">+ Añadir perfil</button></div>
+  const rowFor=p=>{const c=pCharge(p.id);const sub=p.contract_type==="Subcontractor";return`<tr onclick="openPM('${p.id}')"><td><div style="display:flex;align-items:center;gap:10px"><div class="av">${ini(p.name)}</div><div><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--t3)">${p.role||""}</div></div></div></td><td style="color:var(--t3);font-size:12px;font-family:monospace">${p.eid||"—"}</td><td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td><td class="cap-col" style="color:var(--t2);font-size:12px">${p.capability||"—"}</td><td style="color:var(--t2);font-size:12px">${p.location||"—"}</td><td><span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${p.contract_type||"Interno"}</span></td><td style="color:var(--t2);font-size:12px">${p.lcr?parseFloat(p.lcr).toFixed(2)+"€/h":"—"}</td><td><div class="cbar"><div class="ctrack"><div class="cfill" style="width:${Math.min(c,100)}%;background:${cc(c)}"></div></div><span style="font-size:12px;color:var(--t2);min-width:34px">${c}%</span><span class="bdg ${c===0?"bred":c>=80?"bgreen":"bamber"}" style="font-size:10px;margin-left:4px">${c===0?"Banquillo":c>=100?"Full":c+"%"}</span></div></td></tr>`;};
+  const headRow=`<thead><tr>${th("Perfil","name")}${th("EID","eid")}${th("Level","level_accenture")}${th("Capability","capability")}${th("Ubicación","location")}${th("Tipo","contract_type")}${th("LCR","lcr")}${th("Cargabilidad","cargabilidad")}</tr></thead>`;
+  const ohRowFor=p=>`<tr onclick="openPM('${p.id}')"><td><div style="display:flex;align-items:center;gap:10px"><div class="av">${ini(p.name)}</div><div><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--t3)">${p.role||""}</div></div></div></td><td style="color:var(--t3);font-size:12px;font-family:monospace">${p.eid||"—"}</td><td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td><td class="cap-col" style="color:var(--t2);font-size:12px">${p.capability||"—"}</td><td style="color:var(--t2);font-size:12px">${p.location||"—"}</td><td><span class="bdg bgreen" style="font-size:10px">${p.contract_type||"Interno"}</span></td><td style="color:var(--t2);font-size:12px">${p.lcr?parseFloat(p.lcr).toFixed(2)+"€/h":"—"}</td><td style="color:var(--t3);font-size:11px">No computable</td></tr>`;
+  return`<div class="shdr"><span class="scnt" style="margin-left:0">${fp.length} perfiles asignables</span><button class="btn btnp btns" onclick="openPM(null)">+ Añadir perfil</button></div>
   ${filterBar()}
   <div class="tw"><table>
-    <thead><tr>${th("Perfil","name")}${th("EID","eid")}${th("Level","level_accenture")}<span class="cap-col">${th("Capability","capability")}</span>${th("Ubicación","location")}${th("Tipo","contract_type")}${th("LCR","lcr")}${th("Cargabilidad","cargabilidad")}</tr></thead>
-    <tbody>${fp.length===0?`<tr><td colspan="8" class="empty">Sin perfiles que coincidan.</td></tr>`:fp.map(p=>{const c=pCharge(p.id);const sub=p.contract_type==="Subcontractor";return`<tr onclick="openPM('${p.id}')"><td><div style="display:flex;align-items:center;gap:10px"><div class="av">${ini(p.name)}</div><div><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--t3)">${p.role||""}</div></div></div></td><td style="color:var(--t3);font-size:12px;font-family:monospace">${p.eid||"—"}</td><td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td><td class="cap-col" style="color:var(--t2);font-size:12px">${p.capability||"—"}</td><td style="color:var(--t2);font-size:12px">${p.location||"—"}</td><td><span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${p.contract_type||"Interno"}</span></td><td style="color:var(--t2);font-size:12px">${p.lcr?parseFloat(p.lcr).toFixed(2)+"€/h":"—"}</td><td><div class="cbar"><div class="ctrack"><div class="cfill" style="width:${Math.min(c,100)}%;background:${cc(c)}"></div></div><span style="font-size:12px;color:var(--t2);min-width:34px">${c}%</span><span class="bdg ${c===0?"bred":c>=80?"bgreen":"bamber"}" style="font-size:10px;margin-left:4px">${c===0?"Banquillo":c>=100?"Full":c+"%"}</span></div></td></tr>`;}).join("")}</tbody>
-  </table></div>`;}
+    ${headRow}
+    <tbody>${fp.length===0?`<tr><td colspan="8" class="empty">Sin perfiles que coincidan.</td></tr>`:fp.map(rowFor).join("")}</tbody>
+  </table></div>
+  ${ohp.length?`<div style="margin-top:28px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div class="sect-lbl" style="margin:0">Overhead</div>
+      <span style="font-size:11px;color:var(--t3)">${ohp.length} · no computa en capacidad ni disponibilidad</span>
+    </div>
+    <div class="tw"><table>
+      ${headRow}
+      <tbody>${ohp.map(ohRowFor).join("")}</tbody>
+    </table></div>
+  </div>`:""}`;}
 
 // ── SUPPLY ────────────────────────────────────────────────────────────────
 function tSupply(){
   const f=S.sf,now=new Date();
   const ia=a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return s<=now&&(!e||e>=now)&&!a.is_forecast};
   const sfF=p=>{
+    if(isOverhead(p))return false; // overhead never appears in Supply
     if(f.q&&!p.name.toLowerCase().includes(f.q.toLowerCase()))return false;
     if(f.caps.length&&!f.caps.includes(p.capability))return false;
     if(f.levels.length&&!f.levels.includes(p.level_accenture))return false;
@@ -818,7 +845,7 @@ function tSupply(){
 
   if(S.supplyView==="bajas"){
     const formalBajaIds=new Set(S.bajas.map(b=>b.profile_id));
-    const onLeaveProfiles=S.profiles.filter(p=>p.on_leave&&!formalBajaIds.has(p.id)).map(p=>({id:"ol_"+p.id,profile_id:p.id,type:"Sin registro formal",desde:"",hasta:"",comments:"Marcado como de baja en el perfil",profile:p,synthetic:true}));
+    const onLeaveProfiles=S.profiles.filter(p=>p.on_leave&&!formalBajaIds.has(p.id)&&!isOverhead(p)).map(p=>({id:"ol_"+p.id,profile_id:p.id,type:"Sin registro formal",desde:"",hasta:"",comments:"Marcado como de baja en el perfil",profile:p,synthetic:true}));
     const bajas=[...S.bajas.map(b=>{const p=S.profiles.find(x=>x.id===b.profile_id);return{...b,profile:p};}).filter(b=>b.profile),...onLeaveProfiles];
     bajas.sort((a,b)=>new Date(b.desde||0)-new Date(a.desde||0));
     return`<div class="shdr" style="margin-bottom:16px">
@@ -947,7 +974,7 @@ function tDemand(){
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
-function tDash(){const bench=S.profiles.filter(p=>pCharge(p.id)===0).length;const avg=S.profiles.length?Math.round(S.profiles.reduce((s,p)=>s+pCharge(p.id),0)/S.profiles.length):0;const openD=S.demands.filter(d=>d.status==="Abierta").length;const byS=STATUSES.reduce((a,s)=>{a[s]=S.demands.filter(d=>d.status===s).length;return a},{});const byCap=S.profiles.reduce((a,p)=>{const c=p.capability||"?";if(!a[c])a[c]={t:0,b:0,ch:0};a[c].t++;const ch=pCharge(p.id);if(ch===0)a[c].b++;a[c].ch+=ch;return a},{});const byLoc=S.profiles.reduce((a,p)=>{if(p.location)a[p.location]=(a[p.location]||0)+1;return a},{});const intN=S.profiles.filter(p=>p.contract_type!=="Subcontractor").length,subN=S.profiles.filter(p=>p.contract_type==="Subcontractor").length;return`<div class="shdr"><span class="stitle">Dashboard</span></div><div class="mgrid"><div class="mcard"><div class="mlbl">Perfiles activos</div><div class="mval">${S.profiles.length}</div><div class="msub">Internos: ${intN} · Sub: ${subN}</div></div><div class="mcard"><div class="mlbl">En banquillo</div><div class="mval" style="color:${bench>0?"var(--amber)":"var(--green)"}">${bench}</div><div class="msub">${S.profiles.length>0?Math.round(bench/S.profiles.length*100):0}% del equipo</div></div><div class="mcard"><div class="mlbl">Cargabilidad media</div><div class="mval" style="color:${avg>=80?"var(--green)":avg>=50?"var(--amber)":"var(--red)"}">${avg}%</div></div><div class="mcard"><div class="mlbl">Demanda abierta</div><div class="mval" style="color:${openD>0?"var(--acc)":"var(--t)"}">${openD}</div><div class="msub">sin cubrir</div></div></div><div class="sect-lbl">Demand por estado</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px">${STATUSES.map(s=>`<div class="mcard" style="flex:1 1 90px;padding:14px 16px"><div class="mlbl" style="margin-bottom:4px">${s}</div><div style="font-size:22px;font-weight:500">${byS[s]||0}</div></div>`).join("")}</div><div class="sect-lbl">Por capability</div><div class="tw" style="margin-bottom:28px"><table><thead><tr><th class="cap-col">Capability</th><th>Perfiles</th><th>Banquillo</th><th>Cargabilidad media</th></tr></thead><tbody>${Object.entries(byCap).map(([cap,d])=>{const ca=Math.round(d.ch/d.t);return`<tr class="cap-col"><td style="font-weight:500">${cap}</td><td>${d.t}</td><td><span class="bdg ${d.b>0?"bamber":"bgreen"}">${d.b}</span></td><td><div class="cbar"><div class="ctrack" style="min-width:80px"><div class="cfill" style="width:${Math.min(ca,100)}%;background:${cc(ca)}"></div></div><span style="font-size:12px">${ca}%</span></div></td></tr>`}).join("")}</tbody></table></div><div class="sect-lbl">Por ubicación</div><div style="display:flex;gap:10px;flex-wrap:wrap">${Object.entries(byLoc).sort((a,b)=>b[1]-a[1]).map(([loc,n])=>`<div class="mcard" style="flex:1 1 100px;padding:14px 16px"><div class="mlbl" style="margin-bottom:4px">${loc}</div><div style="font-size:22px;font-weight:500">${n}</div></div>`).join("")}</div>`;}
+function tDash(){const staffable=S.profiles.filter(p=>!isOverhead(p)&&p.is_active!==false);const bench=staffable.filter(p=>pCharge(p.id)===0).length;const avg=staffable.length?Math.round(staffable.reduce((s,p)=>s+pCharge(p.id),0)/staffable.length):0;const openD=S.demands.filter(d=>d.status==="Abierta").length;const byS=STATUSES.reduce((a,s)=>{a[s]=S.demands.filter(d=>d.status===s).length;return a},{});const byCap=S.profiles.reduce((a,p)=>{const c=p.capability||"?";if(!a[c])a[c]={t:0,b:0,ch:0};a[c].t++;const ch=pCharge(p.id);if(ch===0)a[c].b++;a[c].ch+=ch;return a},{});const byLoc=S.profiles.reduce((a,p)=>{if(p.location)a[p.location]=(a[p.location]||0)+1;return a},{});const intN=S.profiles.filter(p=>p.contract_type!=="Subcontractor").length,subN=S.profiles.filter(p=>p.contract_type==="Subcontractor").length;return`<div class="shdr"><span class="stitle">Dashboard</span></div><div class="mgrid"><div class="mcard"><div class="mlbl">Perfiles activos</div><div class="mval">${S.profiles.length}</div><div class="msub">Internos: ${intN} · Sub: ${subN}</div></div><div class="mcard"><div class="mlbl">En banquillo</div><div class="mval" style="color:${bench>0?"var(--amber)":"var(--green)"}">${bench}</div><div class="msub">${S.profiles.length>0?Math.round(bench/S.profiles.length*100):0}% del equipo</div></div><div class="mcard"><div class="mlbl">Cargabilidad media</div><div class="mval" style="color:${avg>=80?"var(--green)":avg>=50?"var(--amber)":"var(--red)"}">${avg}%</div></div><div class="mcard"><div class="mlbl">Demanda abierta</div><div class="mval" style="color:${openD>0?"var(--acc)":"var(--t)"}">${openD}</div><div class="msub">sin cubrir</div></div></div><div class="sect-lbl">Demand por estado</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px">${STATUSES.map(s=>`<div class="mcard" style="flex:1 1 90px;padding:14px 16px"><div class="mlbl" style="margin-bottom:4px">${s}</div><div style="font-size:22px;font-weight:500">${byS[s]||0}</div></div>`).join("")}</div><div class="sect-lbl">Por capability</div><div class="tw" style="margin-bottom:28px"><table><thead><tr><th class="cap-col">Capability</th><th>Perfiles</th><th>Banquillo</th><th>Cargabilidad media</th></tr></thead><tbody>${Object.entries(byCap).map(([cap,d])=>{const ca=Math.round(d.ch/d.t);return`<tr class="cap-col"><td style="font-weight:500">${cap}</td><td>${d.t}</td><td><span class="bdg ${d.b>0?"bamber":"bgreen"}">${d.b}</span></td><td><div class="cbar"><div class="ctrack" style="min-width:80px"><div class="cfill" style="width:${Math.min(ca,100)}%;background:${cc(ca)}"></div></div><span style="font-size:12px">${ca}%</span></div></td></tr>`}).join("")}</tbody></table></div><div class="sect-lbl">Por ubicación</div><div style="display:flex;gap:10px;flex-wrap:wrap">${Object.entries(byLoc).sort((a,b)=>b[1]-a[1]).map(([loc,n])=>`<div class="mcard" style="flex:1 1 100px;padding:14px 16px"><div class="mlbl" style="margin-bottom:4px">${loc}</div><div style="font-size:22px;font-weight:500">${n}</div></div>`).join("")}</div>`;}
 
 // ── PROFILE MODAL ─────────────────────────────────────────────────────────
 function openPM(id,defTab){
