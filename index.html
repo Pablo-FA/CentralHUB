@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 17:23" data-file="index"/>
+<meta name="build-stamp" content="2026-07-07 17:40" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -199,7 +199,7 @@ body{background:var(--bg)}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-07-07 17:23"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-07-07 17:40"};</script>
 </head>
 <body>
 
@@ -317,6 +317,9 @@ body{background:var(--bg)}
 const PIN="estrategia";
 const CAP_COLORS={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"};
 let currentUser=null,sbCol=false,currentTool=null;
+// Todos state — declared early so auto-login/showHome can safely reference it
+let S_TODOS=[];
+const TODO_SB_H={'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Content-Type':'application/json'};
 
 // Apply current theme to iframe every time it loads
 document.addEventListener('DOMContentLoaded',function(){
@@ -569,9 +572,7 @@ async function loadMetrics(){
   }catch(e){return{total:0,bench:0,avg:0,openD:0,projs:0,capData:[],ok:false,allocatedFte:0,fteUtil:0};}
 }
 
-// Todos
-let S_TODOS=[]; // in-memory cache of all todos, loaded from Supabase
-const TODO_SB_H={'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Content-Type':'application/json'};
+// Todos (S_TODOS + headers declared at top for early init)
 // Fetch with timeout so a hanging Supabase call never freezes the Home
 async function fetchT(url,opts={},ms=8000){
   const ctrl=new AbortController();
