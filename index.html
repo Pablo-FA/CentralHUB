@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<meta name="build-stamp" content="2026-07-07 14:26" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -193,7 +194,12 @@ body{background:var(--bg)}
 .todo-owner:hover{border-color:var(--border2)}
 .todo-owner.assigned{background:var(--acc-bg);color:var(--acc);border-color:var(--acc-border)}
 .dark-btn i{font-size:14px}
+
+/* ═══ CAPABILITY HIDDEN (reversible: delete this block to restore) ═══ */
+.cap-col{display:none !important;}
+/* ══════════════════════════════════════════════════════════════════ */
 </style>
+<script>window.__BUILD__={file:"index",stamp:"2026-07-07 14:26"};</script>
 </head>
 <body>
 
@@ -371,6 +377,28 @@ function doLogout(){
 
 // Sidebar
 function toggleSB(){sbCol=!sbCol;document.getElementById("sb").classList.toggle("col",sbCol);}
+
+
+async function loadBuildStamps(){
+  const files=[
+    {label:'Home',url:'index.html'},
+    {label:'Supply & Demand',url:'supply-demand.html'},
+    {label:'Project Health',url:'pm_tracker_v4.html'},
+    {label:'Executive Hub',url:'executive-hub-cap.html'}
+  ];
+  const results=await Promise.all(files.map(async f=>{
+    try{
+      const r=await fetch(f.url+'?t='+Date.now(),{cache:'no-store'});
+      const txt=await r.text();
+      const m=txt.match(/name="build-stamp" content="([^"]*)"/);
+      return {label:f.label,stamp:m?m[1]:'—'};
+    }catch(e){return {label:f.label,stamp:'error'};}
+  }));
+  const el=document.getElementById('build-debug');
+  if(el){
+    el.innerHTML=results.map(r=>`<span style="white-space:nowrap"><strong style="color:var(--text2)">${r.label}:</strong> ${r.stamp}</span>`).join('<span style="opacity:.3">·</span>');
+  }
+}
 
 async function loadActiveProjects(){
   try{
@@ -596,11 +624,11 @@ async function showHome(){
         `<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin proyectos. Abre <span style="color:var(--acc);cursor:pointer" onclick="navTo('pm')">Project Health</span> para añadir.</p>`:
         `<table style="width:100%;border-collapse:collapse"><thead><tr>
           <th style="text-align:left;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Proyecto</th>
-          <th style="text-align:left;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Capability</th>
+          <th style="text-align:left;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)" class="cap-col">Capability</th>
           <th style="text-align:right;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">FTEs</th>
           <th style="text-align:right;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Hasta</th>
         </tr></thead><tbody>
-        ${activeProjects.map(p=>{const cap=p.capability||"";const col={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"}[cap]||"#888";return`<tr class="proj-row" style="cursor:pointer"><td style="padding:8px 0;border-bottom:1px solid var(--border);font-weight:500;font-size:13px">${p.name||"—"}</td><td style="padding:8px 0;border-bottom:1px solid var(--border)">${cap?`<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${col}22;color:${col};font-weight:600">${cap}</span>`:"—"}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:12px;font-weight:500">${(p.team||[]).length}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:11px;color:var(--text3)">${p.endDate?new Date(p.endDate+"T12:00:00").toLocaleDateString("es-ES",{day:"2-digit",month:"short"}):"—"}</td></tr>`;
+        ${activeProjects.map(p=>{const cap=p.capability||"";const col={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"}[cap]||"#888";return`<tr class="proj-row" style="cursor:pointer"><td style="padding:8px 0;border-bottom:1px solid var(--border);font-weight:500;font-size:13px">${p.name||"—"}</td><td class="cap-col" style="padding:8px 0;border-bottom:1px solid var(--border)">${cap?`<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${col}22;color:${col};font-weight:600">${cap}</span>`:"—"}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:12px;font-weight:500">${(p.team||[]).length}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:11px;color:var(--text3)">${p.endDate?new Date(p.endDate+"T12:00:00").toLocaleDateString("es-ES",{day:"2-digit",month:"short"}):"—"}</td></tr>`;
 }).join("")}
         </tbody></table>`}
     </div>
@@ -649,11 +677,16 @@ async function showHome(){
       <div class="tc-name">Sales Tracking</div>
       <div class="tc-tag">Próximamente</div>
     </div>
+  </div>
+  <div style="margin-top:32px;padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:11px;color:var(--text3)">
+    <span style="opacity:.6">⚙ Build:</span>
+    <span id="build-debug" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">cargando…</span>
   </div>`;
   // Project row click delegation (must run after innerHTML is set)
   document.querySelectorAll('#home-view .proj-row').forEach(tr=>{
     tr.addEventListener('click',()=>navTo('pm'));
   });
+  loadBuildStamps();
 }
 </script>
 </body>
