@@ -523,6 +523,7 @@ function sortedSupply(list){
         va=getD(a,field);vb=getD(b,field);
       }
       else if(field==="lcr"){va=parseFloat(a.lcr)||0;vb=parseFloat(b.lcr)||0;}
+      else if(field==="level_accenture"){va=parseInt((a.level_accenture||"").replace(/\D/g,""))||999;vb=parseInt((b.level_accenture||"").replace(/\D/g,""))||999;}
       else{va=(a[field]||"").toString().toLowerCase();vb=(b[field]||"").toString().toLowerCase();}
       if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;
     }
@@ -661,7 +662,7 @@ function render(){
 // ── SORT ──────────────────────────────────────────────────────────────────
 function sortBy(f){if(S.rosterSort.field===f)S.rosterSort.dir=S.rosterSort.dir==="asc"?"desc":"asc";else{S.rosterSort.field=f;S.rosterSort.dir="asc";}render();}
 function sa(f){const{field,dir}=S.rosterSort;if(field!==f)return`<span style="color:var(--t3);font-size:9px;margin-left:3px">↕</span>`;return`<span style="font-size:9px;margin-left:3px">${dir==="asc"?"↑":"↓"}</span>`;}
-function sortedProfiles(list){const{field,dir}=S.rosterSort;return[...list].sort((a,b)=>{let va,vb;if(field==="cargabilidad"){va=pCharge(a.id);vb=pCharge(b.id);}else if(field==="lcr"){va=parseFloat(a.lcr)||0;vb=parseFloat(b.lcr)||0;}else{va=(a[field]||"").toString().toLowerCase();vb=(b[field]||"").toString().toLowerCase();}if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;return 0;});}
+function sortedProfiles(list){const{field,dir}=S.rosterSort;return[...list].sort((a,b)=>{let va,vb;if(field==="cargabilidad"){va=pCharge(a.id);vb=pCharge(b.id);}else if(field==="lcr"){va=parseFloat(a.lcr)||0;vb=parseFloat(b.lcr)||0;}else if(field==="level_accenture"){va=parseInt((a.level_accenture||"").replace(/\D/g,""))||999;vb=parseInt((b.level_accenture||"").replace(/\D/g,""))||999;}else{va=(a[field]||"").toString().toLowerCase();vb=(b[field]||"").toString().toLowerCase();}if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;return 0;});}
 
 // ── DROPDOWN FILTERS ──────────────────────────────────────────────────────
 function tFDD(k,e){e.stopPropagation();if(openFDD===k){closeFDD();return;}closeFDD();openFDD=k;const p=document.getElementById("fddp-"+k),b=document.getElementById("fddb-"+k);if(p)p.classList.add("open");if(b)b.classList.add("open");}
@@ -690,7 +691,7 @@ function applyRF(list){const f=S.rf;return list.filter(p=>{if(f.q){const q=f.q.t
 // ── ROSTER ────────────────────────────────────────────────────────────────
 function tRoster(){
   const fp=sortedProfiles(applyRF(S.profiles));
-  const th=(label,field)=>`<th onclick="sortBy('${field}')" style="cursor:pointer">${label}${sa(field)}</th>`;
+  const th=(label,field)=>`<th class="${field==='capability'?'cap-col':''}" onclick="sortBy('${field}')" style="cursor:pointer">${label}${sa(field)}</th>`;
   return`<div class="shdr"><span class="scnt" style="margin-left:0">${fp.length} de ${S.profiles.length} perfiles</span><button class="btn btnp btns" onclick="openPM(null)">+ Añadir perfil</button></div>
   ${filterBar()}
   <div class="tw"><table>
@@ -711,7 +712,7 @@ function tSupply(){
   };
   const VIEWS=[["asignacion","Asignación"],["disponibles","Disponibles"],["bajas","Bajas"],["log","Log"]];
   const vt=`<div style="display:flex;gap:0;background:var(--bg2);border:1px solid var(--b);border-radius:6px;padding:2px">${VIEWS.map(([v,l])=>`<button style="padding:5px 16px;border-radius:5px;font-size:12px;cursor:pointer;border:none;background:${S.supplyView===v?"var(--bg1)":"transparent"};color:${S.supplyView===v?"var(--t)":"var(--t2)"};font-family:inherit;font-weight:${S.supplyView===v?"500":"400"};transition:all .15s" onclick="S.supplyView='${v}';render()">${l}</button>`).join("")}</div>`;
-  const thS=(label,field)=>`<th onclick="sSortBy('${field}',event)" title="Shift+click para orden secundario" style="cursor:pointer">${label}${sSA(field)}</th>`;
+  const thS=(label,field)=>`<th class="${field==='capability'?'cap-col':''}" onclick="sSortBy('${field}',event)" title="Shift+click para orden secundario" style="cursor:pointer">${label}${sSA(field)}</th>`;
   const editBtn=(pid)=>`<td style="padding:0;width:36px;text-align:center;border-left:1px solid rgba(255,255,255,0.07)"><button onclick="event.stopPropagation();openSupplyEdit('${pid}')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:6px 8px;line-height:1;display:block;margin:0 auto" title="Editar supply">✎</button></td>`;
   const nameCell=(p)=>`<td style="min-width:280px;width:280px"><div style="display:flex;align-items:center;gap:9px"><div class="av" style="flex-shrink:0">${ini(p.name)}</div><div><div style="font-weight:500">${p.name}${p.on_leave?` <span class="bdg bred" style="font-size:9px">Baja</span>`:""}</div><div style="font-size:11px;color:var(--t3)">${p.role||""}</div></div></div></td>`;
 
@@ -731,7 +732,7 @@ function tSupply(){
     <div class="tw" style="overflow-x:auto"><table style="min-width:800px">
       <thead><tr>
         ${thS("Nombre","name")}
-        ${thS("Capability","capability")}
+        <span class="cap-col">${thS("Capability","capability")}</span>
         ${thS("Level","level_accenture")}
         ${thS("Tipo","contract_type")}
         ${thS("Proyecto","project")}
@@ -749,7 +750,7 @@ function tSupply(){
         const hasta=active.length?fds([...active].sort((a,b)=>new Date(b.end_date||"9999")-new Date(a.end_date||"9999"))[0].end_date):"—";
         return`<tr onclick="openPM('${p.id}','asignacion')">
           ${nameCell(p)}
-          <td style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
+          <td class="cap-col" style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
           <td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td>
           <td><span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${p.contract_type||"Interno"}</span></td>
           <td style="font-size:13px">${projTxt}</td>
@@ -781,7 +782,7 @@ function tSupply(){
     <div class="tw" style="overflow-x:auto"><table style="min-width:700px">
       <thead><tr>
         ${thS("Nombre","name")}
-        ${thS("Capability","capability")}
+        <span class="cap-col">${thS("Capability","capability")}</span>
         ${thS("Level","level_accenture")}
         ${thS("Tipo","contract_type")}
         ${thS("Bench desde","bench_since")}
@@ -797,7 +798,7 @@ function tSupply(){
         const lastNote=(p.supply_notes||[]).slice(-1)[0];
         return`<tr onclick="openSupplyEdit('${p.id}')">
           ${nameCell(p)}
-          <td style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
+          <td class="cap-col" style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
           <td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td>
           <td><span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${p.contract_type||"Interno"}</span></td>
           <td style="font-size:12px;color:var(--t2)">${bs?fds(bs.toISOString()):"—"}</td>
@@ -823,7 +824,7 @@ function tSupply(){
     <div class="tw"><table>
       <thead><tr>
         ${thS("Nombre","name")}
-        ${thS("Capability","capability")}
+        <span class="cap-col">${thS("Capability","capability")}</span>
         ${thS("Level","level_accenture")}
         <th>Tipo de baja</th>
         ${thS("Desde","desde")}
@@ -836,7 +837,7 @@ function tSupply(){
         const typeCls=b.type==="Enfermedad"?"bred":b.type==="Embarazo"||b.type==="Maternidad"?"bacc":b.type==="Sin registro formal"?"bg":"bamber";
         return`<tr>
           <td style="min-width:220px"><div style="display:flex;align-items:center;gap:9px"><div class="av" style="flex-shrink:0">${ini(p.name)}</div><div><div style="font-weight:500">${p.name}</div>${isActive?`<span class="bdg bgreen" style="font-size:9px">Activa</span>`:""}</div></div></td>
-          <td style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
+          <td class="cap-col" style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
           <td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td>
           <td><span class="bdg ${typeCls}" style="font-size:11px">${b.type}</span></td>
           <td style="font-size:12px;color:var(--t2)">${b.desde?fds(b.desde):"—"}</td>
