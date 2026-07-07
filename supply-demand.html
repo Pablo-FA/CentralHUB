@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 17:31" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-07 17:43" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 17:31"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 17:43"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -944,12 +944,14 @@ function tSupply(){
     ${(()=>{
       const fc=getForecast(90);
       if(!fc.length)return"";
+      const fcOpen=window._fcOpen!==false; // default open
       return`<div style="margin-top:28px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div onclick="window._fcOpen=${fcOpen?"false":"true"};render()" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;user-select:none">
+          <span style="font-size:11px;color:var(--t3);transition:transform .15s;transform:rotate(${fcOpen?"90":"0"}deg);display:inline-block">▶</span>
           <div class="sect-lbl" style="margin:0">Forecast</div>
           <span style="font-size:11px;color:var(--t3)">${fc.length} · previsión de banquillo · próximos 90 días</span>
         </div>
-        <div class="tw" style="overflow-x:auto"><table style="min-width:700px">
+        ${fcOpen?`<div class="tw" style="overflow-x:auto"><table style="min-width:700px">
           <thead><tr>
             <th>Nombre</th>
             <th class="cap-col">Capability</th>
@@ -973,7 +975,7 @@ function tSupply(){
               <td><span class="bdg ${item.loadAfter===0?"bred":"bamber"}" style="font-size:10px">${item.freedPct}%${item.loadAfter===0?" · full bench":""}</span></td>
             </tr>`;
           }).join("")}</tbody>
-        </table></div>
+        </table></div>`:""}
       </div>`;
     })()}`;
   }
