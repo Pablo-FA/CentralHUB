@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 14:26" data-file="index"/>
+<meta name="build-stamp" content="2026-07-07 15:04" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -199,7 +199,7 @@ body{background:var(--bg)}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-07-07 14:26"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-07-07 15:04"};</script>
 </head>
 <body>
 
@@ -390,7 +390,7 @@ async function loadBuildStamps(){
     try{
       const r=await fetch(f.url+'?t='+Date.now(),{cache:'no-store'});
       const txt=await r.text();
-      const m=txt.match(/name="build-stamp" content="([^"]*)"/);
+      const m=txt.match(/name="build-stamp" content="2026-07-07 15:04"]*)"/);
       return {label:f.label,stamp:m?m[1]:'—'};
     }catch(e){return {label:f.label,stamp:'error'};}
   }));
@@ -547,7 +547,8 @@ async function loadMetrics(){
       const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
       return a.profile_id===pid&&s<=now&&(!e||e>=now)&&!a.is_forecast;
     }).reduce((t,a)=>t+(a.chargeability||0),0);
-    const active=profiles.filter(p=>p.is_active);
+    const isOverhead=p=>(p.role||"").toLowerCase()==="management"||(p.role||"").toLowerCase()==="overhead";
+    const active=profiles.filter(p=>p.is_active&&!isOverhead(p));
     const bench=active.filter(p=>charge(p.id)===0);
     const avg=active.length?Math.round(active.reduce((s,p)=>s+charge(p.id),0)/active.length):0;
     const openD=demands.filter(d=>d.status!=="Asignado").length;
