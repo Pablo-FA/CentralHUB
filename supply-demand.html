@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 16:50" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-07 17:07" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 16:50"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 17:07"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -260,6 +260,32 @@ const rolesForCap=cap=>{const custom=S.customRoles.filter(r=>!cap||r.cap===cap).
 // Normalize strings for accent-insensitive sorting (Ángela sorts with A)
 // Overhead/Management profiles — excluded from staffing views & capacity metrics
 // Get the display project for a profile (active assignment, else upcoming, else "")
+const TODO_H={'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Content-Type':'application/json'};
+// Sync the auto-todo for a demand's owner: create/reassign/remove in Supabase
+async function syncDemandTodo(demand){
+  const refId="demand_"+demand.id;
+  try{
+    // Find existing demand-todo for this demand
+    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?ref_id=eq.'+encodeURIComponent(refId),{headers:TODO_H,cache:'no-store'});
+    const existing=r.ok?await r.json():[];
+    const owner=demand.owner||"";
+    const label="Cubrir demanda: "+(demand.client||"")+(demand.project_reference?" — "+demand.project_reference:"");
+    if(!owner){
+      // No owner → remove any existing demand-todo
+      for(const t of existing){
+        await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(t.id),{method:"DELETE",headers:{...TODO_H,"Prefer":"return=minimal"}});
+      }
+      return;
+    }
+    if(existing.length){
+      // Update owner + label (reassign)
+      await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?ref_id=eq.'+encodeURIComponent(refId),{method:"PATCH",headers:{...TODO_H,"Prefer":"return=minimal"},body:JSON.stringify({owner,text:label})});
+    } else {
+      // Create new demand-todo
+      await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_H,"Prefer":"return=minimal"},body:JSON.stringify({id:"td_"+refId,owner,text:label,done:false,source:"demand",ref_id:refId})});
+    }
+  }catch(e){console.warn("syncDemandTodo error",e);}
+}
 function getForecast(horizonDays){
   // Profiles currently assigned that will free up (load drops) within the horizon.
   const now=new Date();
@@ -1650,6 +1676,14 @@ function openDM(id){
           <select id="dm-pp" class="fi">${ppOpts}</select>
           <div style="font-size:11px;color:var(--t3);margin-top:4px">Los perfiles disponibles aparecen primero. Los asignados pueden sobreescribirse.</div>
         </div>
+        <div class="fld">
+          <label>Owner <span style="font-size:10px;color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0">(responsable de cubrir esta demanda)</span></label>
+          <select id="dm-owner" class="fi">
+            <option value="">— Sin owner</option>
+            ${S.profiles.filter(p=>isOverhead(p)).map(p=>`<option value="${p.name}"${d&&d.owner===p.name?" selected":""}>${p.name}</option>`).join("")}
+          </select>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px">Se creará un pendiente en el Home del owner.</div>
+        </div>
         <div style="border-top:1px solid var(--b);margin-top:4px;padding-top:18px">
           <div class="sect-lbl" style="margin-bottom:12px">Comentarios</div>
           ${noteHTML}
@@ -1673,13 +1707,16 @@ function openDM(id){
     window._dmNav=(i)=>{noteIdx=i;render2();};
     window._dmSave=async()=>{
       const getT=gid=>{const b=document.querySelector("#"+gid+" .tgb.on");return b?b.textContent:"";};
-      const data={client:document.getElementById("dm-cli").value,project_reference:document.getElementById("dm-proj").value,start_date:document.getElementById("dm-start").value||null,duration_weeks:parseInt(document.getElementById("dm-dur").value)||null,capability:document.getElementById("dm-cap").value,role:document.getElementById("dm-role").value,seniority:document.getElementById("dm-sen").value,chargeability_required:parseInt(document.getElementById("dm-ch").value)||100,contract_type:getT("tgg-dct")||"Interno",status:getT("tgg-dst")||"Vacío",proposed_profile:document.getElementById("dm-pp").value};
+      const data={client:document.getElementById("dm-cli").value,project_reference:document.getElementById("dm-proj").value,start_date:document.getElementById("dm-start").value||null,duration_weeks:parseInt(document.getElementById("dm-dur").value)||null,capability:document.getElementById("dm-cap").value,role:document.getElementById("dm-role").value,seniority:document.getElementById("dm-sen").value,chargeability_required:parseInt(document.getElementById("dm-ch").value)||100,contract_type:getT("tgg-dct")||"Interno",status:getT("tgg-dst")||"Vacío",proposed_profile:document.getElementById("dm-pp").value,owner:document.getElementById("dm-owner")?document.getElementById("dm-owner").value:""};
       if(!data.client||!data.role)return;
-      if(id){S.demands=S.demands.map(d=>d.id===id?{...d,...data}:d);}
-      else{S.demands.push({...data,id:uid(),notes:[],created_at:new Date().toISOString()});}
-      await save();cm();render();
+      let savedDemand;
+      if(id){savedDemand={...S.demands.find(d=>d.id===id),...data};S.demands=S.demands.map(d=>d.id===id?savedDemand:d);}
+      else{savedDemand={...data,id:uid(),notes:[],created_at:new Date().toISOString()};S.demands.push(savedDemand);}
+      await save();
+      await syncDemandTodo(savedDemand);
+      cm();render();
     };
-    window._dmDel=async()=>{S.demands=S.demands.filter(d=>d.id!==id);await save();cm();render();};
+    window._dmDel=async()=>{const dd=S.demands.find(d=>d.id===id);S.demands=S.demands.filter(d=>d.id!==id);await save();if(dd){await syncDemandTodo({...dd,owner:""});}cm();render();};
     window._dmAddNote=async()=>{
       const txt=document.getElementById("dm-note-inp")?.value?.trim();if(!txt)return;
       const note={id:uid(),ts:new Date().toISOString(),text:txt};
