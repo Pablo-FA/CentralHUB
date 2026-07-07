@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 15:04" data-file="index"/>
+<meta name="build-stamp" content="2026-07-07 15:09" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -199,7 +199,7 @@ body{background:var(--bg)}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-07-07 15:04"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-07-07 15:09"};</script>
 </head>
 <body>
 
@@ -390,7 +390,7 @@ async function loadBuildStamps(){
     try{
       const r=await fetch(f.url+'?t='+Date.now(),{cache:'no-store'});
       const txt=await r.text();
-      const m=txt.match(/name="build-stamp" content="2026-07-07 15:04"]*)"/);
+      const m=txt.match(/name="build-stamp" content="([^"]*)"/);
       return {label:f.label,stamp:m?m[1]:'—'};
     }catch(e){return {label:f.label,stamp:'error'};}
   }));
