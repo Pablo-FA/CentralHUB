@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 17:07" data-file="index"/>
+<meta name="build-stamp" content="2026-07-07 17:11" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -199,7 +199,7 @@ body{background:var(--bg)}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-07-07 17:07"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-07-07 17:11"};</script>
 </head>
 <body>
 
@@ -402,7 +402,7 @@ async function loadBuildStamps(){
 
 async function loadActiveProjects(){
   try{
-    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/pm_projects?order=updated_at.desc',{
+    const r=await fetchT('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/pm_projects?order=updated_at.desc',{
       headers:{'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk'}
     });
     if(!r.ok)return[];
@@ -534,7 +534,7 @@ function navToTab(tab){
 // Metrics
 async function loadMetrics(){
   try{
-    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/sd_data?select=key,data&key=in.(profiles,assigns,demands)',{
+    const r=await fetchT('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/sd_data?select=key,data&key=in.(profiles,assigns,demands)',{
       headers:{'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk'}
     });
     const rows=r.ok?await r.json():[];
@@ -570,9 +570,16 @@ async function loadMetrics(){
 // Todos
 let S_TODOS=[]; // in-memory cache of all todos, loaded from Supabase
 const TODO_SB_H={'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Content-Type':'application/json'};
+// Fetch with timeout so a hanging Supabase call never freezes the Home
+async function fetchT(url,opts={},ms=8000){
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),ms);
+  try{const r=await fetch(url,{...opts,signal:ctrl.signal});clearTimeout(timer);return r;}
+  catch(e){clearTimeout(timer);throw e;}
+}
 async function loadTodos(){
   try{
-    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?order=created_at.asc',{headers:TODO_SB_H,cache:'no-store'});
+    const r=await fetchT('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?order=created_at.asc',{headers:TODO_SB_H,cache:'no-store'});
     S_TODOS=r.ok?await r.json():[];
   }catch(e){S_TODOS=[];}
   return S_TODOS;
@@ -582,17 +589,17 @@ function getTodos(){return S_TODOS.filter(t=>t.owner===(currentUser?.name||""));
 // saveTodos removed — todos now persist individually to Supabase
 async function toggleTodo(id){
   const t=S_TODOS.find(x=>x.id===id);if(!t)return;
-  t.done=!t.done;showHome();
+  t.done=!t.done;renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({done:t.done})});}catch(e){}
 }
 async function delTodo(id){
-  S_TODOS=S_TODOS.filter(t=>t.id!==id);showHome();
+  S_TODOS=S_TODOS.filter(t=>t.id!==id);renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"DELETE",headers:{...TODO_SB_H,"Prefer":"return=minimal"}});}catch(e){}
 }
 const TODO_USERS=['Pablo F.','Conrado P.','Fabio H.G.'];
 async function setTodoOwner(id,owner){
   const t=S_TODOS.find(x=>x.id===id);if(!t)return;
-  t.owner=owner;showHome();
+  t.owner=owner;renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({owner})});}catch(e){}
 }
 async function addTodo(){
@@ -600,14 +607,31 @@ async function addTodo(){
   if(!inp||!inp.value.trim())return;
   const todo={id:Date.now()+"",owner:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual"};
   S_TODOS.push(todo); // optimistic
-  inp.value="";showHome();
+  inp.value="";renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(todo)});}catch(e){}
 }
 
+function renderTodos(){
+  const el=document.getElementById("todo-list");
+  if(!el)return;
+  const todos=getTodos();
+  el.innerHTML=(todos.length===0?`<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin pendientes.</p>`:"")+
+    todos.map(t=>{const isDemand=t.source==="demand";return`<div class="todo-item">
+        <div class="todo-chk${t.done?" dn":""}" onclick="toggleTodo('${t.id}')"></div>
+        <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--acc-bg);color:var(--acc);font-weight:600;letter-spacing:.03em;margin-left:4px">DEMAND</span>`:""}</div>
+        ${isDemand
+          ?`<span style="font-size:11px;color:var(--text3);white-space:nowrap">gestionar en Supply</span>`
+          :`<select class="todo-owner${t.owner?" assigned":""}" onchange="setTodoOwner('${t.id}',this.value)" onclick="event.stopPropagation()">
+            <option value="">— owner</option>
+            ${TODO_USERS.map(u=>`<option value="${u}"${t.owner===u?" selected":""}>${u}</option>`).join("")}
+          </select>
+          <button class="todo-del" onclick="delTodo('${t.id}')">×</button>`}
+      </div>`;}).join("");
+}
 async function showHome(){
   if(!currentUser)return;
-  await loadTodos();const m=await loadMetrics(),todos=getTodos(),now=new Date();
-  const activeProjects=await loadActiveProjects();
+  const [,m,activeProjects]=await Promise.all([loadTodos(),loadMetrics(),loadActiveProjects()]);
+  const todos=getTodos(),now=new Date();
   const capColors={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"};
   const h=now.getHours(),gr=h<13?"Buenos días ☀️":h<20?"Buenas tardes 🌤":"Buenas noches 🌙";
   document.getElementById("home-view").innerHTML=`
@@ -655,6 +679,7 @@ async function showHome(){
     </div>
     <div class="card">
       <div class="card-title">Pendientes</div>
+      <div id="todo-list">
       ${todos.length===0?`<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin pendientes.</p>`:""}
       ${todos.map(t=>{const isDemand=t.source==="demand";return`<div class="todo-item">
         <div class="todo-chk${t.done?" dn":""}" onclick="toggleTodo('${t.id}')"></div>
@@ -667,6 +692,7 @@ async function showHome(){
           </select>
           <button class="todo-del" onclick="delTodo('${t.id}')">×</button>`}
       </div>`;}).join("")}
+      </div>
       <div class="todo-add">
         <input id="todo-inp" class="todo-inp" placeholder="Añadir pendiente..." onkeydown="if(event.key==='Enter')addTodo()"/>
         <button class="todo-btn" onclick="addTodo()">+</button>
