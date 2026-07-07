@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 15:09" data-file="index"/>
+<meta name="build-stamp" content="2026-07-07 16:32" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -199,7 +199,7 @@ body{background:var(--bg)}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-07-07 15:09"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-07-07 16:32"};</script>
 </head>
 <body>
 
@@ -548,7 +548,7 @@ async function loadMetrics(){
       return a.profile_id===pid&&s<=now&&(!e||e>=now)&&!a.is_forecast;
     }).reduce((t,a)=>t+(a.chargeability||0),0);
     const isOverhead=p=>(p.role||"").toLowerCase()==="management"||(p.role||"").toLowerCase()==="overhead";
-    const active=profiles.filter(p=>p.is_active&&!isOverhead(p));
+    const active=profiles.filter(p=>p.is_active&&!isOverhead(p)&&!p.on_leave);
     const bench=active.filter(p=>charge(p.id)===0);
     const avg=active.length?Math.round(active.reduce((s,p)=>s+charge(p.id),0)/active.length):0;
     const openD=demands.filter(d=>d.status!=="Asignado").length;
