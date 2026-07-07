@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 14:42" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-07 14:47" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 14:42"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 14:47"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -257,6 +257,8 @@ const fdm=d=>d?new Date(d).toLocaleDateString("es-ES",{month:"short",year:"numer
 const cc=c=>c>=80?"var(--green)":c>=40?"var(--amber)":"var(--red)";
 const scol=s=>({Asignado:"bgreen",Entrevistas:"bblue",Entrevistado:"bblue",Propuesto:"bacc",Esperando:"bamber","En revisión":"bamber",Vacío:"bg"})[s]||"bg";
 const rolesForCap=cap=>{const custom=S.customRoles.filter(r=>!cap||r.cap===cap).map(r=>r.name);const base=cap&&ROLES_BY_CAP[cap]?ROLES_BY_CAP[cap]:[...new Set(Object.values(ROLES_BY_CAP).flat())];return[...new Set([...base,...custom])].sort();};
+// Normalize strings for accent-insensitive sorting (Ángela sorts with A)
+function normStr(s){return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
 function pCharge(pid){const now=new Date();return S.assigns.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===pid&&s<=now&&(!e||e>=now)&&!a.is_forecast;}).reduce((t,a)=>t+(a.chargeability||0),0);}
 
 function getBenchSince(pid){
@@ -370,7 +372,7 @@ function sortedDemands(list){
   const sort=S.demandSort;if(!sort.length)return list;
   return[...list].sort((a,b)=>{
     for(const{field,dir}of sort){
-      let va=(a[field]||"").toString().toLowerCase(),vb=(b[field]||"").toString().toLowerCase();
+      let va=normStr(a[field]),vb=normStr(b[field]);
       if(field==="chargeability_required"||field==="duration_weeks"){va=parseFloat(a[field])||0;vb=parseFloat(b[field])||0;}
       if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;
     }
@@ -526,7 +528,7 @@ function sortedSupply(list){
       }
       else if(field==="lcr"){va=parseFloat(a.lcr)||0;vb=parseFloat(b.lcr)||0;}
       else if(field==="level_accenture"){va=parseInt((a.level_accenture||"").replace(/\D/g,""))||999;vb=parseInt((b.level_accenture||"").replace(/\D/g,""))||999;}
-      else{va=(a[field]||"").toString().toLowerCase();vb=(b[field]||"").toString().toLowerCase();}
+      else{va=normStr(a[field]);vb=normStr(b[field]);}
       if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;
     }
     return 0;
@@ -664,7 +666,7 @@ function render(){
 // ── SORT ──────────────────────────────────────────────────────────────────
 function sortBy(f){if(S.rosterSort.field===f)S.rosterSort.dir=S.rosterSort.dir==="asc"?"desc":"asc";else{S.rosterSort.field=f;S.rosterSort.dir="asc";}render();}
 function sa(f){const{field,dir}=S.rosterSort;if(field!==f)return`<span style="color:var(--t3);font-size:9px;margin-left:3px">↕</span>`;return`<span style="font-size:9px;margin-left:3px">${dir==="asc"?"↑":"↓"}</span>`;}
-function sortedProfiles(list){const{field,dir}=S.rosterSort;return[...list].sort((a,b)=>{let va,vb;if(field==="cargabilidad"){va=pCharge(a.id);vb=pCharge(b.id);}else if(field==="lcr"){va=parseFloat(a.lcr)||0;vb=parseFloat(b.lcr)||0;}else if(field==="level_accenture"){va=parseInt((a.level_accenture||"").replace(/\D/g,""))||999;vb=parseInt((b.level_accenture||"").replace(/\D/g,""))||999;}else{va=(a[field]||"").toString().toLowerCase();vb=(b[field]||"").toString().toLowerCase();}if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;return 0;});}
+function sortedProfiles(list){const{field,dir}=S.rosterSort;return[...list].sort((a,b)=>{let va,vb;if(field==="cargabilidad"){va=pCharge(a.id);vb=pCharge(b.id);}else if(field==="lcr"){va=parseFloat(a.lcr)||0;vb=parseFloat(b.lcr)||0;}else if(field==="level_accenture"){va=parseInt((a.level_accenture||"").replace(/\D/g,""))||999;vb=parseInt((b.level_accenture||"").replace(/\D/g,""))||999;}else{va=normStr(a[field]);vb=normStr(b[field]);}if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;return 0;});}
 
 // ── DROPDOWN FILTERS ──────────────────────────────────────────────────────
 function tFDD(k,e){e.stopPropagation();if(openFDD===k){closeFDD();return;}closeFDD();openFDD=k;const p=document.getElementById("fddp-"+k),b=document.getElementById("fddb-"+k);if(p)p.classList.add("open");if(b)b.classList.add("open");}
