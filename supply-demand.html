@@ -121,6 +121,10 @@ select.fi option{background:var(--bg2)}
 .hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
 input[type=range]{accent-color:var(--acc);width:100%}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--b);border-radius:3px}
+
+/* ═══ CAPABILITY HIDDEN (reversible: delete this block to restore) ═══ */
+.cap-col{display:none !important;}
+/* ══════════════════════════════════════════════════════════════════ */
 </style>
 </head>
 <body>
@@ -673,7 +677,7 @@ function filterBar(){
   return`<div class="fbar">
     <input id="rf-q" class="fsearch" placeholder="🔍  Nombre o EID..." value="${f.q}" oninput="S.rf.q=this.value;render()"/>
     ${fddM("lv","levels","Nivel",LEVELS.map(l=>({val:l,label:l,sub:LN[l]})))}
-    ${fddM("cp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}
+    <span class="cap-col">${fddM("cp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}</span>
     ${fddM("rl","roles","Rol",allRoles.map(r=>({val:r,label:r})))}
     ${fddM("lc","locs","Ubicación",LOCATIONS.map(l=>({val:l,label:l})))}
     ${fddM("sk","skills","Skill",allSkills.map(s=>({val:s,label:s})))}
@@ -690,8 +694,8 @@ function tRoster(){
   return`<div class="shdr"><span class="scnt" style="margin-left:0">${fp.length} de ${S.profiles.length} perfiles</span><button class="btn btnp btns" onclick="openPM(null)">+ Añadir perfil</button></div>
   ${filterBar()}
   <div class="tw"><table>
-    <thead><tr>${th("Perfil","name")}${th("EID","eid")}${th("Level","level_accenture")}${th("Capability","capability")}${th("Ubicación","location")}${th("Tipo","contract_type")}${th("LCR","lcr")}${th("Cargabilidad","cargabilidad")}</tr></thead>
-    <tbody>${fp.length===0?`<tr><td colspan="8" class="empty">Sin perfiles que coincidan.</td></tr>`:fp.map(p=>{const c=pCharge(p.id);const sub=p.contract_type==="Subcontractor";return`<tr onclick="openPM('${p.id}')"><td><div style="display:flex;align-items:center;gap:10px"><div class="av">${ini(p.name)}</div><div><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--t3)">${p.role||""}</div></div></div></td><td style="color:var(--t3);font-size:12px;font-family:monospace">${p.eid||"—"}</td><td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td><td style="color:var(--t2);font-size:12px">${p.capability||"—"}</td><td style="color:var(--t2);font-size:12px">${p.location||"—"}</td><td><span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${p.contract_type||"Interno"}</span></td><td style="color:var(--t2);font-size:12px">${p.lcr?parseFloat(p.lcr).toFixed(2)+"€/h":"—"}</td><td><div class="cbar"><div class="ctrack"><div class="cfill" style="width:${Math.min(c,100)}%;background:${cc(c)}"></div></div><span style="font-size:12px;color:var(--t2);min-width:34px">${c}%</span><span class="bdg ${c===0?"bred":c>=80?"bgreen":"bamber"}" style="font-size:10px;margin-left:4px">${c===0?"Banquillo":c>=100?"Full":c+"%"}</span></div></td></tr>`;}).join("")}</tbody>
+    <thead><tr>${th("Perfil","name")}${th("EID","eid")}${th("Level","level_accenture")}<span class="cap-col">${th("Capability","capability")}</span>${th("Ubicación","location")}${th("Tipo","contract_type")}${th("LCR","lcr")}${th("Cargabilidad","cargabilidad")}</tr></thead>
+    <tbody>${fp.length===0?`<tr><td colspan="8" class="empty">Sin perfiles que coincidan.</td></tr>`:fp.map(p=>{const c=pCharge(p.id);const sub=p.contract_type==="Subcontractor";return`<tr onclick="openPM('${p.id}')"><td><div style="display:flex;align-items:center;gap:10px"><div class="av">${ini(p.name)}</div><div><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--t3)">${p.role||""}</div></div></div></td><td style="color:var(--t3);font-size:12px;font-family:monospace">${p.eid||"—"}</td><td><span class="bdg bg" title="${LN[p.level_accenture]||""}">${p.level_accenture||"—"}</span></td><td class="cap-col" style="color:var(--t2);font-size:12px">${p.capability||"—"}</td><td style="color:var(--t2);font-size:12px">${p.location||"—"}</td><td><span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${p.contract_type||"Interno"}</span></td><td style="color:var(--t2);font-size:12px">${p.lcr?parseFloat(p.lcr).toFixed(2)+"€/h":"—"}</td><td><div class="cbar"><div class="ctrack"><div class="cfill" style="width:${Math.min(c,100)}%;background:${cc(c)}"></div></div><span style="font-size:12px;color:var(--t2);min-width:34px">${c}%</span><span class="bdg ${c===0?"bred":c>=80?"bgreen":"bamber"}" style="font-size:10px;margin-left:4px">${c===0?"Banquillo":c>=100?"Full":c+"%"}</span></div></td></tr>`;}).join("")}</tbody>
   </table></div>`;}
 
 // ── SUPPLY ────────────────────────────────────────────────────────────────
@@ -719,7 +723,7 @@ function tSupply(){
     </div>
     <div class="fbar">
       <input id="sf-q" class="fsearch" placeholder="Buscar perfil..." value="${f.q}" oninput="S.sf.q=this.value;render()"/>
-      ${sfddM("cp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}
+      <span class="cap-col">${sfddM("cp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}</span>
       ${sfddM("lv","levels","Nivel",LEVELS.map(l=>({val:l,label:l,sub:LN[l]})))}
       ${sfddM("ct","ctypes","Tipo",CONTRACT_TYPES.map(t=>({val:t,label:t})))}
       ${fCount>0?`<button class="btn btns" style="color:var(--t3);border-color:transparent" onclick="S.sf={q:'',caps:[],levels:[],risks:[],ctypes:[]};render()">× ${fCount}</button>`:""}
@@ -845,7 +849,7 @@ function tSupply(){
   }
 
   if(S.supplyView==="log"){
-    const LOG_VIEWS=[["bench","Disponibles"],["proyectos","Proyectos"],["caps","Capabilities"],["roles","Roles"]];
+    const LOG_VIEWS=[["bench","Disponibles"],["proyectos","Proyectos"],["roles","Roles"]];/*cap-hidden: caps view removed*/
     const lvt=`<div style="display:flex;gap:0;background:var(--bg3);border:1px solid var(--b);border-radius:6px;padding:2px;margin-bottom:20px">${LOG_VIEWS.map(([v,l])=>`<button style="padding:4px 14px;border-radius:5px;font-size:12px;cursor:pointer;border:none;background:${S.logView===v?"var(--bg2)":"transparent"};color:${S.logView===v?"var(--t)":"var(--t2)"};font-family:inherit;transition:all .15s" onclick="S.logView='${v}';render()">${l}</button>`).join("")}</div>`;
     if(S.logView==="bench"){
       const rows=calcLog();const last=rows[rows.length-1];
@@ -859,19 +863,19 @@ function tSupply(){
       return`<div class="shdr" style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:16px">${vt}</div></div>${lvt}
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px"><div class="mcard"><div class="mlbl">Activos</div><div class="mval">${activeProj.length}</div></div><div class="mcard"><div class="mlbl">Total</div><div class="mval" style="color:var(--t2)">${data.length}</div></div><div class="mcard"><div class="mlbl">Asignados</div><div class="mval">${totalActive}</div></div><div class="mcard"><div class="mlbl">Mayor proyecto</div><div style="font-size:14px;font-weight:500;margin-top:4px">${data[0]?data[0].name.split(" ").slice(0,3).join(" "):"—"}</div><div class="msub">${data[0]?data[0].count+" perfiles":""}</div></div></div>
       <div style="background:var(--bg1);border:1px solid var(--b);border-radius:8px;padding:20px;margin-bottom:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="sect-lbl" style="margin:0">Headcount por proyecto</div><div style="font-size:11px;color:var(--t3)"><span style="color:var(--acc)">■ Activo</span> · <span style="color:#444">■ Histórico</span></div></div>${projChart(data)}</div>
-      <div class="tw"><table><thead><tr><th>Proyecto</th><th>Estado</th><th>Perfiles</th><th>Capabilities</th><th>LCR/mes</th><th>Inicio</th><th>Fin</th></tr></thead><tbody>${data.map(d=>`<tr><td style="font-weight:500">${d.name}</td><td><span class="bdg ${d.active?"bgreen":"bg"}" style="font-size:10px">${d.active?"Activo":"Cerrado"}</span></td><td>${d.count}</td><td style="font-size:12px;color:var(--t2)">${d.caps}</td><td style="font-size:12px;color:var(--t2)">${d.lcr_week?d.lcr_week+"€":"—"}</td><td style="font-size:12px;color:var(--t2)">${fds(d.start)}</td><td style="font-size:12px;color:var(--t2)">${d.end?fds(d.end):"—"}</td></tr>`).join("")}</tbody></table></div>`;
+      <div class="tw"><table><thead><tr><th>Proyecto</th><th>Estado</th><th>Perfiles</th><th class="cap-col">Capabilities</th><th>LCR/mes</th><th>Inicio</th><th>Fin</th></tr></thead><tbody>${data.map(d=>`<tr><td style="font-weight:500">${d.name}</td><td><span class="bdg ${d.active?"bgreen":"bg"}" style="font-size:10px">${d.active?"Activo":"Cerrado"}</span></td><td>${d.count}</td><td class="cap-col" style="font-size:12px;color:var(--t2)">${d.caps}</td><td style="font-size:12px;color:var(--t2)">${d.lcr_week?d.lcr_week+"€":"—"}</td><td style="font-size:12px;color:var(--t2)">${fds(d.start)}</td><td style="font-size:12px;color:var(--t2)">${d.end?fds(d.end):"—"}</td></tr>`).join("")}</tbody></table></div>`;
     }
     if(S.logView==="caps"){
       const rows=calcLogCaps();const last=rows[rows.length-1];
       return`<div class="shdr" style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:16px">${vt}</div></div>${lvt}
       <div style="background:var(--bg1);border:1px solid var(--b);border-radius:8px;padding:20px;margin-bottom:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="sect-lbl" style="margin:0">Evolución headcount por capability</div><div style="display:flex;flex-wrap:wrap;gap:10px">${CAPS.map(cap=>`<span style="font-size:11px;color:${CAP_COLORS[cap]}">${cap} ${last[cap]||0}</span>`).join("")}</div></div>${capChart(rows)}</div>
-      <div class="tw"><table><thead><tr><th>Capability</th><th>Headcount</th><th>Disponibles</th><th>Cargabilidad media</th><th>Δ</th></tr></thead><tbody>${CAPS.map(cap=>{const curr=S.profiles.filter(p=>p.capability===cap&&p.is_active);const bench=curr.filter(p=>pCharge(p.id)<100).length;const avg=curr.length?Math.round(curr.reduce((s,p)=>s+pCharge(p.id),0)/curr.length):0;const prev=rows[rows.length-2];const delta=prev?(last[cap]||0)-(prev[cap]||0):null;const deltaCls=delta===null?"":delta>0?"bgreen":delta<0?"bred":"bg";const deltaLbl=delta===null?"—":delta>0?`+${delta}`:delta<0?`${delta}`:"=";return`<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${CAP_COLORS[cap]};margin-right:8px"></span><span style="font-weight:500">${cap}</span></td><td>${curr.length}</td><td><span class="bdg ${bench>0?"bamber":"bgreen"}">${bench}</span></td><td><div class="cbar"><div class="ctrack" style="min-width:80px"><div class="cfill" style="width:${Math.min(avg,100)}%;background:${cc(avg)}"></div></div><span style="font-size:12px">${avg}%</span></div></td><td>${delta!==null?`<span class="bdg ${deltaCls}" style="font-size:11px">${deltaLbl}</span>`:"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
+      <div class="tw"><table><thead><tr><th class="cap-col">Capability</th><th>Headcount</th><th>Disponibles</th><th>Cargabilidad media</th><th>Δ</th></tr></thead><tbody>${CAPS.map(cap=>{const curr=S.profiles.filter(p=>p.capability===cap&&p.is_active);const bench=curr.filter(p=>pCharge(p.id)<100).length;const avg=curr.length?Math.round(curr.reduce((s,p)=>s+pCharge(p.id),0)/curr.length):0;const prev=rows[rows.length-2];const delta=prev?(last[cap]||0)-(prev[cap]||0):null;const deltaCls=delta===null?"":delta>0?"bgreen":delta<0?"bred":"bg";const deltaLbl=delta===null?"—":delta>0?`+${delta}`:delta<0?`${delta}`:"=";return`<tr class="cap-col"><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${CAP_COLORS[cap]};margin-right:8px"></span><span style="font-weight:500">${cap}</span></td><td>${curr.length}</td><td><span class="bdg ${bench>0?"bamber":"bgreen"}">${bench}</span></td><td><div class="cbar"><div class="ctrack" style="min-width:80px"><div class="cfill" style="width:${Math.min(avg,100)}%;background:${cc(avg)}"></div></div><span style="font-size:12px">${avg}%</span></div></td><td>${delta!==null?`<span class="bdg ${deltaCls}" style="font-size:11px">${deltaLbl}</span>`:"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
     }
     if(S.logView==="roles"){
       const data=calcLogRoles();
       return`<div class="shdr" style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:16px">${vt}</div></div>${lvt}
       <div style="background:var(--bg1);border:1px solid var(--b);border-radius:8px;padding:20px;margin-bottom:24px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="sect-lbl" style="margin:0">Headcount por rol</div><div style="font-size:11px;color:var(--t3)"><span style="color:var(--acc)">■ asignado</span> · fondo = total</div></div>${roleChart(data)}</div>
-      <div class="tw"><table><thead><tr><th>Rol</th><th>Total</th><th>Asignados</th><th>Disponibles</th><th>% asignación</th><th>Capabilities</th></tr></thead><tbody>${data.map(r=>{const pctCls=r.pct>=80?"bgreen":r.pct>=50?"bamber":"bred";return`<tr><td style="font-weight:500">${r.name}</td><td>${r.total}</td><td>${r.assigned}</td><td><span class="bdg ${r.bench>0?"bamber":"bgreen"}">${r.bench}</span></td><td><span class="bdg ${pctCls}" style="font-size:11px">${r.pct}%</span></td><td style="font-size:12px;color:var(--t2)">${r.caps}</td></tr>`;}).join("")}</tbody></table></div>`;
+      <div class="tw"><table><thead><tr><th>Rol</th><th>Total</th><th>Asignados</th><th>Disponibles</th><th>% asignación</th><th class="cap-col">Capabilities</th></tr></thead><tbody>${data.map(r=>{const pctCls=r.pct>=80?"bgreen":r.pct>=50?"bamber":"bred";return`<tr><td style="font-weight:500">${r.name}</td><td>${r.total}</td><td>${r.assigned}</td><td><span class="bdg ${r.bench>0?"bamber":"bgreen"}">${r.bench}</span></td><td><span class="bdg ${pctCls}" style="font-size:11px">${r.pct}%</span></td><td class="cap-col" style="font-size:12px;color:var(--t2)">${r.caps}</td></tr>`;}).join("")}</tbody></table></div>`;
     }
   }
   return"";
@@ -938,7 +942,7 @@ function tDemand(){
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
-function tDash(){const bench=S.profiles.filter(p=>pCharge(p.id)===0).length;const avg=S.profiles.length?Math.round(S.profiles.reduce((s,p)=>s+pCharge(p.id),0)/S.profiles.length):0;const openD=S.demands.filter(d=>d.status==="Abierta").length;const byS=STATUSES.reduce((a,s)=>{a[s]=S.demands.filter(d=>d.status===s).length;return a},{});const byCap=S.profiles.reduce((a,p)=>{const c=p.capability||"?";if(!a[c])a[c]={t:0,b:0,ch:0};a[c].t++;const ch=pCharge(p.id);if(ch===0)a[c].b++;a[c].ch+=ch;return a},{});const byLoc=S.profiles.reduce((a,p)=>{if(p.location)a[p.location]=(a[p.location]||0)+1;return a},{});const intN=S.profiles.filter(p=>p.contract_type!=="Subcontractor").length,subN=S.profiles.filter(p=>p.contract_type==="Subcontractor").length;return`<div class="shdr"><span class="stitle">Dashboard</span></div><div class="mgrid"><div class="mcard"><div class="mlbl">Perfiles activos</div><div class="mval">${S.profiles.length}</div><div class="msub">Internos: ${intN} · Sub: ${subN}</div></div><div class="mcard"><div class="mlbl">En banquillo</div><div class="mval" style="color:${bench>0?"var(--amber)":"var(--green)"}">${bench}</div><div class="msub">${S.profiles.length>0?Math.round(bench/S.profiles.length*100):0}% del equipo</div></div><div class="mcard"><div class="mlbl">Cargabilidad media</div><div class="mval" style="color:${avg>=80?"var(--green)":avg>=50?"var(--amber)":"var(--red)"}">${avg}%</div></div><div class="mcard"><div class="mlbl">Demanda abierta</div><div class="mval" style="color:${openD>0?"var(--acc)":"var(--t)"}">${openD}</div><div class="msub">sin cubrir</div></div></div><div class="sect-lbl">Demand por estado</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px">${STATUSES.map(s=>`<div class="mcard" style="flex:1 1 90px;padding:14px 16px"><div class="mlbl" style="margin-bottom:4px">${s}</div><div style="font-size:22px;font-weight:500">${byS[s]||0}</div></div>`).join("")}</div><div class="sect-lbl">Por capability</div><div class="tw" style="margin-bottom:28px"><table><thead><tr><th>Capability</th><th>Perfiles</th><th>Banquillo</th><th>Cargabilidad media</th></tr></thead><tbody>${Object.entries(byCap).map(([cap,d])=>{const ca=Math.round(d.ch/d.t);return`<tr><td style="font-weight:500">${cap}</td><td>${d.t}</td><td><span class="bdg ${d.b>0?"bamber":"bgreen"}">${d.b}</span></td><td><div class="cbar"><div class="ctrack" style="min-width:80px"><div class="cfill" style="width:${Math.min(ca,100)}%;background:${cc(ca)}"></div></div><span style="font-size:12px">${ca}%</span></div></td></tr>`}).join("")}</tbody></table></div><div class="sect-lbl">Por ubicación</div><div style="display:flex;gap:10px;flex-wrap:wrap">${Object.entries(byLoc).sort((a,b)=>b[1]-a[1]).map(([loc,n])=>`<div class="mcard" style="flex:1 1 100px;padding:14px 16px"><div class="mlbl" style="margin-bottom:4px">${loc}</div><div style="font-size:22px;font-weight:500">${n}</div></div>`).join("")}</div>`;}
+function tDash(){const bench=S.profiles.filter(p=>pCharge(p.id)===0).length;const avg=S.profiles.length?Math.round(S.profiles.reduce((s,p)=>s+pCharge(p.id),0)/S.profiles.length):0;const openD=S.demands.filter(d=>d.status==="Abierta").length;const byS=STATUSES.reduce((a,s)=>{a[s]=S.demands.filter(d=>d.status===s).length;return a},{});const byCap=S.profiles.reduce((a,p)=>{const c=p.capability||"?";if(!a[c])a[c]={t:0,b:0,ch:0};a[c].t++;const ch=pCharge(p.id);if(ch===0)a[c].b++;a[c].ch+=ch;return a},{});const byLoc=S.profiles.reduce((a,p)=>{if(p.location)a[p.location]=(a[p.location]||0)+1;return a},{});const intN=S.profiles.filter(p=>p.contract_type!=="Subcontractor").length,subN=S.profiles.filter(p=>p.contract_type==="Subcontractor").length;return`<div class="shdr"><span class="stitle">Dashboard</span></div><div class="mgrid"><div class="mcard"><div class="mlbl">Perfiles activos</div><div class="mval">${S.profiles.length}</div><div class="msub">Internos: ${intN} · Sub: ${subN}</div></div><div class="mcard"><div class="mlbl">En banquillo</div><div class="mval" style="color:${bench>0?"var(--amber)":"var(--green)"}">${bench}</div><div class="msub">${S.profiles.length>0?Math.round(bench/S.profiles.length*100):0}% del equipo</div></div><div class="mcard"><div class="mlbl">Cargabilidad media</div><div class="mval" style="color:${avg>=80?"var(--green)":avg>=50?"var(--amber)":"var(--red)"}">${avg}%</div></div><div class="mcard"><div class="mlbl">Demanda abierta</div><div class="mval" style="color:${openD>0?"var(--acc)":"var(--t)"}">${openD}</div><div class="msub">sin cubrir</div></div></div><div class="sect-lbl">Demand por estado</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px">${STATUSES.map(s=>`<div class="mcard" style="flex:1 1 90px;padding:14px 16px"><div class="mlbl" style="margin-bottom:4px">${s}</div><div style="font-size:22px;font-weight:500">${byS[s]||0}</div></div>`).join("")}</div><div class="sect-lbl">Por capability</div><div class="tw" style="margin-bottom:28px"><table><thead><tr><th class="cap-col">Capability</th><th>Perfiles</th><th>Banquillo</th><th>Cargabilidad media</th></tr></thead><tbody>${Object.entries(byCap).map(([cap,d])=>{const ca=Math.round(d.ch/d.t);return`<tr class="cap-col"><td style="font-weight:500">${cap}</td><td>${d.t}</td><td><span class="bdg ${d.b>0?"bamber":"bgreen"}">${d.b}</span></td><td><div class="cbar"><div class="ctrack" style="min-width:80px"><div class="cfill" style="width:${Math.min(ca,100)}%;background:${cc(ca)}"></div></div><span style="font-size:12px">${ca}%</span></div></td></tr>`}).join("")}</tbody></table></div><div class="sect-lbl">Por ubicación</div><div style="display:flex;gap:10px;flex-wrap:wrap">${Object.entries(byLoc).sort((a,b)=>b[1]-a[1]).map(([loc,n])=>`<div class="mcard" style="flex:1 1 100px;padding:14px 16px"><div class="mlbl" style="margin-bottom:4px">${loc}</div><div style="font-size:22px;font-weight:500">${n}</div></div>`).join("")}</div>`;}
 
 // ── PROFILE MODAL ─────────────────────────────────────────────────────────
 function openPM(id,defTab){
@@ -999,7 +1003,7 @@ function renderPM(){
       <div style="flex:1"></div>
       ${modalEditMode
         ?`<button class="btn btns" onclick="cancelEdit()">${p?"Cancelar":"Cerrar"}</button><button class="btn btnp btns" onclick="saveP()">Guardar</button>`
-        :`${p?`<button class="btn btns btnd" onclick="archP('${p.id}')">Archivar</button>`:""}<button class="btn btnp btns" onclick="startEdit()">Editar</button>`
+        :`${p?`<button class="btn btns btnd" onclick="confirmDelP('${p.id}')">Eliminar</button>`:""}<button class="btn btnp btns" onclick="startEdit()">Editar</button>`
       }
     </div>
   </div></div>`;
@@ -1059,7 +1063,7 @@ function genTab(d){
   return`<div>
     <div class="r2"><div class="fld"><label>Nombre completo</label><input id="pn" class="fi" value="${d.name||""}" placeholder="Ej: Álvaro Ruiz"/></div><div class="fld" style="max-width:155px"><label>EID</label><input id="peid" class="fi" value="${d.eid||""}" placeholder="alvaro.ruiz" style="font-family:monospace"/></div></div>
     <div class="r2">
-      <div class="fld"><label>Capability</label><select id="pcap" class="fi" onchange="updRoleDd(this.value)"><option value="">Seleccionar...</option>${CAPS.map(c=>`<option${(d.capability||"")==c?" selected":""}>${c}</option>`).join("")}</select></div>
+      <div class="fld cap-col"><label>Capability</label><select id="pcap" class="fi" onchange="updRoleDd(this.value)"><option value="">Seleccionar...</option>${CAPS.map(c=>`<option${(d.capability||"")==c?" selected":""}>${c}</option>`).join("")}</select></div>
       <div class="fld"><label>Rol</label><select id="prol" class="fi" onchange="tNR(this.value)"><option value="">Seleccionar...</option>${rolesForCap(d.capability).map(r=>`<option${(d.role||"")==r?" selected":""}>${r}</option>`).join("")}<option value="__new__">+ Nuevo rol...</option></select></div>
     </div>
     <div id="nrw" style="display:none;margin-bottom:16px"><div class="fld" style="margin:0"><label>Nombre del nuevo rol</label><div style="display:flex;gap:8px"><input id="nri" class="fi" placeholder="Ej: CGI Supervisor"/><button class="btn btns btnp" onclick="addNR()">+</button></div></div></div>
@@ -1152,10 +1156,33 @@ function asigTab(p){
   const currNotes=notes.filter(n=>currIds.has(n.assignment_id));
   const pastNotes=notes.filter(n=>!currIds.has(n.assignment_id));
 
-  // Assignment summary
-  const assignSum=activeA.length===0
-    ?`<div style="color:var(--t3);font-size:12px;padding:8px 0 16px">Sin asignación activa.</div>`
-    :activeA.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--b)"><div style="flex:1"><div style="font-weight:500;font-size:13px">${a.project_name}</div><div style="font-size:11px;color:var(--t3);margin-top:2px">${fds(a.start_date)} → ${fds(a.end_date)} <span class="bdg ${a.chargeability>=80?"bgreen":a.chargeability>=40?"bamber":"bg"}" style="font-size:11px;margin-left:4px">${a.chargeability}%</span>${a.is_forecast?` <span style="font-size:10px;color:var(--acc)">PREV</span>`:""}</div></div></div>`).join("");
+  // Assignment summary — read-only when viewing, editable fields when editing
+  const mainA=activeA[0]||null;
+  let assignSum;
+  if(modalEditMode){
+    // Editable current-assignment form
+    assignSum=`<div style="padding:4px 0 8px">
+      <div class="fld"><label>Proyecto actual</label>
+        <input id="aa-proj" class="fi" value="${mainA?String(mainA.project_name||"").replace(/"/g,"&quot;"):""}" placeholder="Nombre del proyecto"/>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="fld" style="flex:1"><label>Desde</label>
+          <input id="aa-start" type="date" class="fi" value="${mainA&&mainA.start_date?mainA.start_date:""}"/>
+        </div>
+        <div class="fld" style="flex:1"><label>Hasta (fin previsto)</label>
+          <input id="aa-end" type="date" class="fi" value="${mainA&&mainA.end_date?mainA.end_date:""}"/>
+        </div>
+      </div>
+      <div class="fld"><label>Carga (%)</label>
+        <input id="aa-charge" type="number" min="0" max="100" class="fi" value="${mainA?(mainA.chargeability!=null?mainA.chargeability:100):100}" style="max-width:120px"/>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:2px">Deja el proyecto vacío para quitar la asignación actual.</div>
+    </div>`;
+  } else {
+    assignSum=activeA.length===0
+      ?`<div style="color:var(--t3);font-size:12px;padding:8px 0 16px">Sin asignación activa.</div>`
+      :activeA.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--b)"><div style="flex:1"><div style="font-weight:500;font-size:13px">${a.project_name}</div><div style="font-size:11px;color:var(--t3);margin-top:2px">${fds(a.start_date)} → ${fds(a.end_date)} <span class="bdg ${a.chargeability>=80?"bgreen":a.chargeability>=40?"bamber":"bg"}" style="font-size:11px;margin-left:4px">${a.chargeability}%</span>${a.is_forecast?` <span style="font-size:10px;color:var(--acc)">PREV</span>`:""}</div></div></div>`).join("");
+  }
 
   // Risk section
   const rBtns=["low","mid","high"].map(r=>`<button class="tgb${(p.risk_override||risk)===r?" on":""}" onclick="window._prRisk('${p.id}','${r}')">${r==="low"?"Low":r==="mid"?"Mid":"High"}</button>`).join("")+`<button class="tgb${!p.risk_override?" on":""}" onclick="window._prRisk('${p.id}','auto')">Auto</button>`;
@@ -1166,6 +1193,7 @@ function asigTab(p){
   return`<div>
     <div class="sect-lbl">Asignación actual</div>
     ${assignSum}
+    ${modalEditMode?"":`
     <div class="fld" style="margin-top:16px">
       <label>Riesgo</label>
       <div class="tgg">${rBtns}</div>
@@ -1187,17 +1215,65 @@ function asigTab(p){
       </div>
       <div style="opacity:.7">${pastNotes.map(noteRow).join("")}</div>
     </div>`:""}
+    `}
   </div>`;
 }
 
 async function _prSaveAndRefresh(pid){await save();render();currentPid=pid;renderPM();}
 
+async function captureAssignEdit(pid){
+  // Only if the assignment edit fields are present in the DOM (asignacion tab was open in edit mode)
+  const projEl=document.getElementById("aa-proj");
+  if(!projEl)return; // assignment tab not rendered — nothing to capture
+  const proj=projEl.value.trim();
+  const start=document.getElementById("aa-start")?.value||"";
+  const end=document.getElementById("aa-end")?.value||"";
+  const charge=parseInt(document.getElementById("aa-charge")?.value)||0;
+  const now=new Date();
+  const isActive=a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===pid&&s<=now&&(!e||e>=now)&&!a.is_forecast;};
+  const current=S.assigns.filter(isActive).sort((a,b)=>b.chargeability-a.chargeability);
+  const mainA=current[0]||null;
+  if(!proj){
+    // Empty project → remove the current active assignment if any
+    if(mainA)S.assigns=S.assigns.filter(a=>a.id!==mainA.id);
+    return;
+  }
+  if(mainA){
+    // Update existing
+    S.assigns=S.assigns.map(a=>a.id===mainA.id?{...a,project_name:proj,start_date:start||a.start_date,end_date:end||null,chargeability:charge}:a);
+  } else {
+    // Create new active assignment
+    S.assigns.push({id:uid(),profile_id:pid,project_name:proj,start_date:start||new Date().toISOString().slice(0,10),end_date:end||null,chargeability:charge,is_forecast:false});
+  }
+}
 async function saveP(){
   captureEditData();
   const data={...editData,skills:editSkills,lcr:parseFloat(editData.lcr)||null};
   if(!data.name)return;
+  let savedPid=currentPid;
   if(currentPid){S.profiles=S.profiles.map(p=>p.id===currentPid?{...p,...data}:p);}
-  else{S.profiles.push({...data,id:uid(),is_active:true,created_at:new Date().toISOString()});}
+  else{const np={...data,id:uid(),is_active:true,created_at:new Date().toISOString()};S.profiles.push(np);savedPid=np.id;}
+  captureAssignEdit(savedPid);
+  await save();cm();render();
+}
+function confirmDelP(id){
+  const p=S.profiles.find(x=>x.id===id);if(!p)return;
+  document.getElementById("mroot").insertAdjacentHTML("beforeend",`
+    <div class="modal-overlay" id="del-confirm" style="z-index:200;display:flex;align-items:center;justify-content:center">
+      <div class="modal" style="max-width:400px;padding:24px">
+        <div style="font-size:16px;font-weight:600;margin-bottom:10px">¿Eliminar este perfil?</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:20px">Vas a eliminar permanentemente a <strong style="color:var(--t)">${p.name}</strong>. Esta acción no se puede deshacer y también eliminará sus asignaciones.</div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn btns" onclick="document.getElementById('del-confirm').remove()">Cancelar</button>
+          <button class="btn btns btnd" onclick="doDelP('${id}')">Eliminar</button>
+        </div>
+      </div>
+    </div>`);
+}
+async function doDelP(id){
+  S.profiles=S.profiles.filter(p=>p.id!==id);
+  S.assigns=S.assigns.filter(a=>a.profile_id!==id);
+  document.getElementById("del-confirm")?.remove();
   await save();cm();render();
 }
 async function archP(id){S.profiles=S.profiles.filter(p=>p.id!==id);await save();cm();render();}
@@ -1317,7 +1393,7 @@ function openDM(id){
           <div class="fld"><label>Duración (semanas)</label><input type="number" id="dm-dur" class="fi" value="${d?d.duration_weeks||"":""}" min="1" placeholder="Ej: 12"/></div>
         </div>
         <div class="r2">
-          <div class="fld"><label>Capability</label><select id="dm-cap" class="fi">${CAPS.map(cp=>`<option${d&&d.capability===cp?" selected":""}>${cp}</option>`).join("")}</select></div>
+          <div class="fld cap-col"><label>Capability</label><select id="dm-cap" class="fi">${CAPS.map(cp=>`<option${d&&d.capability===cp?" selected":""}>${cp}</option>`).join("")}</select></div>
           <div class="fld"><label>Rol</label><select id="dm-role" class="fi"><option value="">Seleccionar...</option>${[...new Set(Object.values(ROLES_BY_CAP).flat())].sort().map(r=>`<option${d&&d.role===r?" selected":""}>${r}</option>`).join("")}</select></div>
         </div>
         <div class="r2">
