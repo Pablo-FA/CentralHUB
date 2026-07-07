@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 16:32" data-file="index"/>
+<meta name="build-stamp" content="2026-07-07 16:58" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -199,7 +199,7 @@ body{background:var(--bg)}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-07-07 16:32"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-07-07 16:58"};</script>
 </head>
 <body>
 
@@ -568,25 +568,45 @@ async function loadMetrics(){
 }
 
 // Todos
-function getTodos(){return JSON.parse(localStorage.getItem("mo_todos_"+(currentUser?.name||""))||"[]");}
-function saveTodos(t){localStorage.setItem("mo_todos_"+(currentUser?.name||""),JSON.stringify(t));}
-function toggleTodo(id){saveTodos(getTodos().map(t=>t.id===id?{...t,done:!t.done}:t));showHome();}
-function delTodo(id){saveTodos(getTodos().filter(t=>t.id!==id));showHome();}
-const TODO_USERS=['Pablo F.','Conrado P.','Fabio H.G.'];
-function setTodoOwner(id,owner){
-  saveTodos(getTodos().map(t=>t.id===id?{...t,owner}:t));
-  showHome();
+let S_TODOS=[]; // in-memory cache of all todos, loaded from Supabase
+const TODO_SB_H={'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Content-Type':'application/json'};
+async function loadTodos(){
+  try{
+    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?order=created_at.asc',{headers:TODO_SB_H,cache:'no-store'});
+    S_TODOS=r.ok?await r.json():[];
+  }catch(e){S_TODOS=[];}
+  return S_TODOS;
 }
-function addTodo(){
+// Returns todos for the current user (from cache)
+function getTodos(){return S_TODOS.filter(t=>t.owner===(currentUser?.name||""));}
+// saveTodos removed — todos now persist individually to Supabase
+async function toggleTodo(id){
+  const t=S_TODOS.find(x=>x.id===id);if(!t)return;
+  t.done=!t.done;showHome();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({done:t.done})});}catch(e){}
+}
+async function delTodo(id){
+  S_TODOS=S_TODOS.filter(t=>t.id!==id);showHome();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"DELETE",headers:{...TODO_SB_H,"Prefer":"return=minimal"}});}catch(e){}
+}
+const TODO_USERS=['Pablo F.','Conrado P.','Fabio H.G.'];
+async function setTodoOwner(id,owner){
+  const t=S_TODOS.find(x=>x.id===id);if(!t)return;
+  t.owner=owner;showHome();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({owner})});}catch(e){}
+}
+async function addTodo(){
   const inp=document.getElementById("todo-inp");
   if(!inp||!inp.value.trim())return;
-  saveTodos([...getTodos(),{id:Date.now()+"",text:inp.value.trim(),done:false}]);
+  const todo={id:Date.now()+"",owner:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual"};
+  S_TODOS.push(todo); // optimistic
   inp.value="";showHome();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(todo)});}catch(e){}
 }
 
 async function showHome(){
   if(!currentUser)return;
-  const m=await loadMetrics(),todos=getTodos(),now=new Date();
+  await loadTodos();const m=await loadMetrics(),todos=getTodos(),now=new Date();
   const activeProjects=await loadActiveProjects();
   const capColors={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"};
   const h=now.getHours(),gr=h<13?"Buenos días ☀️":h<20?"Buenas tardes 🌤":"Buenas noches 🌙";
