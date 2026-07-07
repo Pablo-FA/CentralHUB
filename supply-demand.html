@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 15:04" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-07 15:06" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 15:04"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 15:06"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -244,7 +244,7 @@ const DD=[
 let S={profiles:[],assigns:[],demands:[],tab:"roster",customRoles:[],
   rosterSort:{field:"name",dir:"asc"},
   rf:{q:"",levels:[],caps:[],roles:[],locs:[],skills:[],ctype:""},
-  sf:{q:"",caps:[],levels:[],risks:[],ctypes:[]},supplySort:[{field:"name",dir:"asc"}],supplyView:"asignacion",logView:"bench",bajas:[],demandSort:[{field:"client",dir:"asc"}],df2:{statuses:[],caps:[],clients:[]},colGroups:{asignacion:{perfil:true,asignacion:true},disponibles:{perfil:true,asignacion:true},bajas:{perfil:true,baja:true}},df:{status:""}};
+  sf:{q:"",caps:[],levels:[],risks:[],ctypes:[],projects:[]},supplySort:[{field:"name",dir:"asc"}],supplyView:"asignacion",logView:"bench",bajas:[],demandSort:[{field:"client",dir:"asc"}],df2:{statuses:[],caps:[],clients:[]},colGroups:{asignacion:{perfil:true,asignacion:true},disponibles:{perfil:true,asignacion:true},bajas:{perfil:true,baja:true}},df:{status:""}};
 let editSkills=[],editData={},openFDD=null,modalTabState="general";
 let currentPid=null,modalEditMode=false;
 
@@ -260,6 +260,11 @@ const rolesForCap=cap=>{const custom=S.customRoles.filter(r=>!cap||r.cap===cap).
 // Normalize strings for accent-insensitive sorting (Ángela sorts with A)
 // Overhead/Management profiles — excluded from staffing views & capacity metrics
 // Get the display project for a profile (active assignment, else upcoming, else "")
+function supplyProjects(){
+  const set=new Set();
+  S.profiles.filter(p=>!isOverhead(p)).forEach(p=>{const pr=getProjectName(p);if(pr)set.add(pr);});
+  return [...set].sort((a,b)=>a.localeCompare(b,"es"));
+}
 function getProjectName(p){
   const now=new Date();
   const active=S.assigns.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return a.profile_id===p.id&&s<=now&&(!e||e>=now)&&!a.is_forecast;}).sort((a,b)=>b.chargeability-a.chargeability);
@@ -735,6 +740,7 @@ function tSupply(){
   const ia=a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return s<=now&&(!e||e>=now)&&!a.is_forecast};
   const sfF=p=>{
     if(isOverhead(p))return false; // overhead never appears in Supply
+    if(f.projects&&f.projects.length&&!f.projects.includes(getProjectName(p)))return false;
     if(f.q&&!p.name.toLowerCase().includes(f.q.toLowerCase()))return false;
     if(f.caps.length&&!f.caps.includes(p.capability))return false;
     if(f.levels.length&&!f.levels.includes(p.level_accenture))return false;
@@ -749,7 +755,7 @@ function tSupply(){
 
   if(S.supplyView==="asignacion"){
     const fp=sortedSupply(S.profiles.filter(sfF));
-    const fCount=f.caps.length+f.levels.length+f.ctypes.length+(f.q?1:0);
+    const fCount=f.caps.length+f.levels.length+f.ctypes.length+(f.projects?f.projects.length:0)+(f.q?1:0);
     return`<div class="shdr" style="margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:16px">${vt}<span class="scnt" style="margin-left:0">${fp.length} perfiles</span></div>
     </div>
@@ -758,6 +764,7 @@ function tSupply(){
       <span class="cap-col">${sfddM("cp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}</span>
       ${sfddM("lv","levels","Nivel",LEVELS.map(l=>({val:l,label:l,sub:LN[l]})))}
       ${sfddM("ct","ctypes","Tipo",CONTRACT_TYPES.map(t=>({val:t,label:t})))}
+      ${sfddM("pj","projects","Proyecto",supplyProjects().map(pr=>({val:pr,label:pr})))}
       ${fCount>0?`<button class="btn btns" style="color:var(--t3);border-color:transparent" onclick="S.sf={q:'',caps:[],levels:[],risks:[],ctypes:[]};render()">× ${fCount}</button>`:""}
     </div>
     <div class="tw" style="overflow-x:auto"><table style="min-width:800px">
