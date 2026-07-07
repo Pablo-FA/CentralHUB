@@ -965,7 +965,10 @@ function startEdit(){modalEditMode=true;renderPM();}
 function cancelEdit(){modalEditMode=false;const p=currentPid?S.profiles.find(x=>x.id===currentPid):null;editSkills=p?p.skills.map(s=>({...s})):[];editData=p?{...p}:{};renderPM();}
 
 function captureEditData(){
-  const g=(id,def="")=>{const el=document.getElementById(id);return el?el.value:def;};
+  // If an input isn't currently in the DOM (e.g. editing from a different tab),
+  // keep the existing editData value instead of wiping it with "".
+  const fieldMap={pn:"name",peid:"eid",pcap:"capability",prol:"role",ploc:"location",ppl:"people_lead",pl:"lcr",pcp:"current_project",pna:"next_assignment",penum:"employee_number",phire:"hire_date",pagency:"agency",pno:"notes",pperf:"performance_notes"};
+  const g=(id,def="")=>{const el=document.getElementById(id);if(el)return el.value;const f=fieldMap[id];return f&&editData[f]!==undefined?editData[f]:def;};
   const getTgg=gid=>{const b=document.querySelector(`#${gid} .tgb.on`);return b?b.textContent:editData[gid==="tgg-sen"?"seniority":gid==="tgg-lvl"?"level_accenture":"contract_type"]||"";};
   Object.assign(editData,{name:g("pn"),eid:g("peid"),capability:g("pcap"),role:g("prol")==="__new__"?"":g("prol"),seniority:getTgg("tgg-sen"),level_accenture:getTgg("tgg-lvl"),contract_type:getTgg("tgg-ct"),location:g("ploc"),people_lead:g("ppl"),lcr:g("pl"),current_project:g("pcp"),next_assignment:g("pna"),employee_number:g("penum"),hire_date:g("phire"),agency:g("pagency"),notes:g("pno"),performance_notes:g("pperf")});
   // Capture "Perfil de baja" checkbox + leave type
