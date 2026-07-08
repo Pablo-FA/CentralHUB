@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-08 12:12" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-08 13:32" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 12:12"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 13:32"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -1734,7 +1734,7 @@ function openDM(id){
       </div>
       <div class="mftr">
         ${id?`<button class="btn btns btnd" onclick="window._dmDel()">Eliminar</button>`:""}
-        ${id&&!(d&&d.archived)?`<button class="btn btns" style="border-color:var(--green);color:var(--green)" onclick="window._dmComplete()">✓ Completar</button>`:""}
+        ${id&&d&&d.status==="Asignado"&&!d.archived?`<button class="btn btns" style="border-color:var(--green);color:var(--green)" onclick="window._dmComplete()">✓ Completar</button>`:""}
         <div style="flex:1"></div>
         <button class="btn btns" onclick="cm()">Cancelar</button>
         <button class="btn btnp btns" onclick="window._dmSave()">Guardar</button>
@@ -1754,6 +1754,7 @@ function openDM(id){
       }
       // ── TRIGGER: status "Asignado" auto-creates a Supply assignment ──
       // The demand status ALWAYS saves; the assignment is created only if valid.
+      const demandId = id || uid(); // stable id available to both trigger and save
       const wasAssigned = id ? (S.demands.find(d=>d.id===id)||{}).status==="Asignado" : false;
       const nowAssigned = data.status==="Asignado";
       let assignWarning = "";
@@ -1779,20 +1780,36 @@ function openDM(id){
             if(over){
               assignWarning=`Estado guardado, pero NO se creó la asignación: la carga de ${prof.name} superaría el 100% (llegaría al ${peak}%). Ajusta fechas o carga y vuelve a guardar.`;
             } else {
-              S.assigns.push({id:uid(),profile_id:prof.id,project_name:projName,start_date:startD,end_date:endD,chargeability:charge,is_forecast:false});
+              S.assigns.push({id:uid(),profile_id:prof.id,project_name:projName,start_date:startD,end_date:endD,chargeability:charge,is_forecast:false,from_demand:demandId});
             }
           }
         }
       }
       let savedDemand;
       if(id){savedDemand={...S.demands.find(d=>d.id===id),...data};S.demands=S.demands.map(d=>d.id===id?savedDemand:d);}
-      else{savedDemand={...data,id:uid(),notes:[],created_at:new Date().toISOString()};S.demands.push(savedDemand);}
+      else{savedDemand={...data,id:demandId,notes:[],created_at:new Date().toISOString()};S.demands.push(savedDemand);}
       await save();
       await syncDemandTodo(savedDemand);
       cm();render();
       if(assignWarning){setTimeout(()=>{const w=document.createElement("div");w.style.cssText="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg1);border:1px solid var(--amber);color:var(--t);padding:14px 20px;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.3);z-index:9999;max-width:480px;font-size:13px;line-height:1.5";w.textContent="⚠ "+assignWarning;document.body.appendChild(w);setTimeout(()=>w.remove(),7000);},100);}
     };
-    window._dmDel=async()=>{const dd=S.demands.find(d=>d.id===id);S.demands=S.demands.filter(d=>d.id!==id);await save();if(dd){await syncDemandTodo({...dd,owner:""});}cm();render();};
+    window._dmDel=async()=>{
+      const dd=S.demands.find(d=>d.id===id);
+      // Find any assignment created from this demand
+      const linked=S.assigns.filter(a=>a.from_demand===id);
+      if(linked.length){
+        const prof=S.profiles.find(p=>p.id===linked[0].profile_id);
+        const msg=`Esta demanda generó una asignación de ${prof?prof.name:"un perfil"} en "${linked[0].project_name}".\n\n¿Eliminar la demanda Y esa asignación? El perfil quedará desasignado.`;
+        if(!confirm(msg))return;
+        // Remove linked assignments
+        const linkedIds=new Set(linked.map(a=>a.id));
+        S.assigns=S.assigns.filter(a=>!linkedIds.has(a.id));
+      }
+      S.demands=S.demands.filter(d=>d.id!==id);
+      await save();
+      if(dd){await syncDemandTodo({...dd,owner:""});}
+      cm();render();
+    };
     window._dmComplete=async()=>{
       const dd=S.demands.find(d=>d.id===id);if(!dd)return;
       dd.archived=true;dd.archived_at=new Date().toISOString();
