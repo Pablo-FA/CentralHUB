@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-08 19:26" data-file="index"/>
+<meta name="build-stamp" content="2026-07-08 19:35" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -199,7 +199,7 @@ body{background:var(--bg)}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-07-08 19:26"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-07-08 19:35"};</script>
 </head>
 <body>
 
@@ -563,29 +563,57 @@ function navToTab(tab){
 // Metrics
 async function loadMetrics(){
   try{
-    const r=await fetchT('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/sd_data?select=key,data&key=in.(profiles,assigns,demands)',{
-      headers:{'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk'}
-    });
+    const H={'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk'};
+    const [r,rv]=await Promise.all([
+      fetchT('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/sd_data?select=key,data&key=in.(profiles,assigns,demands)',{headers:H}),
+      fetchT('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/vacations?select=*',{headers:H})
+    ]);
     const rows=r.ok?await r.json():[];
     const bk={};rows.forEach(row=>bk[row.key]=row.data);
     const profiles=bk.profiles||[];
     const assigns=bk.assigns||[];
     const demands=bk.demands||[];
+    // Attach vacations with resolved profile_id (via EID)
+    let vacResolved=[];
+    if(rv&&rv.ok){
+      const rawVac=await rv.json();
+      const byEid={};profiles.forEach(p=>{if(p.eid)byEid[p.eid.toLowerCase().trim()]=p;});
+      vacResolved=rawVac.map(v=>({...v,profile_id:(byEid[(v.eid||'').toLowerCase().trim()]||{}).id})).filter(v=>v.profile_id);
+    }
+    bk.vacations=vacResolved;
     const now=new Date();
     const charge=pid=>assigns.filter(a=>{
       const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
       return a.profile_id===pid&&s<=now&&(!e||e>=now)&&!a.is_forecast;
     }).reduce((t,a)=>t+(a.chargeability||0),0);
     const isOverhead=p=>(p.role||"").toLowerCase()==="management"||(p.role||"").toLowerCase()==="overhead";
+    // Vacations map (from vacations table) — someone on vacation TODAY is not "available"
+    const vacRows=bk.vacations||[];
+    const onVacToday=pid=>vacRows.some(v=>{
+      if(v.profile_id!==pid)return false;
+      const s=new Date(v.start_date),e=new Date(v.end_date);s.setHours(0,0,0,0);e.setHours(0,0,0,0);
+      const t=new Date();t.setHours(0,0,0,0);
+      return s<=t&&e>=t;
+    });
+    // active = the pool for utilización & cargabilidad (INCLUDES people on vacation — still employees)
     const active=profiles.filter(p=>p.is_active&&!isOverhead(p)&&!p.on_leave);
-    const bench=active.filter(p=>charge(p.id)===0);
+    // bench / Current Capacity = free today AND not on vacation today
+    const bench=active.filter(p=>charge(p.id)===0&&!onVacToday(p.id));
     const avg=active.length?Math.round(active.reduce((s,p)=>s+charge(p.id),0)/active.length):0;
-    const openD=demands.filter(d=>d.status!=="Asignado").length;
+    // Demand abierta = every non-archived (non-completed) ticket
+    const openD=demands.filter(d=>!d.archived).length;
+    // Active projects = vigente today, excluding Vacaciones & Interno (aligned with loadActiveProjects)
+    const EXCLUDE_PROJ=['Vacaciones','Interno'];
     const projs=new Set(assigns.filter(a=>{
+      if(a.is_vacation||a.is_forecast)return false;
+      if(EXCLUDE_PROJ.includes(a.project_name))return false;
       const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
-      return s<=now&&(!e||e>=now)&&!a.is_forecast;
+      return s<=now&&(!e||e>=now);
     }).map(a=>a.project_name)).size;
-    const allocatedFte=active.length-bench.length;
+    // Utilización = FTEs assigned / total FTEs. On-vacation people count in the denominator.
+    // Numerator = those with load > 0 (assigned). On-vacation with 0 load count as NOT assigned but stay in denominator.
+    const assignedCount=active.filter(p=>charge(p.id)>0).length;
+    const allocatedFte=assignedCount;
     const fteUtil=active.length>0?Math.round(allocatedFte/active.length*100):0;
     const capData=["Creative","CGI","Content","Media","Data","Development","DPM"].map(cap=>{
       const cp=active.filter(p=>p.capability===cap);
