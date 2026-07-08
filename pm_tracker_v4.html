@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build-stamp" content="2026-07-08 10:15" data-file="pm-tracker"/>
+<meta name="build-stamp" content="2026-07-08 11:03" data-file="pm-tracker"/>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>PM Tracker — Governance Suite</title>
@@ -267,7 +267,7 @@ html.embedded .content { padding: 20px 24px; }
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"pm-tracker",stamp:"2026-07-08 10:15"};</script>
+<script>window.__BUILD__={file:"pm-tracker",stamp:"2026-07-08 11:03"};</script>
 </head>
 <body>
 
@@ -529,11 +529,16 @@ async function chLoad(){
       SB.get('pm_wbs_codes','order=updated_at.asc'),
       SB.get('pm_time_reports','order=updated_at.asc')
     ]);
-    if(sbP.length){S.projects=sbP.map(r=>({...r.data,id:r.id}));}
-    else{
-      // Empty table — start with NO projects (demo seeding disabled).
-      // Projects should come from the real flow, not placeholders.
-      S.projects=[];
+    // Health data (budget, governance, WBS...) lives in pm_projects, keyed by project NAME.
+    // We do NOT let it define the project list — projects come dynamically from Supply assignments.
+    // Store it to merge onto the synthesised projects below.
+    S._healthData = {};
+    if(sbP.length){
+      sbP.forEach(r=>{
+        const d=r.data||{};
+        const key=(d.name||r.id||"").toString().trim().toLowerCase();
+        if(key)S._healthData[key]=d;
+      });
     }
     if(sbW.length){
       const sys=S.wbsCodes.filter(w=>w.system);
@@ -548,6 +553,9 @@ async function chLoad(){
     }
     if(sbT.length){S.timeReports=sbT.map(r=>({...r.data,id:r.id}));}
   }catch(e){console.warn('PM Supabase load error:',e);}
+  // Re-synthesise projects now that health data is loaded, so budget/governance
+  // gets merged onto the live projects derived from Supply assignments.
+  if(S._chConnected){rebuildAllocationsFromAssigns();}
 }
 
 // Turn flat sd_a3 rows into per-profile assignment entries + derive projects
@@ -570,9 +578,20 @@ function rebuildAllocationsFromAssigns(){
     if(a.start_date && (!pr.startDate || a.start_date<pr.startDate))pr.startDate=a.start_date;
     if(a.end_date && (!pr.endDate || a.end_date>pr.endDate))pr.endDate=a.end_date;
   });
-  // merge synthesised projects with any of our own (financial) projects, keyed by id
-  const ourProjects=(S.projects||[]).filter(p=>!p._synth);
-  S.projects=[...ourProjects, ...Object.values(projMap)];
+  // Apply saved health data (budget, governance, WBS...) onto each synthesised project,
+  // matched by project name. This keeps the dynamic list from Supply while preserving
+  // any PM-specific data the user has added in Project Health.
+  const health=S._healthData||{};
+  Object.values(projMap).forEach(pr=>{
+    const key=(pr.name||"").toString().trim().toLowerCase();
+    const h=health[key];
+    if(h){
+      // Merge health fields but NEVER override the live-derived identity/team/dates/status
+      const preserve={id:pr.id,name:pr.name,type:pr.type,status:pr.status,team:pr.team,allocations:pr.allocations,startDate:pr.startDate,endDate:pr.endDate,_synth:true};
+      Object.assign(pr, h, preserve);
+    }
+  });
+  S.projects=Object.values(projMap);
 }
 
 function slugify(s){return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");}
