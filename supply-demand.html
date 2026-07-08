@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-08 11:29" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-08 12:12" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 11:29"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 12:12"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -1061,6 +1061,7 @@ function tDemand(){
   const thD=(label,field)=>`<th onclick="dSortBy('${field}',event)" title="Shift+click para orden secundario" style="cursor:pointer">${label}${dSA(field)}</th>`;
 
   let fd=S.demands.filter(d=>{
+    if(d.archived)return false;
     if(f.statuses.length&&!f.statuses.includes(d.status))return false;
     if(f.caps.length&&!f.caps.includes(d.capability))return false;
     if(f.clients.length&&!f.clients.includes(d.client))return false;
@@ -1107,7 +1108,34 @@ function tDemand(){
         <td style="font-size:12px;color:var(--t2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${lastNote?lastNote.text:""}</td>
       </tr>`;
     }).join("")}</tbody>
-  </table></div>`;
+  </table></div>
+  ${(()=>{
+    const resolved=S.demands.filter(d=>d.archived).sort((a,b)=>new Date(b.archived_at||0)-new Date(a.archived_at||0));
+    if(!resolved.length)return"";
+    const open=window._resolvedOpen===true; // default closed
+    return`<div style="margin-top:28px">
+      <div onclick="window._resolvedOpen=${open?"false":"true"};render()" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;user-select:none">
+        <span style="font-size:11px;color:var(--t3);transition:transform .15s;transform:rotate(${open?"90":"0"}deg);display:inline-block">▶</span>
+        <div class="sect-lbl" style="margin:0">Demandas resueltas</div>
+        <span style="font-size:11px;color:var(--t3)">${resolved.length}</span>
+      </div>
+      ${open?`<div class="tw" style="overflow-x:auto"><table style="min-width:800px">
+        <thead><tr>
+          <th>Cliente</th><th>Proyecto</th><th class="cap-col">Capability</th><th>Perfil asignado</th><th>Rol</th><th>Carga</th><th>Owner</th><th>Completada</th>
+        </tr></thead>
+        <tbody>${resolved.map(d=>`<tr onclick="openDM('${d.id}')" style="cursor:pointer">
+          <td style="font-weight:500;font-size:13px">${d.client||"—"}</td>
+          <td style="font-size:12px;color:var(--t2)">${d.project_reference||"—"}</td>
+          <td class="cap-col" style="font-size:12px;color:var(--t2)">${d.capability||"—"}</td>
+          <td style="font-size:12px">${d.proposed_profile||'<span style="color:var(--t3)">—</span>'}</td>
+          <td style="font-size:12px;color:var(--t2)">${d.role||"—"}</td>
+          <td><span class="bdg ${d.chargeability_required>=80?"bgreen":d.chargeability_required>=40?"bamber":"bg"}" style="font-size:11px">${d.chargeability_required||0}%</span></td>
+          <td style="font-size:12px;color:var(--t2)">${d.owner||'<span style="color:var(--t3)">—</span>'}</td>
+          <td style="font-size:12px;color:var(--t3)">${d.archived_at?fds(d.archived_at):"—"}</td>
+        </tr>`).join("")}</tbody>
+      </table></div>`:""}
+    </div>`;
+  })()}`;
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
@@ -1706,6 +1734,7 @@ function openDM(id){
       </div>
       <div class="mftr">
         ${id?`<button class="btn btns btnd" onclick="window._dmDel()">Eliminar</button>`:""}
+        ${id&&!(d&&d.archived)?`<button class="btn btns" style="border-color:var(--green);color:var(--green)" onclick="window._dmComplete()">✓ Completar</button>`:""}
         <div style="flex:1"></div>
         <button class="btn btns" onclick="cm()">Cancelar</button>
         <button class="btn btnp btns" onclick="window._dmSave()">Guardar</button>
@@ -1764,6 +1793,14 @@ function openDM(id){
       if(assignWarning){setTimeout(()=>{const w=document.createElement("div");w.style.cssText="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg1);border:1px solid var(--amber);color:var(--t);padding:14px 20px;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.3);z-index:9999;max-width:480px;font-size:13px;line-height:1.5";w.textContent="⚠ "+assignWarning;document.body.appendChild(w);setTimeout(()=>w.remove(),7000);},100);}
     };
     window._dmDel=async()=>{const dd=S.demands.find(d=>d.id===id);S.demands=S.demands.filter(d=>d.id!==id);await save();if(dd){await syncDemandTodo({...dd,owner:""});}cm();render();};
+    window._dmComplete=async()=>{
+      const dd=S.demands.find(d=>d.id===id);if(!dd)return;
+      dd.archived=true;dd.archived_at=new Date().toISOString();
+      // Remove its owner todo (demand is resolved)
+      await save();
+      await syncDemandTodo({...dd,owner:""});
+      cm();render();
+    };
     window._dmAddNote=async()=>{
       const txt=document.getElementById("dm-note-inp")?.value?.trim();if(!txt)return;
       const note={id:uid(),ts:new Date().toISOString(),text:txt};
