@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build-stamp" content="2026-07-07 14:26" data-file="pm-tracker"/>
+<meta name="build-stamp" content="2026-07-08 10:15" data-file="pm-tracker"/>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>PM Tracker — Governance Suite</title>
@@ -267,7 +267,7 @@ html.embedded .content { padding: 20px 24px; }
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"pm-tracker",stamp:"2026-07-07 14:26"};</script>
+<script>window.__BUILD__={file:"pm-tracker",stamp:"2026-07-08 10:15"};</script>
 </head>
 <body>
 
@@ -531,11 +531,9 @@ async function chLoad(){
     ]);
     if(sbP.length){S.projects=sbP.map(r=>({...r.data,id:r.id}));}
     else{
-      // First load — seed demo projects to Supabase
-      const demoProjs=S.projects.filter(p=>p.unit!=='Internal');
-      if(demoProjs.length){
-        SB.upsert('pm_projects', demoProjs.map(p=>({id:p.id,data:p,updated_at:new Date().toISOString()})));
-      }
+      // Empty table — start with NO projects (demo seeding disabled).
+      // Projects should come from the real flow, not placeholders.
+      S.projects=[];
     }
     if(sbW.length){
       const sys=S.wbsCodes.filter(w=>w.system);
