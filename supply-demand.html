@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 17:48" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-08 11:19" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-07 17:48"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 11:19"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -225,18 +225,18 @@ const DA=[
 ].map(a=>({...a,created_at:"2026-01-01T00:00:00Z"}));
 
 const DD=[
-  {id:"dem01",client:"Coca-Cola",project_reference:"Q4 Brand Campaign",start_date:"2026-07-01",duration_weeks:12,role:"Creative Director",capability:"Creative",seniority:"Lead",contract_type:"Interno",chargeability_required:60,status:"Propuesto",proposed_profile:"Carlos Rodríguez",notes:[{id:"n1",ts:"2026-05-10T09:00:00Z",text:"Cliente confirma necesidad para julio. Presupuesto aprobado."}]},
-  {id:"dem02",client:"Samsung",project_reference:"Galaxy S26 Launch",start_date:"2026-08-01",duration_weeks:8,role:"Motion Designer",capability:"CGI",seniority:"Mid",contract_type:"Interno",chargeability_required:75,status:"Entrevistas",proposed_profile:"Pablo Moreno",notes:[{id:"n2",ts:"2026-05-14T11:30:00Z",text:"Primera entrevista con Pablo muy positiva. Pendiente segunda ronda."}]},
-  {id:"dem03",client:"BBVA",project_reference:"Digital Banking 2.0",start_date:"2026-09-01",duration_weeks:24,role:"Data Engineer",capability:"Data",seniority:"Senior",contract_type:"Interno",chargeability_required:100,status:"Asignado",proposed_profile:"Alberto Gil",notes:[{id:"n3",ts:"2026-05-18T14:00:00Z",text:"Alberto confirmado. Incorporación el 1 septiembre."}]},
-  {id:"dem04",client:"Nike",project_reference:"FW25 Running Campaign",start_date:"2026-10-01",duration_weeks:16,role:"Media Planner",capability:"Media",seniority:"Lead",contract_type:"Interno",chargeability_required:100,status:"En revisión",proposed_profile:"Roberto Castro",notes:[]},
-  {id:"dem05",client:"Zara",project_reference:"Summer Collection 2027",start_date:"2026-11-01",duration_weeks:20,role:"Art Director",capability:"Creative",seniority:"Mid",contract_type:"Interno",chargeability_required:60,status:"Vacío",proposed_profile:"",notes:[{id:"n4",ts:"2026-05-20T10:00:00Z",text:"Briefing recibido. Buscar perfil CL10 Creative disponible desde noviembre."}]},
-  {id:"dem06",client:"Telefónica",project_reference:"Enterprise Portal v2",start_date:"2026-07-15",duration_weeks:20,role:"Frontend Developer",capability:"Development",seniority:"Senior",contract_type:"Interno",chargeability_required:100,status:"Esperando",proposed_profile:"Fernando Blanco",notes:[{id:"n5",ts:"2026-05-19T16:00:00Z",text:"Esperando confirmación del cliente para activar. Fernando está disponible desde agosto."}]},
-  {id:"dem07",client:"Iberdrola",project_reference:"ESG Report 2026",start_date:"2026-06-15",duration_weeks:6,role:"Content Producer",capability:"Content",seniority:"Mid",contract_type:"Subcontractor",chargeability_required:50,status:"Propuesto",proposed_profile:"",notes:[{id:"n6",ts:"2026-05-15T09:30:00Z",text:"Cliente acepta subcontratación. Buscar perfil externo Content Mid."}]},
-  {id:"dem08",client:"Santander",project_reference:"App Móvil Rediseño",start_date:"2026-08-01",duration_weeks:12,role:"Designer",capability:"Creative",seniority:"Senior",contract_type:"Subcontractor",chargeability_required:100,status:"Entrevistado",proposed_profile:"",notes:[{id:"n7",ts:"2026-05-21T12:00:00Z",text:"Entrevistado perfil externo. Buena impresión. Decisión esta semana."}]},
-  {id:"dem09",client:"Heineken",project_reference:"World Cup 2027 Activación",start_date:"2026-09-01",duration_weeks:32,role:"Creative Strategist",capability:"Creative",seniority:"Senior",contract_type:"Interno",chargeability_required:100,status:"Vacío",proposed_profile:"",notes:[]},
-  {id:"dem10",client:"Apple",project_reference:"Spain Brand Campaign",start_date:"2026-07-01",duration_weeks:10,role:"CGI Supervisor",capability:"CGI",seniority:"Lead",contract_type:"Subcontractor",chargeability_required:100,status:"En revisión",proposed_profile:"Manuel Díaz",notes:[{id:"n8",ts:"2026-05-22T08:00:00Z",text:"Manuel interesado pero tiene conflicto de fechas con Seat. Revisar solapamiento."}]},
-  {id:"dem11",client:"Seat",project_reference:"Tarraco 2.0 CGI",start_date:"2026-11-01",duration_weeks:16,role:"3D Artist",capability:"CGI",seniority:"Mid",contract_type:"Interno",chargeability_required:100,status:"Asignado",proposed_profile:"Isabel Fernández",notes:[{id:"n9",ts:"2026-05-20T15:00:00Z",text:"Isabel asignada. Extensión del proyecto actual con la misma cuenta."}]},
-  {id:"dem12",client:"Vodafone",project_reference:"Portal B2B",start_date:"2026-08-15",duration_weeks:14,role:"Scrum Master",capability:"DPM",seniority:"Mid",contract_type:"Interno",chargeability_required:100,status:"Propuesto",proposed_profile:"Adrián Santos",notes:[{id:"n10",ts:"2026-05-17T11:00:00Z",text:"Adrián disponible desde agosto. Cliente quiere reunión de alineamiento antes de confirmar."}]}
+  {id:"dem01",client:"Coca-Cola",project_reference:"Q4 Brand Campaign",start_date:"2026-07-01",end_date:"2026-09-23",role:"Creative Director",capability:"Creative",seniority:"Lead",contract_type:"Interno",chargeability_required:60,status:"Propuesto",proposed_profile:"Carlos Rodríguez",notes:[{id:"n1",ts:"2026-05-10T09:00:00Z",text:"Cliente confirma necesidad para julio. Presupuesto aprobado."}]},
+  {id:"dem02",client:"Samsung",project_reference:"Galaxy S26 Launch",start_date:"2026-08-01",end_date:"2026-09-26",role:"Motion Designer",capability:"CGI",seniority:"Mid",contract_type:"Interno",chargeability_required:75,status:"Entrevistas",proposed_profile:"Pablo Moreno",notes:[{id:"n2",ts:"2026-05-14T11:30:00Z",text:"Primera entrevista con Pablo muy positiva. Pendiente segunda ronda."}]},
+  {id:"dem03",client:"BBVA",project_reference:"Digital Banking 2.0",start_date:"2026-09-01",end_date:"2027-02-16",role:"Data Engineer",capability:"Data",seniority:"Senior",contract_type:"Interno",chargeability_required:100,status:"Asignado",proposed_profile:"Alberto Gil",notes:[{id:"n3",ts:"2026-05-18T14:00:00Z",text:"Alberto confirmado. Incorporación el 1 septiembre."}]},
+  {id:"dem04",client:"Nike",project_reference:"FW25 Running Campaign",start_date:"2026-10-01",end_date:"2027-01-21",role:"Media Planner",capability:"Media",seniority:"Lead",contract_type:"Interno",chargeability_required:100,status:"En revisión",proposed_profile:"Roberto Castro",notes:[]},
+  {id:"dem05",client:"Zara",project_reference:"Summer Collection 2027",start_date:"2026-11-01",end_date:"2027-03-21",role:"Art Director",capability:"Creative",seniority:"Mid",contract_type:"Interno",chargeability_required:60,status:"Vacío",proposed_profile:"",notes:[{id:"n4",ts:"2026-05-20T10:00:00Z",text:"Briefing recibido. Buscar perfil CL10 Creative disponible desde noviembre."}]},
+  {id:"dem06",client:"Telefónica",project_reference:"Enterprise Portal v2",start_date:"2026-07-15",end_date:"2026-12-02",role:"Frontend Developer",capability:"Development",seniority:"Senior",contract_type:"Interno",chargeability_required:100,status:"Esperando",proposed_profile:"Fernando Blanco",notes:[{id:"n5",ts:"2026-05-19T16:00:00Z",text:"Esperando confirmación del cliente para activar. Fernando está disponible desde agosto."}]},
+  {id:"dem07",client:"Iberdrola",project_reference:"ESG Report 2026",start_date:"2026-06-15",end_date:"2026-07-27",role:"Content Producer",capability:"Content",seniority:"Mid",contract_type:"Subcontractor",chargeability_required:50,status:"Propuesto",proposed_profile:"",notes:[{id:"n6",ts:"2026-05-15T09:30:00Z",text:"Cliente acepta subcontratación. Buscar perfil externo Content Mid."}]},
+  {id:"dem08",client:"Santander",project_reference:"App Móvil Rediseño",start_date:"2026-08-01",end_date:"2026-10-24",role:"Designer",capability:"Creative",seniority:"Senior",contract_type:"Subcontractor",chargeability_required:100,status:"Entrevistado",proposed_profile:"",notes:[{id:"n7",ts:"2026-05-21T12:00:00Z",text:"Entrevistado perfil externo. Buena impresión. Decisión esta semana."}]},
+  {id:"dem09",client:"Heineken",project_reference:"World Cup 2027 Activación",start_date:"2026-09-01",end_date:"2027-04-13",role:"Creative Strategist",capability:"Creative",seniority:"Senior",contract_type:"Interno",chargeability_required:100,status:"Vacío",proposed_profile:"",notes:[]},
+  {id:"dem10",client:"Apple",project_reference:"Spain Brand Campaign",start_date:"2026-07-01",end_date:"2026-09-09",role:"CGI Supervisor",capability:"CGI",seniority:"Lead",contract_type:"Subcontractor",chargeability_required:100,status:"En revisión",proposed_profile:"Manuel Díaz",notes:[{id:"n8",ts:"2026-05-22T08:00:00Z",text:"Manuel interesado pero tiene conflicto de fechas con Seat. Revisar solapamiento."}]},
+  {id:"dem11",client:"Seat",project_reference:"Tarraco 2.0 CGI",start_date:"2026-11-01",end_date:"2027-02-21",role:"3D Artist",capability:"CGI",seniority:"Mid",contract_type:"Interno",chargeability_required:100,status:"Asignado",proposed_profile:"Isabel Fernández",notes:[{id:"n9",ts:"2026-05-20T15:00:00Z",text:"Isabel asignada. Extensión del proyecto actual con la misma cuenta."}]},
+  {id:"dem12",client:"Vodafone",project_reference:"Portal B2B",start_date:"2026-08-15",end_date:"2026-11-21",role:"Scrum Master",capability:"DPM",seniority:"Mid",contract_type:"Interno",chargeability_required:100,status:"Propuesto",proposed_profile:"Adrián Santos",notes:[{id:"n10",ts:"2026-05-17T11:00:00Z",text:"Adrián disponible desde agosto. Cliente quiere reunión de alineamiento antes de confirmar."}]}
 ].map(d=>({...d,created_at:"2026-01-01T00:00:00Z"}));
 
 
@@ -452,7 +452,7 @@ function sortedDemands(list){
   return[...list].sort((a,b)=>{
     for(const{field,dir}of sort){
       let va=normStr(a[field]),vb=normStr(b[field]);
-      if(field==="chargeability_required"||field==="duration_weeks"){va=parseFloat(a[field])||0;vb=parseFloat(b[field])||0;}
+      if(field==="chargeability_required"){va=parseFloat(a[field])||0;vb=parseFloat(b[field])||0;}
       if(va<vb)return dir==="asc"?-1:1;if(va>vb)return dir==="asc"?1:-1;
     }
     return 0;
@@ -1083,7 +1083,7 @@ function tDemand(){
       ${thD("Cliente","client")}
       ${thD("Proyecto","project_reference")}
       ${thD("Inicio","start_date")}
-      ${thD("Duración","duration_weeks")}
+      ${thD("Fecha fin","end_date")}
       ${thD("Perfil","role")}
       ${thD("Tipo","contract_type")}
       ${thD("Carga","chargeability_required")}
@@ -1098,7 +1098,7 @@ function tDemand(){
         <td style="font-weight:500">${d.client||"—"}</td>
         <td style="font-size:12px;color:var(--t2)">${d.project_reference||"—"}</td>
         <td style="font-size:12px;color:var(--t2)">${d.start_date?new Date(d.start_date).toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric"}):"—"}</td>
-        <td style="font-size:12px;color:var(--t2)">${d.duration_weeks?d.duration_weeks+"sem":"—"}</td>
+        <td style="font-size:12px;color:var(--t2)">${d.end_date?fds(d.end_date):"—"}</td>
         <td><div style="font-weight:500;font-size:13px">${d.role||"—"}</div><div style="font-size:11px;color:var(--t3)">${d.seniority||""} · ${d.capability||""}</div></td>
         <td><span class="bdg ${sub?"bamber":"bgreen"}" style="font-size:10px">${d.contract_type||"Interno"}</span></td>
         <td style="font-size:12px">${d.chargeability_required?d.chargeability_required+"%":"—"}</td>
@@ -1670,7 +1670,7 @@ function openDM(id){
         </div>
         <div class="r2">
           <div class="fld"><label>Fecha inicio</label><input type="date" id="dm-start" class="fi" value="${d?d.start_date||"":""}"/></div>
-          <div class="fld"><label>Duración (semanas)</label><input type="number" id="dm-dur" class="fi" value="${d?d.duration_weeks||"":""}" min="1" placeholder="Ej: 12"/></div>
+          <div class="fld"><label>Fecha fin</label><input type="date" id="dm-end" class="fi" value="${d?d.end_date||"":""}"/></div>
         </div>
         <div class="r2">
           <div class="fld cap-col"><label>Capability</label><select id="dm-cap" class="fi">${CAPS.map(cp=>`<option${d&&d.capability===cp?" selected":""}>${cp}</option>`).join("")}</select></div>
@@ -1718,7 +1718,7 @@ function openDM(id){
     window._dmNav=(i)=>{noteIdx=i;render2();};
     window._dmSave=async()=>{
       const getT=gid=>{const b=document.querySelector("#"+gid+" .tgb.on");return b?b.textContent:"";};
-      const data={client:document.getElementById("dm-cli").value,project_reference:document.getElementById("dm-proj").value,start_date:document.getElementById("dm-start").value||null,duration_weeks:parseInt(document.getElementById("dm-dur").value)||null,capability:document.getElementById("dm-cap").value,role:document.getElementById("dm-role").value,seniority:document.getElementById("dm-sen").value,chargeability_required:parseInt(document.getElementById("dm-ch").value)||100,contract_type:getT("tgg-dct")||"Interno",status:getT("tgg-dst")||"Vacío",proposed_profile:document.getElementById("dm-pp").value,owner:document.getElementById("dm-owner")?document.getElementById("dm-owner").value:""};
+      const data={client:document.getElementById("dm-cli").value,project_reference:document.getElementById("dm-proj").value,start_date:document.getElementById("dm-start").value||null,end_date:document.getElementById("dm-end").value||null,capability:document.getElementById("dm-cap").value,role:document.getElementById("dm-role").value,seniority:document.getElementById("dm-sen").value,chargeability_required:parseInt(document.getElementById("dm-ch").value)||100,contract_type:getT("tgg-dct")||"Interno",status:getT("tgg-dst")||"Vacío",proposed_profile:document.getElementById("dm-pp").value,owner:document.getElementById("dm-owner")?document.getElementById("dm-owner").value:""};
       if(!data.client||!data.role)return;
       let savedDemand;
       if(id){savedDemand={...S.demands.find(d=>d.id===id),...data};S.demands=S.demands.map(d=>d.id===id?savedDemand:d);}
