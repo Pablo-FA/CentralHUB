@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-08 13:32" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-08 18:54" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 13:32"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 18:54"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -660,11 +660,42 @@ function calcLog(){
 function calcAge(d){if(!d)return"—";const dt=new Date(d),now=new Date();let y=now.getFullYear()-dt.getFullYear(),m=now.getMonth()-dt.getMonth();if(m<0){y--;m+=12;}return y>0?`${y}a ${m>0?m+"m":""}`:`${m>0?m+" mes":"<1 mes"}`;}
 
 // ── STORAGE ───────────────────────────────────────────────────────────────
+async function loadVacations(){
+  // Remove any previously-injected vacation assignments (avoid duplicates on reload)
+  S.assigns = S.assigns.filter(a=>!a.is_vacation);
+  S.vacations = [];
+  try{
+    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/vacations?select=*&order=start_date.asc',{
+      headers:{'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk'},cache:'no-store'
+    });
+    if(r.ok){
+      S.vacations = await r.json();
+      // Build a quick EID → profile map
+      const byEid={};
+      S.profiles.forEach(p=>{if(p.eid)byEid[p.eid.toLowerCase().trim()]=p;});
+      // Inject each vacation period as a 100% virtual assignment to "Vacaciones"
+      S.vacations.forEach(v=>{
+        const prof=byEid[(v.eid||'').toLowerCase().trim()];
+        if(!prof)return; // vacation for someone not in our roster — skip
+        S.assigns.push({
+          id:'vacasg_'+v.id,
+          profile_id:prof.id,
+          project_name:'Vacaciones',
+          start_date:v.start_date,
+          end_date:v.end_date,
+          chargeability:100,
+          is_forecast:false,
+          is_vacation:true
+        });
+      });
+    }
+  }catch(e){console.warn('Vacations load error:',e);}
+}
 async function save(){
   const now=new Date().toISOString();
   const rows=[
     {key:'profiles',data:S.profiles,updated_at:now},
-    {key:'assigns',data:S.assigns,updated_at:now},
+    {key:'assigns',data:S.assigns.filter(a=>!a.is_vacation),updated_at:now}, // never persist virtual vacation assignments
     {key:'demands',data:S.demands,updated_at:now},
     {key:'custom_roles',data:S.customRoles,updated_at:now},
     {key:'bajas',data:S.bajas,updated_at:now}
@@ -709,6 +740,10 @@ async function loadData(){
     S.bajas=[{id:"b01",profile_id:"d05",type:"Embarazo",desde:"2026-04-01",hasta:"2026-11-30",comments:"Baja maternal. Reincorporación prevista noviembre 2026"},{id:"b02",profile_id:"d11",type:"Enfermedad",desde:"2026-05-01",hasta:"2026-06-15",comments:"Baja médica temporal"},{id:"b03",profile_id:"d20",type:"Paternidad",desde:"2026-06-01",hasta:"2026-06-15",comments:"Paternidad 15 días"}];
     await save();
   }
+
+  // ── VACATIONS: load from table and inject as virtual assignments to project "Vacaciones" ──
+  // These are NEVER persisted back to sd_data (save() filters is_vacation out).
+  await loadVacations();
 }
 
 // ── GATE + APP ────────────────────────────────────────────────────────────
@@ -1178,7 +1213,7 @@ function renderPM(){
   const p=currentPid?S.profiles.find(x=>x.id===currentPid):null;
   const d=modalEditMode?editData:(p||{});
   const sub=d.contract_type==="Subcontractor";
-  const tabs=[["asignacion","Asignación"],["general","General"],["skills","Skills"],["detail","Detalle"],["history","Historial"]];
+  const tabs=[["asignacion","Asignación"],["vacaciones","Vacaciones"],["general","General"],["skills","Skills"],["detail","Detalle"],["history","Historial"]];
   document.getElementById("mroot").innerHTML=`
   <div class="ov" id="pov" onclick="if(event.target.id==='pov')cm()">
   <div class="modal">
@@ -1199,6 +1234,7 @@ function renderPM(){
     <div class="mbdy" style="padding-top:0">
       <div class="mtabs">${tabs.filter(([t])=>t!=="history"||p).map(([t,l])=>`<div class="mtab${modalTabState===t?" on":""}" onclick="switchMTab('${t}')">${l}</div>`).join("")}</div>
       ${modalTabState==="asignacion"&&p?asigTab(p):""}
+      ${modalTabState==="vacaciones"&&p?vacTab(p):""}
       ${modalTabState==="general"?genTab(d):""}
       ${modalTabState==="skills"?skillsTab(d):""}
       ${modalTabState==="detail"?detailTab(d):""}
@@ -1351,6 +1387,89 @@ function addSk(){const i=document.getElementById("nsk");if(!i.value.trim())retur
 function delSk(i){editSkills.splice(i,1);rskl();}
 function setSL(i,l){editSkills[i].level=l;rskl();}
 
+
+// Count working days (Mon-Fri) between two dates inclusive
+function workingDays(startStr, endStr){
+  const s=new Date(startStr), e=new Date(endStr);
+  if(isNaN(s)||isNaN(e)||e<s)return 0;
+  let count=0;
+  const d=new Date(s);
+  while(d<=e){
+    const day=d.getDay();
+    if(day!==0&&day!==6)count++;
+    d.setDate(d.getDate()+1);
+  }
+  return count;
+}
+
+// Vacation tab for a profile — reads S.vacations, matched by EID, year 2026 only
+function vacTab(p){
+  const now=new Date(); now.setHours(0,0,0,0);
+  const YEAR=2026;
+  const eid=(p.eid||'').toLowerCase().trim();
+  const mine=(S.vacations||[]).filter(v=>(v.eid||'').toLowerCase().trim()===eid);
+  // Filter to the current year (periods that start in 2026)
+  const yearVacs=mine.filter(v=>new Date(v.start_date).getFullYear()===YEAR);
+
+  if(!eid){
+    return `<div class="mbody"><div style="padding:40px 20px;text-align:center;color:var(--t3)">Este perfil no tiene EID, no se pueden cruzar sus vacaciones.</div></div>`;
+  }
+  if(!yearVacs.length){
+    return `<div class="mbody"><div style="padding:40px 20px;text-align:center;color:var(--t3)">Sin vacaciones registradas para ${YEAR}.</div></div>`;
+  }
+
+  // Classify each period
+  const past=[], current=[], future=[];
+  yearVacs.forEach(v=>{
+    const s=new Date(v.start_date), e=new Date(v.end_date);
+    s.setHours(0,0,0,0); e.setHours(0,0,0,0);
+    if(e<now)past.push(v);
+    else if(s<=now&&e>=now)current.push(v);
+    else future.push(v);
+  });
+
+  const daysPast=past.reduce((t,v)=>t+workingDays(v.start_date,v.end_date),0);
+  const daysCurrent=current.reduce((t,v)=>t+workingDays(v.start_date,v.end_date),0);
+  const daysFuture=future.reduce((t,v)=>t+workingDays(v.start_date,v.end_date),0);
+  const daysTotal=daysPast+daysCurrent+daysFuture;
+
+  const fmt=(v)=>{const d=workingDays(v.start_date,v.end_date);return `<tr>
+    <td style="font-size:12px">${fds(v.start_date)}</td>
+    <td style="font-size:12px">${fds(v.end_date)}</td>
+    <td style="text-align:right"><span class="bdg bg" style="font-size:11px">${d} ${d===1?'día':'días'}</span></td>
+  </tr>`;};
+
+  const section=(title,arr,color)=>arr.length?`
+    <div style="margin-top:18px">
+      <div style="font-size:11px;font-weight:600;color:${color};text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">${title} · ${arr.length}</div>
+      <table style="width:100%"><thead><tr>
+        <th style="text-align:left;font-size:10px;color:var(--t3)">Desde</th>
+        <th style="text-align:left;font-size:10px;color:var(--t3)">Hasta</th>
+        <th style="text-align:right;font-size:10px;color:var(--t3)">Laborables</th>
+      </tr></thead><tbody>${arr.map(fmt).join("")}</tbody></table>
+    </div>`:"";
+
+  return `<div class="mbody">
+    <div style="display:flex;gap:12px;margin-bottom:8px">
+      <div style="flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px">
+        <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Disfrutadas ${YEAR}</div>
+        <div style="font-size:26px;font-weight:600;margin-top:4px">${daysPast}<span style="font-size:13px;color:var(--t3);font-weight:400"> días</span></div>
+      </div>
+      <div style="flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px">
+        <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Planificadas</div>
+        <div style="font-size:26px;font-weight:600;margin-top:4px;color:var(--acc)">${daysFuture}<span style="font-size:13px;color:var(--t3);font-weight:400"> días</span></div>
+      </div>
+      <div style="flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px">
+        <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Total ${YEAR}</div>
+        <div style="font-size:26px;font-weight:600;margin-top:4px">${daysTotal}<span style="font-size:13px;color:var(--t3);font-weight:400"> días</span></div>
+      </div>
+    </div>
+    ${current.length?`<div style="background:var(--green-bg,rgba(34,197,94,.1));border:1px solid var(--green);border-radius:8px;padding:10px 14px;margin-top:8px;font-size:13px;color:var(--green)">🌴 Actualmente de vacaciones (${daysCurrent} ${daysCurrent===1?'día laborable':'días laborables'} en curso)</div>`:""}
+    ${section("En curso",current,"var(--green)")}
+    ${section("Próximas",future,"var(--acc)")}
+    ${section("Disfrutadas",past,"var(--t3)")}
+  </div>`;
+}
 
 function asigTab(p){
   const now=new Date();
