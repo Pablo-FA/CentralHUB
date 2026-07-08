@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-08 19:15" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-08 19:21" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 19:15"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 19:21"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -304,11 +304,15 @@ function getForecast(horizonDays){
     if(!endDates.length)return; // nothing ends within horizon
     // Load on a given date
     const loadOn=d=>asgs.filter(a=>{const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;return s<=d&&(!e||e>=d);}).reduce((t,a)=>t+(a.chargeability||0),0);
+    // Helper: is a given date inside any vacation period of this profile?
+    const onVacOn=d=>{const dd=new Date(d);dd.setHours(0,0,0,0);return (S.vacations||[]).some(v=>{if(v.profile_id!==p.id)return false;const vs=new Date(v.start_date),ve=new Date(v.end_date);vs.setHours(0,0,0,0);ve.setHours(0,0,0,0);return vs<=dd&&ve>=dd;});};
     // Check the day after each end date; find first drop
     for(const ed of endDates){
       const dayAfter=new Date(ed.getTime()+86400000);
       const loadAfter=loadOn(dayAfter);
       if(loadAfter<curLoad){
+        // If they'd "free up" onto a vacation day, they're NOT becoming available — skip.
+        if(onVacOn(dayAfter))break;
         out.push({profile:p,freeDate:dayAfter,loadAfter,curLoad,freedPct:curLoad-loadAfter});
         break; // first drop only
       }
