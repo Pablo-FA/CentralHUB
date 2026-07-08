@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-08 18:54" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-08 19:02" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 18:54"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 19:02"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -329,6 +329,27 @@ function getProjectName(p){
   return upcoming.length?(upcoming[0].project_name||""):"";
 }
 // Whether a profile is currently on leave (baja) — flag on profile OR a formal baja record
+// Whether a profile is currently on vacation TODAY (has a vacation assignment covering today)
+function isOnVacation(p){
+  const now=new Date();now.setHours(0,0,0,0);
+  return S.assigns.some(a=>{
+    if(!a.is_vacation||a.profile_id!==p.id)return false;
+    const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
+    s.setHours(0,0,0,0);if(e)e.setHours(0,0,0,0);
+    return s<=now&&(!e||e>=now);
+  });
+}
+// The end date of the profile's current vacation (for display)
+function currentVacationEnd(p){
+  const now=new Date();now.setHours(0,0,0,0);
+  const v=S.assigns.filter(a=>{
+    if(!a.is_vacation||a.profile_id!==p.id)return false;
+    const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
+    s.setHours(0,0,0,0);if(e)e.setHours(0,0,0,0);
+    return s<=now&&(!e||e>=now);
+  }).sort((a,b)=>new Date(b.end_date||0)-new Date(a.end_date||0));
+  return v.length?v[0].end_date:null;
+}
 function isOnLeave(p){
   if(p.on_leave)return true;
   return S.bajas.some(b=>b.profile_id===p.id);
@@ -860,8 +881,9 @@ function tSupply(){
 
   if(S.supplyView==="asignacion"){
     const allFiltered=sortedSupply(S.profiles.filter(sfF));
-    const fp=allFiltered.filter(p=>!isOnLeave(p));
     const bajaP=allFiltered.filter(p=>isOnLeave(p));
+    const vacP=allFiltered.filter(p=>!isOnLeave(p)&&isOnVacation(p));
+    const fp=allFiltered.filter(p=>!isOnLeave(p)&&!isOnVacation(p));
     const fCount=f.caps.length+f.levels.length+f.ctypes.length+(f.projects?f.projects.length:0)+(f.q?1:0);
     const asgRow=p=>{
         const active=[...S.assigns.filter(a=>a.profile_id===p.id)].filter(ia);
@@ -902,6 +924,14 @@ function tSupply(){
         <td colspan="4" style="font-size:12px;color:var(--t3)">De baja${(()=>{const b=S.bajas.find(x=>x.profile_id===p.id);return b&&b.hasta?` · hasta ${fds(b.hasta)}`:"";})()}</td>
         ${editBtn(p.id)}
       </tr>`;
+    const vacRow=p=>`<tr onclick="openPM('${p.id}','vacaciones')">
+        ${nameCell(p)}
+        <td class="cap-col" style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
+        <td><span class="bdg bg">${p.level_accenture||"—"}</span></td>
+        <td><span class="bdg ${p.contract_type==="Subcontractor"?"bamber":"bgreen"}" style="font-size:10px">${p.contract_type||"Interno"}</span></td>
+        <td colspan="4" style="font-size:12px;color:var(--t3)">🌴 De vacaciones${(()=>{const e=currentVacationEnd(p);return e?` · hasta ${fds(e)}`:"";})()}</td>
+        ${editBtn(p.id)}
+      </tr>`;
     return`<div class="shdr" style="margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:16px">${vt}<span class="scnt" style="margin-left:0">${fp.length} perfiles</span></div>
     </div>
@@ -925,6 +955,16 @@ function tSupply(){
       <div class="tw" style="overflow-x:auto"><table style="min-width:800px">
         ${headRow}
         <tbody>${bajaP.map(bajaRow).join("")}</tbody>
+      </table></div>
+    </div>`:""}
+    ${vacP.length?`<div style="margin-top:28px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div class="sect-lbl" style="margin:0">De vacaciones</div>
+        <span style="font-size:11px;color:var(--t3)">${vacP.length} · fuera actualmente · no disponible para staffing</span>
+      </div>
+      <div class="tw" style="overflow-x:auto"><table style="min-width:800px">
+        ${headRow}
+        <tbody>${vacP.map(vacRow).join("")}</tbody>
       </table></div>
     </div>`:""}`;
   }
