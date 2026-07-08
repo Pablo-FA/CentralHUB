@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-08 19:02" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-08 19:15" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 19:02"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 19:15"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -292,7 +292,7 @@ function getForecast(horizonDays){
   const horizon=new Date(now.getTime()+horizonDays*86400000);
   const out=[];
   S.profiles.forEach(p=>{
-    if(isOverhead(p)||isOnLeave(p)||p.is_active===false)return;
+    if(isOverhead(p)||isOnLeave(p)||isOnVacation(p)||p.is_active===false)return;
     const curLoad=pCharge(p.id);
     if(curLoad===0)return; // already on bench, not a forecast
     // Build timeline of this profile's non-forecast assignments
@@ -329,26 +329,35 @@ function getProjectName(p){
   return upcoming.length?(upcoming[0].project_name||""):"";
 }
 // Whether a profile is currently on leave (baja) — flag on profile OR a formal baja record
-// Whether a profile is currently on vacation TODAY (has a vacation assignment covering today)
+// Whether a profile is currently on vacation TODAY (from S.vacations, separate dimension)
 function isOnVacation(p){
   const now=new Date();now.setHours(0,0,0,0);
-  return S.assigns.some(a=>{
-    if(!a.is_vacation||a.profile_id!==p.id)return false;
-    const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
-    s.setHours(0,0,0,0);if(e)e.setHours(0,0,0,0);
-    return s<=now&&(!e||e>=now);
+  return (S.vacations||[]).some(v=>{
+    if(v.profile_id!==p.id)return false;
+    const s=new Date(v.start_date),e=new Date(v.end_date);
+    s.setHours(0,0,0,0);e.setHours(0,0,0,0);
+    return s<=now&&e>=now;
   });
 }
-// The end date of the profile's current vacation (for display)
+// End date of the profile's current vacation (for display)
 function currentVacationEnd(p){
   const now=new Date();now.setHours(0,0,0,0);
-  const v=S.assigns.filter(a=>{
-    if(!a.is_vacation||a.profile_id!==p.id)return false;
-    const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
-    s.setHours(0,0,0,0);if(e)e.setHours(0,0,0,0);
-    return s<=now&&(!e||e>=now);
+  const v=(S.vacations||[]).filter(v=>{
+    if(v.profile_id!==p.id)return false;
+    const s=new Date(v.start_date),e=new Date(v.end_date);
+    s.setHours(0,0,0,0);e.setHours(0,0,0,0);
+    return s<=now&&e>=now;
   }).sort((a,b)=>new Date(b.end_date||0)-new Date(a.end_date||0));
   return v.length?v[0].end_date:null;
+}
+// Does a date range overlap ANY vacation of this profile? (for staffing warnings)
+function vacationOverlap(pid, startStr, endStr){
+  const s=new Date(startStr), e=endStr?new Date(endStr):new Date("2999-12-31");
+  return (S.vacations||[]).filter(v=>{
+    if(v.profile_id!==pid)return false;
+    const vs=new Date(v.start_date), ve=new Date(v.end_date);
+    return vs<=e && s<=ve;
+  });
 }
 function isOnLeave(p){
   if(p.on_leave)return true;
@@ -682,33 +691,22 @@ function calcAge(d){if(!d)return"—";const dt=new Date(d),now=new Date();let y=
 
 // ── STORAGE ───────────────────────────────────────────────────────────────
 async function loadVacations(){
-  // Remove any previously-injected vacation assignments (avoid duplicates on reload)
-  S.assigns = S.assigns.filter(a=>!a.is_vacation);
+  // Vacations are a SEPARATE dimension — NOT assignments, NOT added to load.
+  // They represent absence and are consulted by helpers (isOnVacation, forecast, staffing).
   S.vacations = [];
   try{
     const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/vacations?select=*&order=start_date.asc',{
       headers:{'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk'},cache:'no-store'
     });
     if(r.ok){
-      S.vacations = await r.json();
-      // Build a quick EID → profile map
+      const rows = await r.json();
+      // Attach the matching profile_id (via EID) so lookups are fast
       const byEid={};
       S.profiles.forEach(p=>{if(p.eid)byEid[p.eid.toLowerCase().trim()]=p;});
-      // Inject each vacation period as a 100% virtual assignment to "Vacaciones"
-      S.vacations.forEach(v=>{
+      S.vacations = rows.map(v=>{
         const prof=byEid[(v.eid||'').toLowerCase().trim()];
-        if(!prof)return; // vacation for someone not in our roster — skip
-        S.assigns.push({
-          id:'vacasg_'+v.id,
-          profile_id:prof.id,
-          project_name:'Vacaciones',
-          start_date:v.start_date,
-          end_date:v.end_date,
-          chargeability:100,
-          is_forecast:false,
-          is_vacation:true
-        });
-      });
+        return {...v, profile_id: prof?prof.id:null};
+      }).filter(v=>v.profile_id); // only vacations for people in our roster
     }
   }catch(e){console.warn('Vacations load error:',e);}
 }
@@ -970,7 +968,7 @@ function tSupply(){
   }
 
   if(S.supplyView==="disponibles"){
-    const bench=S.profiles.filter(p=>sfF(p)&&p.is_active!==false&&!isOnLeave(p)&&pCharge(p.id)===0);
+    const bench=S.profiles.filter(p=>sfF(p)&&p.is_active!==false&&!isOnLeave(p)&&!isOnVacation(p)&&pCharge(p.id)===0);
     const rFiltered=f.risks.length?bench.filter(p=>f.risks.includes(getRisk(p.id))):bench;
     const sorted=sortedSupply(rFiltered);
     const fCount=f.caps.length+f.levels.length+f.risks.length+f.ctypes.length+(f.q?1:0);
@@ -1940,6 +1938,9 @@ function openDM(id){
               assignWarning=`Estado guardado, pero NO se creó la asignación: la carga de ${prof.name} superaría el 100% (llegaría al ${peak}%). Ajusta fechas o carga y vuelve a guardar.`;
             } else {
               S.assigns.push({id:uid(),profile_id:prof.id,project_name:projName,start_date:startD,end_date:endD,chargeability:charge,is_forecast:false,from_demand:demandId});
+              // Non-blocking heads-up if the assignment overlaps the person's vacations
+              const vo=vacationOverlap(prof.id,startD,endD);
+              if(vo.length){assignWarning=`Asignación creada, pero OJO: ${prof.name} tiene vacaciones que solapan (${vo.map(v=>fds(v.start_date)+"–"+fds(v.end_date)).join(", ")}). Revísalo.`;}
             }
           }
         }
