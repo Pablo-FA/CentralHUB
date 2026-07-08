@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build-stamp" content="2026-07-08 11:03" data-file="pm-tracker"/>
+<meta name="build-stamp" content="2026-07-08 18:54" data-file="pm-tracker"/>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>PM Tracker — Governance Suite</title>
@@ -267,7 +267,7 @@ html.embedded .content { padding: 20px 24px; }
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"pm-tracker",stamp:"2026-07-08 11:03"};</script>
+<script>window.__BUILD__={file:"pm-tracker",stamp:"2026-07-08 18:54"};</script>
 </head>
 <body>
 
@@ -564,6 +564,8 @@ function rebuildAllocationsFromAssigns(){
   // group assignments by project_name to synthesise project entities
   const projMap={};
   (S.assigns||[]).forEach(a=>{
+    // Vacaciones is not a real project; Interno is overhead — exclude both from Project Health
+    if(a.is_vacation||a.project_name==="Vacaciones"||a.project_name==="Interno")return;
     const prof=S.profiles.find(p=>p.id===a.profile_id); if(!prof)return;
     // attach to profile
     prof.assignments.push({projectId:"chp-"+slugify(a.project_name),pct:a.chargeability||0,wbsId:"",assignId:a.id,start:a.start_date,end:a.end_date,forecast:a.is_forecast});
