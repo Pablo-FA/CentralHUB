@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-07 17:40" data-file="index"/>
+<meta name="build-stamp" content="2026-07-08 19:26" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -199,7 +199,7 @@ body{background:var(--bg)}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-07-07 17:40"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-07-08 19:26"};</script>
 </head>
 <body>
 
@@ -406,13 +406,37 @@ async function loadBuildStamps(){
 }
 
 async function loadActiveProjects(){
+  // Derive active projects from Supply assignments (same source as Project Health),
+  // NOT from the legacy pm_projects table. Active = has a vigente assignment today.
   try{
-    const r=await fetchT('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/pm_projects?order=updated_at.desc',{
+    const r=await fetchT('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/sd_data?select=key,data&key=eq.assigns',{
       headers:{'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk'}
     });
     if(!r.ok)return[];
     const rows=await r.json();
-    return rows.map(r=>r.data||{}).filter(p=>{const s=(p.status||'active').toLowerCase();return s==='active'||s==='activo';});
+    const assigns=(rows[0]&&rows[0].data)||[];
+    const now=new Date();now.setHours(0,0,0,0);
+    const EXCLUDE=['Vacaciones','Interno'];
+    const projMap={};
+    assigns.forEach(a=>{
+      if(a.is_vacation||a.is_forecast)return;
+      const name=a.project_name;
+      if(!name||EXCLUDE.includes(name))return;
+      const s=new Date(a.start_date),e=a.end_date?new Date(a.end_date):null;
+      if(s)s.setHours(0,0,0,0);if(e)e.setHours(0,0,0,0);
+      const vigente=s<=now&&(!e||e>=now);
+      if(!projMap[name])projMap[name]={name,ftes:new Set(),endDate:null};
+      if(vigente){
+        projMap[name].ftes.add(a.profile_id);
+        // Track latest end date among active assignments
+        if(e&&(!projMap[name].endDate||e>projMap[name].endDate))projMap[name].endDate=e;
+      }
+    });
+    // Only projects that have at least one vigente assignment
+    return Object.values(projMap)
+      .filter(p=>p.ftes.size>0)
+      .map(p=>({name:p.name,ftes:p.ftes.size,endDate:p.endDate?p.endDate.toISOString().slice(0,10):null,status:'active'}))
+      .sort((a,b)=>b.ftes-a.ftes);
   }catch(e){return[];}
 }
 function applyTheme(dark){
@@ -676,7 +700,7 @@ async function showHome(){
           <th style="text-align:right;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">FTEs</th>
           <th style="text-align:right;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Hasta</th>
         </tr></thead><tbody>
-        ${activeProjects.map(p=>{const cap=p.capability||"";const col={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"}[cap]||"#888";return`<tr class="proj-row" style="cursor:pointer"><td style="padding:8px 0;border-bottom:1px solid var(--border);font-weight:500;font-size:13px">${p.name||"—"}</td><td class="cap-col" style="padding:8px 0;border-bottom:1px solid var(--border)">${cap?`<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${col}22;color:${col};font-weight:600">${cap}</span>`:"—"}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:12px;font-weight:500">${(p.team||[]).length}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:11px;color:var(--text3)">${p.endDate?new Date(p.endDate+"T12:00:00").toLocaleDateString("es-ES",{day:"2-digit",month:"short"}):"—"}</td></tr>`;
+        ${activeProjects.map(p=>{const cap=p.capability||"";const col={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"}[cap]||"#888";return`<tr class="proj-row" style="cursor:pointer"><td style="padding:8px 0;border-bottom:1px solid var(--border);font-weight:500;font-size:13px">${p.name||"—"}</td><td class="cap-col" style="padding:8px 0;border-bottom:1px solid var(--border)">${cap?`<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${col}22;color:${col};font-weight:600">${cap}</span>`:"—"}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:12px;font-weight:500">${p.ftes!=null?p.ftes:(p.team||[]).length}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:11px;color:var(--text3)">${p.endDate?new Date(p.endDate+"T12:00:00").toLocaleDateString("es-ES",{day:"2-digit",month:"short"}):"—"}</td></tr>`;
 }).join("")}
         </tbody></table>`}
     </div>
