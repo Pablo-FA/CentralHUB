@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-08 11:19" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-08 11:22" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 11:19"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 11:22"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -1720,6 +1720,41 @@ function openDM(id){
       const getT=gid=>{const b=document.querySelector("#"+gid+" .tgb.on");return b?b.textContent:"";};
       const data={client:document.getElementById("dm-cli").value,project_reference:document.getElementById("dm-proj").value,start_date:document.getElementById("dm-start").value||null,end_date:document.getElementById("dm-end").value||null,capability:document.getElementById("dm-cap").value,role:document.getElementById("dm-role").value,seniority:document.getElementById("dm-sen").value,chargeability_required:parseInt(document.getElementById("dm-ch").value)||100,contract_type:getT("tgg-dct")||"Interno",status:getT("tgg-dst")||"Vacío",proposed_profile:document.getElementById("dm-pp").value,owner:document.getElementById("dm-owner")?document.getElementById("dm-owner").value:""};
       if(!data.client||!data.role)return;
+      // ── TRIGGER: status "Asignado" auto-creates a Supply assignment ──
+      const wasAssigned = id ? (S.demands.find(d=>d.id===id)||{}).status==="Asignado" : false;
+      const nowAssigned = data.status==="Asignado";
+      if(nowAssigned && !wasAssigned){
+        // Validate we have what we need
+        if(!data.proposed_profile){
+          alert("Para marcar como \"Asignado\" debes seleccionar un perfil propuesto.");
+          return;
+        }
+        const prof=S.profiles.find(p=>p.name===data.proposed_profile);
+        if(!prof){
+          alert("No se encuentra el perfil propuesto en el roster. Revisa el perfil propuesto.");
+          return;
+        }
+        const projName=(data.project_reference||data.client||"").trim();
+        const startD=data.start_date||new Date().toISOString().slice(0,10);
+        const endD=data.end_date||null;
+        const charge=data.chargeability_required||100;
+        // Overlap validation: sum of loads on any day must stay <=100
+        const existing=S.assigns.filter(a=>a.profile_id===prof.id);
+        const overlaps=(a,s,e)=>{const as=new Date(a.start_date),ae=a.end_date?new Date(a.end_date):new Date("2999-12-31");const ns=new Date(s),ne=e?new Date(e):new Date("2999-12-31");return as<=ne&&ns<=ae;};
+        // Boundary sweep including the new assignment
+        const testSet=[...existing.map(a=>({s:a.start_date,e:a.end_date,c:a.chargeability||0})),{s:startD,e:endD,c:charge}];
+        const events=[];
+        testSet.forEach(a=>{events.push({t:new Date(a.s).getTime(),d:a.c});const et=a.e?new Date(a.e).getTime()+86400000:new Date("2999-12-31").getTime();events.push({t:et,d:-a.c});});
+        events.sort((x,y)=>x.t-y.t||x.d-y.d);
+        let load=0,over=false,peak=0;
+        for(const ev of events){load+=ev.d;if(load>peak)peak=load;if(load>100)over=true;}
+        if(over){
+          alert(`No se puede asignar a ${prof.name}: la carga combinada superaría el 100% (llegaría al ${peak}%) en el periodo. Ajusta fechas o carga antes de asignar.`);
+          return;
+        }
+        // Passed — create the assignment
+        S.assigns.push({id:uid(),profile_id:prof.id,project_name:projName,start_date:startD,end_date:endD,chargeability:charge,is_forecast:false});
+      }
       let savedDemand;
       if(id){savedDemand={...S.demands.find(d=>d.id===id),...data};S.demands=S.demands.map(d=>d.id===id?savedDemand:d);}
       else{savedDemand={...data,id:uid(),notes:[],created_at:new Date().toISOString()};S.demands.push(savedDemand);}
