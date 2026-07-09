@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-08 19:44" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-09 15:44" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-08 19:44"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-09 15:44"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -380,6 +380,8 @@ function getBenchSince(pid){
   const now=new Date();
   const past=S.assigns.filter(a=>a.profile_id===pid&&a.end_date&&!a.is_forecast&&new Date(a.end_date)<now).sort((a,b)=>new Date(b.end_date)-new Date(a.end_date));
   if(past.length>0)return new Date(past[0].end_date);
+  // Fallback (Opción C): profile's system creation date, if available
+  if(p&&p.created_at)return new Date(p.created_at);
   return null;
 }
 
