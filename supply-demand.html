@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-15 12:27" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-15 12:36" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-15 12:27"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-15 12:36"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -1005,7 +1005,7 @@ function tSupply(){
       <tbody>${sorted.length===0?`<tr><td colspan="10" class="empty">Sin perfiles disponibles</td></tr>`:sorted.map(p=>{
         const avail=100-pCharge(p.id);const bs=getBenchSince(p.id);const days=daysBench(p.id);const risk=getRisk(p.id);const sub=p.contract_type==="Subcontractor";
         const daysCls=days>30?"bred":days>15?"bamber":"bg";
-        const lastNote=(p.supply_notes||[]).slice(-1)[0];
+        const supplyComment=p.supply_comments||"";
         return`<tr onclick="openSupplyEdit('${p.id}')">
           ${nameCell(p)}
           <td class="cap-col" style="font-size:12px;color:var(--t2)">${p.capability||"—"}</td>
@@ -1015,7 +1015,7 @@ function tSupply(){
           <td><span class="bdg ${daysCls}" style="font-size:11px">${days}d</span></td>
           <td><div class="cbar"><div class="ctrack" style="min-width:50px"><div class="cfill" style="width:${Math.min(avail,100)}%;background:${cc(100-avail)}"></div></div><span style="font-size:12px;font-weight:500;min-width:34px">${avail}%</span></div></td>
           <td>${riskBadge(risk)}</td>
-          <td style="font-size:12px;color:var(--t2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${lastNote?lastNote.text:""}</td>
+          <td style="font-size:12px;color:var(--t2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${supplyComment.replace(/"/g,'&quot;')}">${supplyComment||""}</td>
           ${editBtn(p.id)}
         </tr>`;
       }).join("")}</tbody>
