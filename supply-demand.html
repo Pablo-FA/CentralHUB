@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-09 17:15" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-07-15 12:27" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-09 17:15"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-15 12:27"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -1822,10 +1822,10 @@ async function delBaja(id){S.bajas=S.bajas.filter(b=>b.id!==id);await save();cm(
 
 // ── DEMAND MODAL ──────────────────────────────────────────────────────────
 function openDM(id){
-  const d=id?S.demands.find(x=>x.id===id):null;
   let noteIdx=0; // 0 = most recent
 
   function buildHTML(){
+    const d=id?S.demands.find(x=>x.id===id):null; // re-fetch each render (avoid stale reference)
     const notesRev=(d&&d.notes||[]).slice().reverse();
     const total=notesRev.length;
     noteIdx=Math.max(0,Math.min(noteIdx,total-1));
