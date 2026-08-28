@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sales Tracking · Command HUB</title>
+<meta name="build-stamp" content="2026-08-28 21:11" data-file="sales-tracking"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7f9; --bg1:#ffffff; --bg2:#f0f2f5; --bd:#e3e6ea;
+  --t:#1a1d24; --t2:#5a6270; --t3:#9aa2b0;
+  --acc:#4f46e5; --acc-bg:#eef0fd;
+  --green:#16a34a; --green-bg:#e8f5ec;
+  --amber:#d97706; --amber-bg:#fdf4e7;
+  --red:#dc2626; --red-bg:#fdecec;
+  --blue:#2563eb; --blue-bg:#e8f0fd;
+  --purple:#7c3aed; --purple-bg:#f1eafd;
+  --slate:#64748b; --slate-bg:#f1f5f9;
+  --hi:#dc2626; --mid:#eab308; --lo:#22c55e;
+}
+[data-theme="dark"]{
+  --bg:#0c0c14; --bg1:#14141f; --bg2:#1c1c2a; --bd:#2a2a3a;
+  --t:#e8e8ef; --t2:#a0a0b5; --t3:#6b6b80;
+  --acc:#6366f1; --acc-bg:#1e1e3a;
+  --green:#22c55e; --green-bg:#12281a;
+  --amber:#f59e0b; --amber-bg:#2a1f0a;
+  --red:#ef4444; --red-bg:#2a1215;
+  --blue:#3b82f6; --blue-bg:#0f1e33;
+  --purple:#8b5cf6; --purple-bg:#1f1533;
+  --slate:#94a3b8; --slate-bg:#1a1f2a;
+  --hi:#ef4444; --mid:#eab308; --lo:#22c55e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.5}
+.wrap{max-width:1480px;margin:0 auto;padding:24px}
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.hdr h1{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.hdr .sub{font-size:13px;color:var(--t3);margin-top:2px}
+.btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--bg1);color:var(--t);transition:all .12s}
+.btn:hover{border-color:var(--t3)}
+.btn.p{background:var(--acc);color:#fff;border-color:var(--acc)}
+.btn.p:hover{opacity:.9}
+.btn.sm{padding:5px 12px;font-size:12px}
+
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.kpi{background:var(--bg1);border:1px solid var(--bd);border-radius:12px;padding:16px 18px}
+.kpi .lbl{font-size:11px;color:var(--t3);letter-spacing:0;font-weight:600}
+.kpi .val{font-size:26px;font-weight:700;margin-top:6px;letter-spacing:-.02em}
+.kpi .msub{font-size:11px;color:var(--t3);margin-top:2px}
+.kpi.hl{border-left:3px solid var(--acc)}
+
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+.toggle{display:flex;gap:0;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:3px}
+.toggle button{padding:6px 16px;border-radius:6px;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--t2);font-family:inherit;font-weight:400}
+.toggle button.on{background:var(--bg1);color:var(--t);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.filter-chip{font-size:12px;padding:6px 12px;border-radius:7px;border:1px solid var(--bd);background:var(--bg1);cursor:pointer}
+.filter-chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+
+/* Kanban */
+.kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;align-items:flex-start}
+.col{background:var(--bg2);border-radius:12px;padding:10px;width:230px;flex-shrink:0}
+.col.sub{border:1px dashed var(--bd)}
+.group.expanded{display:flex;gap:8px;background:rgba(79,70,229,.05);border-radius:14px;padding:6px;flex-shrink:0}
+.col-hdr{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 10px;font-size:12px;font-weight:700;color:var(--t2)}
+.col-hdr .left{display:flex;align-items:center;gap:7px}
+.col-hdr .cnt{background:var(--bg1);border-radius:20px;padding:1px 8px;font-size:11px;color:var(--t3);font-weight:600}
+.col-hdr .sub-lbl{font-size:11px;color:var(--t3);font-weight:600}
+/* expand/collapse button — clearer */
+.expander{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;color:var(--t2);background:var(--bg1);border-radius:6px;width:24px;height:24px;transition:all .12s;border:1px solid var(--bd)}
+.expander:hover{border-color:var(--acc);color:var(--acc);background:var(--acc-bg)}
+.expander svg{width:13px;height:13px}
+
+.card{position:relative;background:var(--bg1);border:1px solid var(--bd);border-radius:10px;padding:12px 12px 12px 16px;margin-bottom:8px;cursor:pointer;transition:all .12s;overflow:hidden}
+.card:hover{border-color:var(--acc);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card .ribbon{position:absolute;left:0;top:0;bottom:0;width:5px}
+.card .client{font-weight:600;font-size:13px}
+.card .oppname{font-size:12px;color:var(--t2);margin-top:1px;margin-bottom:10px;line-height:1.35}
+.card .substate{font-size:10px;color:var(--acc);background:var(--acc-bg);display:inline-block;padding:1px 6px;border-radius:4px;margin-bottom:8px}
+.card .foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card .deadline{font-size:11px;color:var(--t3);display:flex;align-items:center;gap:3px}
+.owner-pill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--acc-bg);color:var(--acc);white-space:nowrap}
+
+/* Table with header filters */
+.tw{background:var(--bg1);border:1px solid var(--bd);border-radius:12px;overflow:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;color:var(--t3);letter-spacing:0;font-weight:600;padding:9px 12px;border-bottom:1px solid var(--bd);background:var(--bg2);white-space:nowrap;vertical-align:top}
+th .th-label{display:flex;align-items:center;gap:5px;margin-bottom:6px}
+th.sortable .th-label{cursor:pointer;user-select:none}
+th.sortable .th-label:hover{color:var(--acc)}
+th select,th input{width:100%;padding:4px 6px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:11px;background:var(--bg1);color:var(--t);font-weight:400;text-transform:none;letter-spacing:0}
+th .hfilter-placeholder{height:0}
+/* funnel filter button + dropdown */
+.th-label{display:flex;align-items:center;gap:5px;margin-bottom:0}
+.funnel{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;cursor:pointer;color:var(--t3);border:1px solid transparent;transition:all .12s;position:relative}
+.funnel:hover{background:var(--bg1);color:var(--acc);border-color:var(--bd)}
+.funnel.active{color:var(--acc);background:var(--acc-bg)}
+.funnel svg{width:12px;height:12px}
+.fdrop{position:absolute;top:100%;left:0;margin-top:4px;background:var(--bg1);border:1px solid var(--bd);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:20;min-width:150px;max-height:240px;overflow-y:auto;padding:4px}
+.fdrop-item{padding:7px 10px;font-size:12px;border-radius:6px;cursor:pointer;color:var(--t);text-transform:none;letter-spacing:0;font-weight:400;white-space:nowrap}
+.fdrop-item:hover{background:var(--bg2)}
+.fdrop-item.sel{background:var(--acc-bg);color:var(--acc);font-weight:600}
+th{position:relative}
+td{padding:11px 12px;border-bottom:1px solid var(--bd);font-size:13px;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:var(--bg2)}
+.pill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.prio-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px}
+.type-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--slate-bg);color:var(--slate)}
+
+/* Modal */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-start;justify-content:center;padding:32px 20px;z-index:100;overflow-y:auto}
+.modal{background:var(--bg1);border-radius:16px;max-width:740px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2);display:flex;flex-direction:column;max-height:calc(100vh - 64px)}
+.mhdr{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--bd);flex-shrink:0;background:var(--bg1);border-radius:16px 16px 0 0}
+.mhdr h2{font-size:18px;font-weight:700}
+.mhdr .msub{font-size:13px;color:var(--t3);margin-top:2px}
+.mbody{padding:20px 24px;overflow-y:auto;flex:1;background:var(--bg2)}
+.close{background:none;border:none;font-size:22px;color:var(--t3);cursor:pointer;line-height:1}
+.fld{margin-bottom:0}
+.fld label{display:block;font-size:11px;color:var(--t2);letter-spacing:0;font-weight:600;margin-bottom:5px}
+.fi{width:100%;padding:8px 12px;border:1px solid var(--bd);border-radius:8px;font-family:inherit;font-size:13px;background:var(--bg1);color:var(--t)}
+.fi:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-bg)}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+/* Section as a card */
+.card-sect{background:var(--bg1);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:14px}
+.card-sect:last-child{margin-bottom:0}
+.sect{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--t);letter-spacing:.01em;margin:0 0 16px;padding:0}
+.sect::before{content:"";width:3px;height:14px;background:var(--acc);border-radius:2px}
+.sect .sect-hint{font-size:11px;font-weight:400;color:var(--t3);text-transform:none;letter-spacing:0;margin-left:auto}
+/* grid gap between stacked fields inside a section */
+.fld-stack{display:flex;flex-direction:column;gap:14px}
+/* Status timeline selector */
+.status-tl{display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding:8px 2px 2px}
+.status-node{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex:1;min-width:64px;position:relative}
+.status-node .dot{width:18px;height:18px;border-radius:50%;background:var(--bg1);border:2px solid var(--bd);z-index:2;transition:all .15s}
+.status-node .dot::after{content:"";position:absolute;top:9px;left:50%;width:100%;height:2px;background:var(--bd);z-index:1}
+.status-node:last-child .dot::after{display:none}
+.status-node .slabel{font-size:10px;color:var(--t3);text-align:center;line-height:1.2;max-width:70px;transition:all .15s}
+.status-node.done .dot{background:var(--acc);border-color:var(--acc)}
+.status-node.done .dot::after{background:var(--acc)}
+.status-node.current .dot{background:var(--acc);border-color:var(--acc);box-shadow:0 0 0 4px var(--acc-bg);width:20px;height:20px}
+.status-node.current .slabel{color:var(--acc);font-weight:700}
+.status-node:hover .dot{border-color:var(--acc)}
+/* Slider */
+.slider-wrap{display:flex;flex-direction:column;gap:8px}
+.slider-track{position:relative;height:36px;display:flex;align-items:center}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:var(--bd);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--acc);cursor:pointer;border:3px solid var(--bg1);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--acc);cursor:pointer;border:3px solid var(--bg1)}
+.slider-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--t3)}
+.slider-labels span{cursor:pointer;padding:2px 6px;border-radius:5px}
+.slider-labels span.on{color:var(--acc);font-weight:700;background:var(--acc-bg)}
+.slider-val{text-align:center;font-size:13px;font-weight:700;margin-top:2px}
+/* Flag tags */
+.flag-tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 10px;border-radius:6px;background:var(--bg2);border:1px solid var(--bd);margin:2px 4px 2px 0}
+.flag-tag .fx{cursor:pointer;color:var(--t3);font-size:13px}
+.flag-tag .fx:hover{color:var(--red)}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--t2);cursor:pointer}
+.cap-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.cap-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px}
+.cap-item label{font-size:12px;color:var(--t2);font-weight:500}
+.cap-item input{width:56px;padding:4px 8px;border:1px solid var(--bd);border-radius:6px;font-family:inherit;font-size:13px;text-align:center;background:var(--bg1)}
+.cap-total{display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--acc-bg);border-radius:8px;margin-top:8px;font-weight:700;color:var(--acc)}
+.multi-tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;background:var(--acc-bg);color:var(--acc);margin:2px 4px 2px 0}
+.mini-bar{height:6px;background:var(--bd);border-radius:3px;overflow:hidden;margin-top:6px}
+.mini-bar>div{height:100%}
+
+/* FIXED LOG PANEL at bottom of modal */
+.mftr{display:flex;gap:10px;padding:14px 24px;border-top:1px solid var(--bd);align-items:center;background:var(--bg1);border-radius:0 0 16px 16px;flex-shrink:0}
+.btn-del{border-color:var(--red);color:var(--red)}
+.btn-del:hover{background:var(--red-bg)}
+.logpanel{flex-shrink:0;border-top:2px solid var(--bd);background:var(--bg2)}
+.logpanel .lp-tabs{display:flex;gap:0;padding:8px 16px 0;align-items:center;justify-content:space-between}
+.lp-tabgroup{display:flex;gap:4px}
+.lp-tab{padding:6px 14px;border-radius:7px 7px 0 0;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--t3);font-family:inherit}
+.lp-tab.on{background:var(--bg1);color:var(--acc)}
+.lp-content{background:var(--bg1);margin:0 8px 8px;border-radius:0 8px 8px 8px;padding:14px 16px;height:22vh;min-height:160px;max-height:280px;overflow:hidden;display:flex;flex-direction:column;gap:0}
+.log-item{padding:8px 10px;background:var(--bg2);border-radius:8px;margin-bottom:6px}
+.log-item .ts{font-size:10px;color:var(--t3);margin-bottom:2px}
+.log-item .txt{font-size:12px;color:var(--t)}
+.comment-card{flex:1;background:linear-gradient(180deg,var(--bg1),var(--bg2));border:1px solid var(--bd);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;min-height:0;overflow-y:auto}
+.comment-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0}
+.comment-date{font-size:12px;font-weight:600;color:var(--t2)}
+.comment-meta{font-size:11px;color:var(--t3);display:flex;align-items:center;gap:4px}
+.recent-badge{background:var(--acc-bg);color:var(--acc);font-weight:600;padding:1px 8px;border-radius:20px;font-size:10px}
+.comment-body{font-size:14px;color:var(--t);line-height:1.6;flex:1}
+.log-add{display:flex;gap:8px;margin-top:10px;flex-shrink:0}
+.log-add{display:flex;gap:8px;margin-top:8px}
+.timeline{position:relative;padding-left:20px}
+.timeline::before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--bd)}
+.tl-item{position:relative;padding:4px 0 12px}
+.tl-item::before{content:"";position:absolute;left:-17px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--acc);border:2px solid var(--bg1)}
+.tl-item.past::before{background:var(--t3)}
+.tl-item .tl-status{font-weight:600;font-size:12px}
+.tl-item .tl-date{font-size:10px;color:var(--t3)}
+.statusnav-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--bd);background:var(--bg1);color:var(--t2);font-size:18px;cursor:pointer;flex-shrink:0;transition:all .12s;display:flex;align-items:center;justify-content:center;line-height:1}
+.statusnav-btn:hover:not(:disabled){border-color:var(--acc);color:var(--acc);background:var(--acc-bg)}
+.statusnav-btn:disabled{opacity:.35;cursor:not-allowed}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.cap-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  
+
+  <div class="hdr">
+    <div><h1>Sales Tracking</h1><div class="sub">Pipeline de oportunidades · hasta "Won" → Demand</div></div>
+    <button class="btn p" onclick="openOpp(null)">+ Nueva oportunidad</button>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi hl"><div class="lbl">Pipeline abierto</div><div class="val" id="kpi-pipeline">—</div><div class="msub" id="kpi-pipeline-sub">—</div></div>
+    <div class="kpi"><div class="lbl">Forecast ponderado</div><div class="val" style="color:var(--acc)" id="kpi-forecast">—</div><div class="msub">valor × probabilidad</div></div>
+    <div class="kpi"><div class="lbl">Win rate</div><div class="val" style="color:var(--green)" id="kpi-winrate">—</div><div class="msub">ganados / cerrados</div></div>
+    <div class="kpi"><div class="lbl">FTEs estimados</div><div class="val" id="kpi-ftes">—</div><div class="msub">en pipeline abierto</div></div>
+    <div class="kpi"><div class="lbl">Deadlines próximos</div><div class="val" style="color:var(--amber)" id="kpi-deadlines">—</div><div class="msub">próximos 7 días</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toggle">
+      <button class="on" onclick="setView('pipeline',this)">Pipeline</button>
+      <button onclick="setView('table',this)">Tabla</button>
+      <button onclick="setView('services',this)" id="btn-servicios">Servicios</button>
+    </div>
+    <button class="btn" id="demo-btn" style="font-size:12px;padding:6px 12px" onclick="toggleDemo()">Ver datos de ejemplo</button>
+  </div>
+
+  <div id="view-pipeline">
+    <div class="filters">
+      <span style="font-size:12px;color:var(--t3);font-weight:600">Owner:</span>
+      <span class="filter-chip on" onclick="setOwnerFilter('',this)">Todos</span>
+      <span class="filter-chip" onclick="setOwnerFilter('Pablo Fajardo',this)">Pablo</span>
+      <span class="filter-chip" onclick="setOwnerFilter('Fabio Gil Pereira',this)">Fabio</span>
+      <span class="filter-chip" onclick="setOwnerFilter('Conrado Pittari',this)">Conrado</span>
+    </div>
+    <div class="kanban" id="kanban"></div>
+  </div>
+
+  <div id="view-table" style="display:none">
+    <div class="tw"><table>
+      <thead><tr id="thead-row"></tr></thead>
+      <tbody id="table-body"></tbody>
+    </table></div>
+  </div>
+
+  <div id="view-services" style="display:none">
+    <div class="tw" style="padding:20px">
+      <div style="font-size:13px;color:var(--t2);margin-bottom:16px">FTEs estimados por servicio en el pipeline abierto. Alimentará el Supply cuando las oportunidades se ganen.</div>
+      <div id="services-body"></div>
+    </div>
+  </div>
+</div>
+<div id="modal-root"></div>
+
+<script>
+window.__BUILD__={file:"sales-tracking",stamp:"2026-08-28 21:11"};
+// ── Theme sync with parent shell ──
+(function(){
+  function applyTheme(t){if(t==='dark')document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');}
+  // Ask parent for theme + listen for changes
+  window.addEventListener('message',e=>{if(e.data&&e.data.theme)applyTheme(e.data.theme);});
+  try{const t=new URLSearchParams(location.search).get('theme');if(t)applyTheme(t);}catch(e){}
+})();
+
+const STATUS_GROUPS=[
+  {id:"idle",label:"Idle",subs:null,color:"var(--slate)"},
+  {id:"progress",label:"In Progress",color:"var(--blue)",subs:[
+    {id:"technical",label:"Technical response"},{id:"solutioning",label:"Solutioning"},
+    {id:"contracting",label:"Contracting"},{id:"reviewing",label:"Reviewing"}]},
+  {id:"hold",label:"On Hold",subs:null,color:"var(--amber)"},
+  {id:"sent",label:"Closed / Sent",subs:null,color:"var(--purple)"},
+  {id:"completed",label:"Completed",color:"var(--green)",subs:[
+    {id:"won",label:"Won"},{id:"lost",label:"Lost"}]}
+];
+const ALL_STATUSES=[];
+STATUS_GROUPS.forEach(g=>{if(g.subs)g.subs.forEach(s=>ALL_STATUSES.push({id:s.id,label:s.label,group:g.id}));else ALL_STATUSES.push({id:g.id,label:g.label,group:g.id});});
+const statusLabel=id=>{const s=ALL_STATUSES.find(x=>x.id===id);return s?s.label:id;};
+const statusGroup=id=>{const s=ALL_STATUSES.find(x=>x.id===id);return s?s.group:id;};
+
+const TYPES=["RFP","RFI","RFQ","Opp","PoC","Renewal"];
+const INDUSTRIES=["FS","HPS","RES","CMT","A&D","PROD"];
+const PARTNERS=["Song","Technology","Industry","Consulting"];
+const PRIORITIES=["High","Mid","Low"];
+const WINPROB=["Low","Mid","High"];
+const LOCATIONS=[
+  {name:"Spain",flag:"🇪🇸"},{name:"France",flag:"🇫🇷"},{name:"Germany",flag:"🇩🇪"},
+  {name:"Italy",flag:"🇮🇹"},{name:"UK",flag:"🇬🇧"},{name:"Portugal",flag:"🇵🇹"},
+  {name:"US",flag:"🇺🇸"},{name:"Mexico",flag:"🇲🇽"},{name:"Brazil",flag:"🇧🇷"},
+  {name:"UAE",flag:"🇦🇪"},{name:"Netherlands",flag:"🇳🇱"},{name:"Ireland",flag:"🇮🇪"}
+];
+const flagFor=name=>{const l=LOCATIONS.find(x=>x.name===name);return l?l.flag:"🏳️";};
+const CAPABILITIES=["Creative Studio","CGI Hub","FE Dev","Content Studio","Paid Media","SEO","Social Media","MKT Services","Data & Analytics","DPM","Customer Experience","eCommerce","Digital Inside Sales","QA"];
+let SERVICES=["Marketing Automation","Content Production","CGI & 3D","Paid Media Management","SEO/SEM","Web Development","Data & Analytics","eCommerce Ops","Brand & Creative","Social Media Management"];
+const OWNERS=["Pablo Fajardo","Fabio Gil Pereira","Conrado Pittari"];
+const SA_PEOPLE=["Ana Solutions","Marc Architect","Elena Design","(externo)"];
+
+const prioColor=p=>p==="High"?"var(--hi)":p==="Mid"?"var(--mid)":"var(--lo)";
+const prioRank=p=>p==="High"?0:p==="Mid"?1:2;
+const probColor=p=>p==="High"?"var(--green)":p==="Mid"?"var(--amber)":"var(--slate)";
+const probBg=p=>p==="High"?"var(--green-bg)":p==="Mid"?"var(--amber-bg)":"var(--slate-bg)";
+
+const DEMO_OPPS=[
+  {id:1,client:"BMW",name:"Configurador 3D Next-Gen",type:"RFP",status:"solutioning",priority:"High",winProb:"High",industry:"PROD",services:["CGI & 3D","Web Development"],owner:"Pablo Fajardo",songContact:"James Miller (Song UK)",sa:"Marc Architect",locations:["Germany","Spain"],revenue:280000,cci:32,bpo:60,revShare:false,revSharePct:0,length:"18",lengthUnit:"Months",deadline:"2026-09-05",startDate:"2026-11-01",partners:["Technology"],contractId:"BMW-2026-001",staffing:{"CGI Hub":8,"FE Dev":4,"DPM":1,"Creative Studio":2},log:[{ts:"2026-08-20",txt:"RFP recibido. ~15 personas."}],statusLog:[{status:"idle",ts:"2026-08-18"},{status:"technical",ts:"2026-08-20"},{status:"solutioning",ts:"2026-08-25"}]},
+  {id:2,client:"Iberdrola",name:"Campaña ESG 2027",type:"RFP",status:"sent",priority:"High",winProb:"Mid",industry:"RES",services:["Content Production","Paid Media Management"],owner:"Fabio Gil Pereira",songContact:"Laura Vidal (Song ES)",sa:"Ana Solutions",locations:["Spain"],revenue:150000,cci:30,bpo:100,revShare:false,revSharePct:0,length:"12",lengthUnit:"Months",deadline:"2026-09-02",startDate:"2026-10-15",partners:["Song"],contractId:"IBE-2026-014",staffing:{"Content Studio":3,"Paid Media":2,"Creative Studio":1},log:[{ts:"2026-08-28",txt:"Enviada. Esperando go/no-go."}],statusLog:[{status:"idle",ts:"2026-08-01"},{status:"technical",ts:"2026-08-10"},{status:"reviewing",ts:"2026-08-22"},{status:"sent",ts:"2026-08-28"}]},
+  {id:3,client:"Santander",name:"Marketing CRM UK & ES",type:"RFP",status:"hold",priority:"Mid",winProb:"Low",industry:"FS",services:["Marketing Automation"],owner:"Pablo Fajardo",songContact:"Dummy (Song UK)",sa:"Ana Solutions",locations:["UK","Spain"],revenue:200000,cci:29,bpo:40,revShare:true,revSharePct:35,length:"3",lengthUnit:"Years",deadline:"2026-12-09",startDate:"2027-01-15",partners:["Song","Technology"],contractId:"SAN-2027-003",staffing:{"MKT Services":5,"Data & Analytics":2},log:[{ts:"2026-08-15",txt:"On Hold: GenAI en scope?"}],statusLog:[{status:"idle",ts:"2026-08-05"},{status:"technical",ts:"2026-08-12"},{status:"hold",ts:"2026-08-15"}]},
+  {id:4,client:"Telefónica",name:"Portal B2B v3",type:"Opp",status:"contracting",priority:"Mid",winProb:"Mid",industry:"CMT",services:["Web Development","Data & Analytics"],owner:"Fabio Gil Pereira",songContact:"Roberto Sanz (Song ES)",sa:"Marc Architect",locations:["Spain"],revenue:175000,cci:34,bpo:100,revShare:false,revSharePct:0,length:"10",lengthUnit:"Months",deadline:"2026-10-30",startDate:"2026-11-15",partners:["Technology"],contractId:"TEL-2026-021",staffing:{"FE Dev":6,"Data & Analytics":2,"DPM":1},log:[{ts:"2026-08-22",txt:"En contratación."}],statusLog:[{status:"idle",ts:"2026-08-01"},{status:"technical",ts:"2026-08-08"},{status:"solutioning",ts:"2026-08-15"},{status:"contracting",ts:"2026-08-22"}]},
+  {id:5,client:"Repsol",name:"Marketing Transformation",type:"RFI",status:"technical",priority:"Low",winProb:"Low",industry:"RES",services:["Marketing Automation","Content Production"],owner:"Pablo Fajardo",songContact:"María López (Song ES)",sa:"(externo)",locations:["Spain","Mexico"],revenue:90000,cci:31,bpo:50,revShare:false,revSharePct:0,length:"6",lengthUnit:"Months",deadline:"2026-11-20",startDate:"2026-12-01",partners:["Consulting"],contractId:"REP-2026-008",staffing:{"MKT Services":2,"Content Studio":1},log:[{ts:"2026-08-18",txt:"RFI inicial."}],statusLog:[{status:"idle",ts:"2026-08-14"},{status:"technical",ts:"2026-08-18"}]},
+  {id:6,client:"Loewe",name:"eCommerce Pilot",type:"PoC",status:"reviewing",priority:"High",winProb:"High",industry:"PROD",services:["eCommerce Ops","Web Development"],owner:"Fabio Gil Pereira",songContact:"Carmen Ruiz (Song ES)",sa:"Elena Design",locations:["Spain"],revenue:65000,cci:33,bpo:100,revShare:false,revSharePct:0,length:"3",lengthUnit:"Months",deadline:"2026-09-15",startDate:"2026-10-01",partners:["Song"],contractId:"LOE-2026-005",staffing:{"eCommerce":2,"FE Dev":2},log:[{ts:"2026-08-26",txt:"PoC aprobado."}],statusLog:[{status:"idle",ts:"2026-08-20"},{status:"technical",ts:"2026-08-23"},{status:"reviewing",ts:"2026-08-26"}]},
+  {id:7,client:"Repsol",name:"Personalization 2.0",type:"RFP",status:"idle",priority:"High",winProb:"Mid",industry:"RES",services:["Data & Analytics","Marketing Automation"],owner:"Pablo Fajardo",songContact:"Dummy (Song ES)",sa:"Ana Solutions",locations:["Spain"],revenue:220000,cci:36,bpo:30,revShare:true,revSharePct:40,length:"2",lengthUnit:"Years",deadline:"2026-11-10",startDate:"2027-01-01",partners:["Technology","Consulting"],contractId:"REP-2027-012",staffing:{"Data & Analytics":4,"MKT Services":3},log:[{ts:"2026-08-14",txt:"Pendiente RFP."}],statusLog:[{status:"idle",ts:"2026-08-14"}]},
+  {id:8,client:"EVO Bank",name:"Comunicación RRSS",type:"Opp",status:"technical",priority:"Low",winProb:"Mid",industry:"FS",services:["Social Media Management","Content Production"],owner:"Conrado Pittari",songContact:"Pablo Gómez (Song ES)",sa:"(externo)",locations:["Spain"],revenue:45000,cci:30,bpo:100,revShare:false,revSharePct:0,length:"12",lengthUnit:"Months",deadline:"2026-10-05",startDate:"2026-11-01",partners:["Song"],contractId:"EVO-2026-018",staffing:{"Social Media":2,"Content Studio":1},log:[{ts:"2026-08-19",txt:"Revisión con cliente."}],statusLog:[{status:"idle",ts:"2026-08-16"},{status:"technical",ts:"2026-08-19"}]},
+  {id:9,client:"Daimler",name:"Config AR Showroom",type:"Renewal",status:"won",priority:"High",winProb:"High",industry:"PROD",services:["CGI & 3D"],owner:"Pablo Fajardo",songContact:"Klaus Weber (Song DE)",sa:"Marc Architect",locations:["Germany"],revenue:210000,cci:35,bpo:100,revShare:false,revSharePct:0,length:"18",lengthUnit:"Months",deadline:"2026-08-15",startDate:"2026-09-15",partners:["Technology"],contractId:"DAI-2026-002",staffing:{"CGI Hub":6,"DPM":1},log:[{ts:"2026-08-10",txt:"GANADA. Pasar a Demand."}],statusLog:[{status:"idle",ts:"2026-07-20"},{status:"technical",ts:"2026-07-25"},{status:"contracting",ts:"2026-08-05"},{status:"won",ts:"2026-08-10"}]},
+  {id:10,client:"BBVA",name:"App Mobile Redesign",type:"RFP",status:"won",priority:"High",winProb:"High",industry:"FS",services:["Web Development","Brand & Creative"],owner:"Conrado Pittari",songContact:"Isabel Marín (Song ES)",sa:"Elena Design",locations:["Spain"],revenue:130000,cci:33,bpo:100,revShare:false,revSharePct:0,length:"9",lengthUnit:"Months",deadline:"2026-08-01",startDate:"2026-10-10",partners:["Song"],contractId:"BBVA-2026-030",staffing:{"FE Dev":4,"Creative Studio":2},log:[{ts:"2026-08-05",txt:"GANADA."}],statusLog:[{status:"idle",ts:"2026-07-10"},{status:"technical",ts:"2026-07-15"},{status:"reviewing",ts:"2026-07-28"},{status:"won",ts:"2026-08-05"}]},
+  {id:11,client:"Loewe",name:"Brand Refresh Q1",type:"Opp",status:"lost",priority:"Mid",winProb:"Low",industry:"PROD",services:["Brand & Creative"],owner:"Fabio Gil Pereira",songContact:"Dummy (Song ES)",sa:"(externo)",locations:["Spain"],revenue:55000,cci:30,bpo:100,revShare:false,revSharePct:0,length:"4",lengthUnit:"Months",deadline:"2026-07-20",startDate:"",partners:["Song"],contractId:"LOE-2026-009",staffing:{},log:[{ts:"2026-07-25",txt:"PERDIDA. Presupuesto."}],statusLog:[{status:"idle",ts:"2026-07-01"},{status:"technical",ts:"2026-07-08"},{status:"lost",ts:"2026-07-25"}]}
+];
+
+let OPPS=[]; // live data, loaded from Supabase (seeded from DEMO_OPPS on first run)
+
+// ── Supabase (shared Command HUB backend) ──
+const SB_URL='https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1';
+const SB_KEY='sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk';
+const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+const SB_HW={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'resolution=merge-duplicates,return=minimal'};
+
+async function loadOpps(){
+  // Start empty. Only ever populate from what's actually saved in Supabase.
+  // (No demo seed, no auto-writes on load — the DB starts blank.)
+  OPPS=[];
+  try{
+    const r=await fetch(SB_URL+'/sd_data?key=eq.sales_opps&select=data',{headers:SB_H,cache:'no-store'});
+    if(r.ok){
+      const rows=await r.json();
+      if(rows.length&&Array.isArray(rows[0].data))OPPS=rows[0].data;
+    }
+  }catch(e){console.warn('Sales load error:',e);}
+}
+async function saveOpps(){
+  if(typeof _demoMode!=='undefined'&&_demoMode){console.warn('Demo mode: save skipped (no persistence).');return;}
+  try{
+    await fetch(SB_URL+'/sd_data',{
+      method:'POST',headers:SB_HW,
+      body:JSON.stringify([{key:'sales_opps',data:OPPS,updated_at:new Date().toISOString()}])
+    });
+  }catch(e){console.warn('Sales save error:',e);}
+}
+
+const fmtK=v=>v>=1000000?"€"+(v/1000000).toFixed(2)+"M":"€"+Math.round(v/1000)+"K";
+const fmtThousands=v=>{if(v===""||v==null)return"";const n=String(v).replace(/\D/g,"");if(!n)return"";return n.replace(/\B(?=(\d{3})+(?!\d))/g,".");};
+const parseThousands=s=>{const n=String(s).replace(/\D/g,"");return n?parseInt(n):0;};
+const fdate=d=>d?new Date(d+"T12:00:00").toLocaleDateString("es-ES",{day:"2-digit",month:"short"}):"—";
+const totalFTE=o=>Object.values(o.staffing||{}).reduce((a,b)=>a+b,0);
+
+// SVG icons for expand/collapse (clearer than a dot)
+const ICON_EXPAND=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+const ICON_COLLAPSE=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`;
+
+// ─── PIPELINE ───
+let ownerFilter="";
+let collapsed={progress:true,completed:true};
+function setOwnerFilter(o,el){ownerFilter=o;document.querySelectorAll('#view-pipeline .filter-chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderKanban();}
+
+function cardHTML(o,showSub){
+  return `<div class="card" onclick="openOpp(${o.id})">
+    <div class="ribbon" style="background:${prioColor(o.priority)}"></div>
+    <div class="client">${o.client}</div>
+    <div class="oppname">${o.name}</div>
+    ${showSub?`<div class="substate">${statusLabel(o.status)}</div>`:''}
+    <div class="foot"><span class="deadline">📅 ${fdate(o.deadline)}</span><span class="owner-pill">${o.owner.split(" ")[0]}</span></div>
+  </div>`;
+}
+const sortByPrio=opps=>opps.slice().sort((a,b)=>prioRank(a.priority)-prioRank(b.priority));
+
+function renderKanban(){
+  const el=document.getElementById("kanban");
+  let opps=OPPS; if(ownerFilter)opps=opps.filter(o=>o.owner===ownerFilter);
+  el.innerHTML=STATUS_GROUPS.map(g=>{
+    const inGroup=opps.filter(o=>statusGroup(o.status)===g.id);
+    if(!g.subs){
+      return `<div class="col">
+        <div class="col-hdr"><span class="left" style="color:${g.color}">${g.label}</span><span class="cnt">${inGroup.length}</span></div>
+        ${sortByPrio(inGroup).map(o=>cardHTML(o,false)).join("")||'<div style="color:var(--t3);font-size:11px;padding:12px;text-align:center">—</div>'}
+      </div>`;
+    }
+    const isCollapsed=collapsed[g.id]!==false;
+    if(isCollapsed){
+      return `<div class="col">
+        <div class="col-hdr">
+          <span class="left" style="color:${g.color}">${g.label}</span>
+          <span style="display:flex;gap:6px;align-items:center"><span class="cnt">${inGroup.length}</span><span class="expander" onclick="event.stopPropagation();collapsed['${g.id}']=false;renderKanban()" title="Expandir">${ICON_EXPAND}</span></span>
+        </div>
+        ${sortByPrio(inGroup).map(o=>cardHTML(o,true)).join("")||'<div style="color:var(--t3);font-size:11px;padding:12px;text-align:center">—</div>'}
+      </div>`;
+    }
+    return `<div class="group expanded">
+      ${g.subs.map((sub,i)=>{
+        const inSub=opps.filter(o=>o.status===sub.id);
+        return `<div class="col sub">
+          <div class="col-hdr">
+            <span class="left"><span class="sub-lbl">${sub.label}</span></span>
+            <span style="display:flex;gap:6px;align-items:center"><span class="cnt">${inSub.length}</span>${i===0?`<span class="expander" onclick="event.stopPropagation();collapsed['${g.id}']=true;renderKanban()" title="Colapsar">${ICON_COLLAPSE}</span>`:''}</span>
+          </div>
+          ${sortByPrio(inSub).map(o=>cardHTML(o,false)).join("")||'<div style="color:var(--t3);font-size:11px;padding:12px;text-align:center">—</div>'}
+        </div>`;
+      }).join("")}
+    </div>`;
+  }).join("");
+}
+
+// ─── TABLE with HEADER FILTERS ───
+let sortKey=null, sortDesc=null;
+let hf={client:"",type:"",status:"",prio:"",win:"",owner:""};
+const ICON_FUNNEL=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`;
+// Priority visual indicators for table
+const PRIO_ICON={
+  High:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--hi)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" title="High"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>`,
+  Mid:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--mid)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" title="Mid"><polyline points="17 14 12 9 7 14"/></svg>`,
+  Low:`<svg viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2.5" stroke-linecap="round" style="width:16px;height:16px" title="Low"><line x1="6" y1="12" x2="18" y2="12"/></svg>`
+};
+let openDropdown=null; // which column's dropdown is open
+
+function buildHead(){
+  const cl=[...new Set(OPPS.map(o=>o.client))].sort();
+  const ow=[...new Set(OPPS.map(o=>o.owner))].sort();
+  const winOpts=[{v:"",l:"Todas"},{v:"High",l:"High"},{v:"Mid",l:"Mid"},{v:"Low",l:"Low"}];
+  // Filterable column with funnel dropdown
+  const mkFilter=(key,label,opts,current)=>{
+    const active=current!=="";
+    return `<th>
+      <div class="th-label">
+        <span>${label}</span>
+        <span class="funnel ${active?'active':''}" onclick="event.stopPropagation();toggleDropdown('${key}',event)" title="Filtrar">${ICON_FUNNEL}
+          ${openDropdown===key?`<div class="fdrop" onclick="event.stopPropagation()">
+            ${opts.map(o=>`<div class="fdrop-item ${current===o.v?'sel':''}" onclick="applyFilter('${key}','${o.v}')">${o.l}</div>`).join("")}
+          </div>`:''}
+        </span>
+      </div>
+    </th>`;
+  };
+  // Sortable column header
+  const mkSort=(key,label)=>{
+    const arrow=sortKey===key?(sortDesc?"↓":"↑"):"↕";
+    const col=sortKey===key?'var(--acc)':'inherit';
+    return `<th class="sortable"><div class="th-label"><span onclick="toggleSort('${key}')" style="cursor:pointer;user-select:none;color:${col}">${label} ${arrow}</span></div></th>`;
+  };
+  document.getElementById("thead-row").innerHTML=
+    mkFilter("prio","Prio",[{v:"",l:"Todas"},...PRIORITIES.map(p=>({v:p,l:p}))],hf.prio)+
+    mkFilter("client","Cliente / Oportunidad",[{v:"",l:"Todos"},...cl.map(c=>({v:c,l:c}))],hf.client)+
+    mkFilter("type","Type",[{v:"",l:"Todos"},...TYPES.map(t=>({v:t,l:t}))],hf.type)+
+    mkFilter("status","Status",[{v:"",l:"Todos"},...ALL_STATUSES.map(s=>({v:s.id,l:s.label}))],hf.status)+
+    mkFilter("win","Win",winOpts,hf.win)+
+    mkSort("revenue","Revenue")+
+    mkSort("cci","CCI")+
+    mkSort("fte","FTEs")+
+    mkFilter("owner","Owner",[{v:"",l:"Todos"},...ow.map(o=>({v:o,l:o.split(" ")[0]}))],hf.owner)+
+    mkSort("deadline","Deadline");
+}
+function toggleDropdown(key,e){openDropdown=openDropdown===key?null:key;buildHead();}
+function applyFilter(key,val){hf[key]=val;openDropdown=null;buildHead();renderTable();}
+document.addEventListener('click',()=>{if(openDropdown!==null){openDropdown=null;buildHead();}});
+
+function toggleSort(key){
+  if(sortKey!==key){sortKey=key;sortDesc=true;}
+  else if(sortDesc){sortDesc=false;}
+  else {sortKey=null;sortDesc=null;}
+  buildHead();renderTable();
+}
+function renderTable(){
+  let rows=OPPS.filter(o=>{
+    if(hf.prio&&o.priority!==hf.prio)return false;
+    if(hf.client&&o.client!==hf.client)return false;
+    if(hf.type&&o.type!==hf.type)return false;
+    if(hf.status&&o.status!==hf.status)return false;
+    if(hf.win&&o.winProb!==hf.win)return false;
+    if(hf.owner&&o.owner!==hf.owner)return false;
+    return true;
+  });
+  if(sortKey!==null){
+    const getVal=o=>{
+      if(sortKey==='revenue')return o.revenue||0;
+      if(sortKey==='cci')return o.cci||0;
+      if(sortKey==='fte')return totalFTE(o);
+      if(sortKey==='deadline')return o.deadline?new Date(o.deadline).getTime():0;
+      return 0;
+    };
+    rows=rows.slice().sort((a,b)=>sortDesc?getVal(b)-getVal(a):getVal(a)-getVal(b));
+  }
+  document.getElementById("table-body").innerHTML=rows.map(o=>{const fte=totalFTE(o);return `<tr class="clickable" onclick="openOpp(${o.id})">
+    <td style="text-align:center">${PRIO_ICON[o.priority]||""}</td>
+    <td><div style="font-weight:600">${o.client}</div><div style="font-size:12px;color:var(--t3)">${o.name}</div></td>
+    <td><span class="type-badge">${o.type}</span></td>
+    <td><span class="pill" style="background:var(--bg2);color:var(--t2)">${statusLabel(o.status)}</span></td>
+    <td><span class="pill" style="background:${probBg(o.winProb)};color:${probColor(o.winProb)}">${o.winProb}</span></td>
+    <td style="font-weight:600">${o.revenue?fmtK(o.revenue):"—"}</td>
+    <td style="color:${o.cci>=36?'var(--purple)':o.cci>=29?'var(--green)':'var(--red)'}">${o.cci}%</td>
+    <td>${fte||"—"}</td>
+    <td style="font-size:12px">${o.owner.split(" ")[0]}</td>
+    <td style="font-size:12px;color:var(--t2)">${fdate(o.deadline)}</td>
+  </tr>`;}).join("")||'<tr><td colspan="10" style="text-align:center;color:var(--t3);padding:30px">Sin resultados.</td></tr>';
+}
+
+// ─── SERVICES ───
+function renderServices(){
+  const el=document.getElementById("services-body");
+  const open=OPPS.filter(o=>!["won","lost"].includes(o.status));
+  const capLoad={};
+  open.forEach(o=>Object.entries(o.staffing||{}).forEach(([cap,n])=>{if(!capLoad[cap])capLoad[cap]={total:0,opps:[]};capLoad[cap].total+=n;capLoad[cap].opps.push(o.client+" ("+n+")");}));
+  const rows=Object.entries(capLoad).sort((a,b)=>b[1].total-a[1].total);
+  const maxV=Math.max(...rows.map(r=>r[1].total),1);
+  el.innerHTML=rows.map(([cap,data])=>`<div style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px"><span style="font-weight:600;font-size:13px">${cap}</span><span style="font-size:13px;font-weight:700;color:var(--acc)">${data.total} FTEs</span></div>
+    <div class="mini-bar"><div style="width:${data.total/maxV*100}%;background:var(--acc)"></div></div>
+    <div style="font-size:11px;color:var(--t3);margin-top:4px">${data.opps.join(" · ")}</div>
+  </div>`).join("");
+}
+
+// ─── MODAL with FIXED LOG PANEL ───
+let _draft=null, _logTab="comments", _draftIsNew=false;
+function openOpp(id){
+  const o=id?JSON.parse(JSON.stringify(OPPS.find(x=>x.id===id))):{staffing:{},log:[],statusLog:[{status:"idle",ts:new Date().toISOString().slice(0,10)}],revShare:false,locations:[],services:[],partners:[],status:"idle",priority:"Mid",winProb:"Mid"};
+  _draft=o;_logTab="comments";_commentIdx=null;_draftIsNew=!id;renderModal(!id);
+}
+// Status timeline selector (option A: all states as nodes)
+function renderStatusTimeline(o){
+  const currentIdx=ALL_STATUSES.findIndex(s=>s.id===o.status);
+  return `<div class="status-tl">
+    ${ALL_STATUSES.map((s,i)=>{
+      const cls=i<currentIdx?'done':(i===currentIdx?'current':'');
+      return `<div class="status-node ${cls}" onclick="setStatusFromTL('${s.id}')" title="${s.label}">
+        <div class="dot"></div><div class="slabel">${s.label}</div>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+function setStatusFromTL(id){
+  if(_draft.status!==id){
+    _draft.status=id;
+    if(!_draft.statusLog)_draft.statusLog=[];
+    _draft.statusLog.push({status:id,ts:new Date().toISOString().slice(0,10)});
+  }
+  renderModal(_draftIsNew);
+}
+function togglePartner(p,on){
+  if(!_draft.partners)_draft.partners=[];
+  if(on){if(!_draft.partners.includes(p))_draft.partners.push(p);}
+  else{_draft.partners=_draft.partners.filter(x=>x!==p);}
+}
+
+// Slider for priority / win probability (3 levels)
+function render3Slider(field,levels,current,colorFn){
+  const idx=Math.max(0,levels.indexOf(current));
+  return `<div class="slider-wrap">
+    <input type="range" min="0" max="${levels.length-1}" step="1" value="${idx}" oninput="set3Slider('${field}',${JSON.stringify(levels).replace(/"/g,'&quot;')},this.value)"/>
+    <div class="slider-labels">${levels.map((l,i)=>`<span class="${i===idx?'on':''}" onclick="set3Slider('${field}',${JSON.stringify(levels).replace(/"/g,'&quot;')},${i})">${l}</span>`).join("")}</div>
+  </div>`;
+}
+function set3Slider(field,levels,i){_draft[field]=levels[parseInt(i)];renderModal(_draftIsNew);}
+function addService(val){
+  if(!val)return;
+  if(!_draft.services)_draft.services=[];
+  if(val==="__new"){
+    const name=prompt("Nombre del nuevo servicio:");
+    if(name&&name.trim()){
+      const n=name.trim();
+      if(!SERVICES.includes(n))SERVICES.push(n); // add to master list
+      if(!_draft.services.includes(n))_draft.services.push(n);
+    }
+  } else {
+    if(!_draft.services.includes(val))_draft.services.push(val);
+  }
+  renderModal(_draftIsNew);
+}
+
+function renderModal(isNew){
+  const o=_draft;const fte=totalFTE(o);
+  document.getElementById("modal-root").innerHTML=`
+  <div class="ov" id="ov" onclick="if(event.target.id==='ov')closeModal()">
+    <div class="modal">
+      <div class="mhdr"><div><h2>${isNew?"Nueva oportunidad":o.client}</h2><div class="msub">${isNew?"Registra una oportunidad":o.name}</div></div><button class="close" onclick="closeModal()">✕</button></div>
+      <div class="mbody">
+        <!-- Identificación -->
+        <div class="card-sect">
+          <div class="sect">Identificación</div>
+          <div class="fld-stack">
+            <div class="r2"><div class="fld"><label>Cliente</label><input class="fi" value="${o.client||''}" oninput="_draft.client=this.value"/></div><div class="fld"><label>Oportunidad</label><input class="fi" value="${o.name||''}" oninput="_draft.name=this.value"/></div></div>
+            <div class="r3">
+              <div class="fld"><label>Type</label><select class="fi" onchange="_draft.type=this.value">${TYPES.map(t=>`<option ${o.type===t?'selected':''}>${t}</option>`).join("")}</select></div>
+              <div class="fld"><label>Industry</label><select class="fi" onchange="_draft.industry=this.value">${INDUSTRIES.map(i=>`<option ${o.industry===i?'selected':''}>${i}</option>`).join("")}</select></div>
+              <div class="fld"><label>Contract Id</label><input class="fi" value="${o.contractId||''}" oninput="_draft.contractId=this.value"/></div>
+            </div>
+            <div class="fld"><label>Services <span style="color:var(--t3);font-weight:400">· lista editable</span></label><div style="margin-bottom:6px">${(o.services||[]).map(s=>`<span class="multi-tag">${s} <span class="fx" style="cursor:pointer;color:var(--acc);opacity:.6" onclick="_draft.services=_draft.services.filter(x=>x!=='${s.replace(/'/g,"\\'")}');renderModal(_draftIsNew)">✕</span></span>`).join("")||'<span style="color:var(--t3);font-size:12px">Ninguno</span>'}</div><select class="fi" onchange="addService(this.value)"><option value="">+ Añadir servicio…</option>${SERVICES.filter(s=>!(o.services||[]).includes(s)).map(s=>`<option>${s}</option>`).join("")}<option value="__new">➕ Crear nuevo…</option></select></div>
+            <div class="fld"><label>Locations <span style="color:var(--t3);font-weight:400">· varios países</span></label><div style="margin-bottom:6px">${(o.locations||[]).map(l=>`<span class="flag-tag" title="${l}"><span style="font-size:16px">${flagFor(l)}</span> <span class="fx" onclick="_draft.locations=_draft.locations.filter(x=>x!=='${l}');renderModal(_draftIsNew)">✕</span></span>`).join("")||'<span style="color:var(--t3);font-size:12px">Ninguno</span>'}</div><select class="fi" onchange="if(this.value){if(!_draft.locations)_draft.locations=[];if(!_draft.locations.includes(this.value))_draft.locations.push(this.value);renderModal(_draftIsNew);}"><option value="">+ Añadir país…</option>${LOCATIONS.filter(l=>!(o.locations||[]).includes(l.name)).map(l=>`<option value="${l.name}">${l.flag} ${l.name}</option>`).join("")}</select></div>
+          </div>
+        </div>
+
+        <!-- Estado y prioridad -->
+        <div class="card-sect">
+          <div class="sect">Estado y prioridad</div>
+          <div class="fld-stack">
+            <div class="fld"><label>Status</label>${renderStatusTimeline(o)}</div>
+            <div class="r2">
+              <div class="fld"><label>Priority</label>${render3Slider('priority',["Low","Mid","High"],o.priority)}</div>
+              <div class="fld"><label>Win probability</label>${render3Slider('winProb',WINPROB,o.winProb)}</div>
+            </div>
+            <div class="r3">
+              <div class="fld"><label>Deadline</label><input type="date" class="fi" value="${o.deadline||''}" onchange="_draft.deadline=this.value"/></div>
+              <div class="fld"><label>Contract Start</label><input type="date" class="fi" value="${o.startDate||''}" onchange="_draft.startDate=this.value"/></div>
+              <div class="fld"><label>Length</label><div style="display:flex;gap:6px"><input class="fi" style="flex:1" value="${o.length||''}" oninput="_draft.length=this.value"/><select class="fi" style="width:96px" onchange="_draft.lengthUnit=this.value"><option ${o.lengthUnit==='Months'?'selected':''}>Months</option><option ${o.lengthUnit==='Years'?'selected':''}>Years</option></select></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Roles -->
+        <div class="card-sect">
+          <div class="sect">Roles</div>
+          <div class="fld-stack">
+            <div class="r3">
+              <div class="fld"><label>MO Owner</label><select class="fi" onchange="_draft.owner=this.value">${OWNERS.map(p=>`<option ${o.owner===p?'selected':''}>${p}</option>`).join("")}</select></div>
+              <div class="fld"><label>Account/Sales Owner <span style="color:var(--t3);font-weight:400">(Song)</span></label><input class="fi" value="${o.songContact||''}" oninput="_draft.songContact=this.value"/></div>
+              <div class="fld"><label>SA <span style="color:var(--t3);font-weight:400">(Solution Architect)</span></label><input class="fi" list="sa-list" value="${o.sa||''}" placeholder="Elegir o escribir nombre…" oninput="_draft.sa=this.value"/><datalist id="sa-list">${SA_PEOPLE.map(p=>`<option value="${p}">`).join("")}</datalist></div>
+            </div>
+            <div class="fld"><label>Partners</label><div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:2px">${PARTNERS.map(p=>`<label class="chk"><input type="checkbox" ${(o.partners||[]).includes(p)?'checked':''} onchange="togglePartner('${p}',this.checked)"/> ${p}</label>`).join("")}</div></div>
+          </div>
+        </div>
+
+        <!-- Finanzas -->
+        <div class="card-sect">
+          <div class="sect">Finanzas</div>
+          <div class="fld-stack">
+            <div class="r3"><div class="fld"><label>Revenue (€)</label><input class="fi" value="${o.revenue?fmtThousands(o.revenue):''}" placeholder="200.000" oninput="this.value=fmtThousands(this.value);_draft.revenue=parseThousands(this.value)"/></div><div class="fld"><label>CCI % <span style="text-transform:none;color:var(--t3);font-weight:400">(margen)</span></label><input class="fi" value="${o.cci||''}" oninput="_draft.cci=parseInt(this.value)||0"/></div><div class="fld"><label>BPO % <span style="text-transform:none;color:var(--t3);font-weight:400">(scope FTEs)</span></label><input class="fi" value="${o.bpo||''}" oninput="_draft.bpo=parseInt(this.value)||0"/></div></div>
+            <div class="fld" style="padding:12px;background:var(--bg2);border-radius:8px"><label class="chk" style="margin:0"><input type="checkbox" ${o.revShare?'checked':''} onchange="_draft.revShare=this.checked;renderModal(${isNew})"/> <span style="font-weight:600;color:var(--t)">Revenue share</span> <span style="color:var(--t3);font-size:12px">· contrato de otra unidad, compartimos margen</span></label>${o.revShare?`<div style="margin-top:10px"><label>% de revenue share</label><input class="fi" value="${o.revSharePct||''}" style="max-width:130px" oninput="_draft.revSharePct=parseInt(this.value)||0"/></div>`:''}</div>
+          </div>
+        </div>
+
+        <!-- Equipo -->
+        <div class="card-sect">
+          <div class="sect">Equipo estimado por servicio <span class="sect-hint">Estimación viva · rellena solo los implicados</span></div>
+          <div class="cap-grid">${CAPABILITIES.map(cap=>`<div class="cap-item"><label>${cap}</label><input type="number" min="0" value="${o.staffing&&o.staffing[cap]||''}" placeholder="0" onchange="if(!_draft.staffing)_draft.staffing={};_draft.staffing['${cap}']=parseInt(this.value)||0;document.getElementById('cap-total-val').textContent=totalFTE(_draft)"/></div>`).join("")}</div>
+          <div class="cap-total"><span>Total FTEs estimados</span><span id="cap-total-val">${fte}</span></div>
+        </div>
+      </div>
+
+      <!-- FIXED LOG PANEL -->
+      <div class="logpanel">
+        <div class="lp-tabs">
+          <div class="lp-tabgroup">
+            <button class="lp-tab ${_logTab==='comments'?'on':''}" onclick="_logTab='comments';renderModal(${isNew})">💬 Comentarios</button>
+            <button class="lp-tab ${_logTab==='status'?'on':''}" onclick="_logTab='status';renderModal(${isNew})">🕐 Historial de estados</button>
+          </div>
+          ${!isNew&&o.status==='won'?`<button class="btn sm p" style="background:var(--green);border-color:var(--green)" onclick="convertToDemand('${o.id}')">→ Convertir a demanda</button>`:''}
+        </div>
+        <div class="lp-content">
+          ${_logTab==='comments'?`
+            ${renderCommentNav(o)}
+            <div class="log-add"><input id="new-comment" class="fi" placeholder="Añadir comentario…" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addComment(${isNew});}"/><button class="btn sm p" onclick="addComment(${isNew})">+ Añadir</button></div>
+          `:`
+            <div style="flex:1;overflow-y:auto"><div class="timeline">${(o.statusLog||[]).map((s,i)=>{const isLast=i===o.statusLog.length-1;return `<div class="tl-item ${isLast?'':'past'}"><div class="tl-status" style="color:${isLast?'var(--acc)':'var(--t2)'}">${statusLabel(s.status)}${isLast?' · actual':''}</div><div class="tl-date">${fdate(s.ts)}</div></div>`;}).join("")}</div></div>
+            <div style="font-size:11px;color:var(--t3);margin-top:6px;flex-shrink:0;border-top:1px solid var(--bd);padding-top:8px">Cada cambio de Status crea un registro automático.</div>
+          `}
+        </div>
+      </div>
+      <!-- FOOTER -->
+      <div class="mftr">
+        ${!isNew?`<button class="btn btn-del" onclick="deleteOpp('${o.id}')">Eliminar</button>`:''}
+        <div style="flex:1"></div>
+        <button class="btn" onclick="closeModal()">Cancelar</button>
+        <button class="btn p" onclick="saveOpp()">${isNew?'Crear oportunidad':'Guardar cambios'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+let _commentIdx=null; // null = show most recent
+function renderCommentNav(o){
+  const log=o.log||[];
+  if(!log.length)return '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:13px">Sin comentarios todavía. Añade el primero abajo.</div>';
+  const idx=_commentIdx===null?log.length-1:_commentIdx;
+  const l=log[idx];
+  const isRecent=idx===log.length-1;
+  const canBack=idx>0;
+  const canFwd=idx<log.length-1;
+  return `<div style="flex:1;display:flex;align-items:stretch;gap:10px;min-height:0">
+    <button class="statusnav-btn" ${canBack?'':'disabled'} onclick="event.stopPropagation();navComment(-1,${log.length})" title="Comentario anterior">‹</button>
+    <div class="comment-card">
+      <div class="comment-head">
+        <span class="comment-date">📅 ${fdate(l.ts)}</span>
+        <span class="comment-meta">${isRecent?'<span class="recent-badge">más reciente</span> · ':''}${idx+1} de ${log.length}</span>
+      </div>
+      <div class="comment-body">${l.txt}</div>
+    </div>
+    <button class="statusnav-btn" ${canFwd?'':'disabled'} onclick="event.stopPropagation();navComment(1,${log.length})" title="Comentario siguiente">›</button>
+  </div>`;
+}
+function navComment(dir,len){
+  const cur=_commentIdx===null?len-1:_commentIdx;
+  let next=cur+dir;
+  if(next<0)next=0; if(next>len-1)next=len-1;
+  _commentIdx=next;
+  const cont=document.querySelector('.lp-content');
+  if(cont)cont.innerHTML=renderCommentNav(_draft)+
+    `<div class="log-add"><input id="new-comment" class="fi" placeholder="Añadir comentario…" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addComment(false);}"/><button class="btn sm p" onclick="addComment(false)">+ Añadir</button></div>`;
+}
+async function addComment(isNew){
+  const inp=document.getElementById("new-comment");
+  if(!inp)return;
+  const txt=inp.value.trim();
+  if(!txt)return;
+  if(!_draft.log)_draft.log=[];
+  _draft.log.push({ts:new Date().toISOString().slice(0,10),txt:txt});
+  _commentIdx=null; // jump to most recent
+  // Persist immediately if this is an existing (already-saved) opportunity
+  if(!isNew){
+    const i=OPPS.findIndex(x=>String(x.id)===String(_draft.id));
+    if(i>=0){OPPS[i]=_draft;await saveOpps();}
+  }
+  renderModal(isNew);
+  setTimeout(()=>{const n=document.getElementById("new-comment");if(n)n.focus();},0);
+}
+async function saveOpp(){
+  const o=_draft;
+  if(!o.client||!o.name){alert("Indica cliente y nombre de oportunidad.");return;}
+  if(_draftIsNew){
+    o.id=Date.now(); // simple unique id
+    if(!o.statusLog||!o.statusLog.length)o.statusLog=[{status:o.status||"idle",ts:new Date().toISOString().slice(0,10)}];
+    OPPS.push(o);
+  } else {
+    const i=OPPS.findIndex(x=>x.id===o.id);
+    if(i>=0)OPPS[i]=o; else OPPS.push(o);
+  }
+  await saveOpps();
+  closeModal();
+  buildHead();renderKanban();renderTable();renderServices();renderKPIs();
+}
+async function deleteOpp(id){
+  const o=OPPS.find(x=>String(x.id)===String(id));
+  if(!o)return;
+  if(!confirm(`¿Eliminar la oportunidad "${o.client} — ${o.name}"? Esta acción no se puede deshacer.`))return;
+  OPPS=OPPS.filter(x=>String(x.id)!==String(id));
+  await saveOpps();
+  closeModal();
+  buildHead();renderKanban();renderTable();renderServices();renderKPIs();
+}
+function closeModal(){document.getElementById("modal-root").innerHTML="";}
+// Map Sales capabilities → S&D capability set (for the demand.capability field)
+const CAP_TO_SD={
+  "Creative Studio":"Creative","CGI Hub":"CGI","FE Dev":"Development","Content Studio":"Content",
+  "Paid Media":"Media","SEO":"Media","Social Media":"Media","MKT Services":"Content",
+  "Data & Analytics":"Data","DPM":"DPM","Customer Experience":"Creative","eCommerce":"Development",
+  "Digital Inside Sales":"Media","QA":"Development"
+};
+
+async function convertToDemand(oppId){
+  if(typeof _demoMode!=='undefined'&&_demoMode){alert("Estás en modo datos de ejemplo. Sal de él para operar con datos reales — la conversión no se ejecuta sobre datos demo.");return;}
+  const o=OPPS.find(x=>String(x.id)===String(oppId));
+  if(!o){alert("Oportunidad no encontrada.");return;}
+  if(o.converted_project){
+    if(!confirm("Esta oportunidad ya se convirtió a demanda antes. ¿Volver a generar las posiciones? (se crearán duplicadas)"))return;
+  }
+  // Build positions: one per FTE per capability (Option A)
+  const staffing=o.staffing||{};
+  const caps=Object.keys(staffing).filter(k=>staffing[k]>0);
+  if(!caps.length){alert("Esta oportunidad no tiene equipo estimado. Añade FTEs por servicio antes de convertir.");return;}
+  const totalPos=caps.reduce((a,k)=>a+Math.round(staffing[k]),0);
+  if(!confirm(`Se generará un proyecto en Demand para "${o.client} — ${o.name}" con ${totalPos} posiciones (una por FTE estimado). ¿Continuar?`))return;
+
+  // 1. Load current demands from shared sd_data
+  let demands=[];
+  try{
+    const r=await fetch(SB_URL+'/sd_data?key=eq.demands&select=data',{headers:SB_H,cache:'no-store'});
+    if(r.ok){const rows=await r.json();if(rows.length&&Array.isArray(rows[0].data))demands=rows[0].data;}
+  }catch(e){console.warn('load demands error',e);alert("No se pudieron leer las demandas actuales. Revisa la conexión.");return;}
+
+  // 2. Generate positions (one per FTE per capability), sharing a project_id
+  const projectId="proj_opp_"+o.id;
+  const uid=()=>crypto.randomUUID();
+  caps.forEach(cap=>{
+    const n=Math.round(staffing[cap]);
+    for(let i=0;i<n;i++){
+      demands.push({
+        id:uid(),
+        project_id:projectId,
+        from_opp:o.id,                       // link back to the opportunity
+        client:o.client,
+        project_reference:o.name,
+        start_date:o.startDate||null,
+        end_date:null,
+        role:cap,                            // sales capability as the role label
+        capability:CAP_TO_SD[cap]||"Creative",
+        seniority:"Mid",
+        contract_type:"Interno",
+        chargeability_required:100,
+        status:"Vacío",
+        proposed_profile:"",
+        notes:[{id:uid(),ts:new Date().toISOString(),text:`Generado desde oportunidad de venta "${o.name}" (${cap})`}],
+        created_at:new Date().toISOString()
+      });
+    }
+  });
+
+  // 3. Persist demands back to shared sd_data
+  try{
+    await fetch(SB_URL+'/sd_data',{method:'POST',headers:SB_HW,
+      body:JSON.stringify([{key:'demands',data:demands,updated_at:new Date().toISOString()}])});
+  }catch(e){console.warn('save demands error',e);alert("No se pudieron guardar las demandas. Revisa la conexión.");return;}
+
+  // 4. Mark opportunity as converted + log it
+  o.converted_project=projectId;
+  if(!o.log)o.log=[];
+  o.log.push({ts:new Date().toISOString().slice(0,10),txt:`✅ Convertida a demanda: ${totalPos} posiciones generadas en el módulo Demand (proyecto vinculado).`});
+  const i=OPPS.findIndex(x=>String(x.id)===String(o.id));
+  if(i>=0)OPPS[i]=o;
+  await saveOpps();
+
+  closeModal();
+  buildHead();renderKanban();renderTable();renderServices();renderKPIs();
+  alert(`✅ Convertida.\n\nSe crearon ${totalPos} posiciones en Demand agrupadas como proyecto. Ve al módulo Supply & Demand → Demand (vista "Por proyecto") para staffearlas.`);
+}
+const WINPROB_PCT={Low:25,Mid:50,High:80};
+const OPEN_STATUSES=["idle","technical","solutioning","contracting","reviewing","hold","sent"];
+let _demoMode=false;
+function toggleDemo(){
+  const btn=document.getElementById("demo-btn");
+  if(!_demoMode){
+    // Load demo data into memory ONLY — never persisted to Supabase
+    OPPS=JSON.parse(JSON.stringify(DEMO_OPPS));
+    _demoMode=true;
+    if(btn){btn.textContent="Salir de datos de ejemplo";btn.classList.add("p");}
+  } else {
+    // Restore real (persisted) data from Supabase
+    _demoMode=false;
+    if(btn){btn.textContent="Ver datos de ejemplo";btn.classList.remove("p");}
+    loadOpps().then(()=>{buildHead();renderKanban();renderTable();renderServices();renderKPIs();});
+    return;
+  }
+  buildHead();renderKanban();renderTable();renderServices();renderKPIs();
+}
+function renderKPIs(){
+  const open=OPPS.filter(o=>OPEN_STATUSES.includes(o.status));
+  const pipeline=open.reduce((a,o)=>a+(o.revenue||0),0);
+  const forecast=open.reduce((a,o)=>a+(o.revenue||0)*(WINPROB_PCT[o.winProb]||0)/100,0);
+  const won=OPPS.filter(o=>o.status==="won").length;
+  const lost=OPPS.filter(o=>o.status==="lost").length;
+  const winrate=(won+lost)>0?Math.round(won/(won+lost)*100):0;
+  const ftes=open.reduce((a,o)=>a+totalFTE(o),0);
+  const now=new Date();const in7=new Date(now.getTime()+7*864e5);
+  const deadlines=open.filter(o=>{if(!o.deadline)return false;const d=new Date(o.deadline);return d>=now&&d<=in7;}).length;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set("kpi-pipeline",fmtK(pipeline));
+  set("kpi-pipeline-sub",open.length+" activas");
+  set("kpi-forecast",fmtK(forecast));
+  set("kpi-winrate",winrate+"%");
+  set("kpi-ftes",ftes);
+  set("kpi-deadlines",deadlines);
+}
+function setView(v,btn){
+  document.querySelectorAll('.toggle button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  document.getElementById('view-pipeline').style.display=v==='pipeline'?'block':'none';
+  document.getElementById('view-table').style.display=v==='table'?'block':'none';
+  document.getElementById('view-services').style.display=v==='services'?'block':'none';
+}
+(async function init(){
+  await loadOpps();
+  buildHead();renderKanban();renderTable();renderServices();renderKPIs();
+})();
+</script>
+</body>
+</html>
