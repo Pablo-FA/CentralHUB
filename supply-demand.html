@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-08-28 17:59" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-08-28 18:15" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-08-28 17:59"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-08-28 18:15"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -244,7 +244,7 @@ const DD=[
 let S={profiles:[],assigns:[],demands:[],tab:"roster",customRoles:[],
   rosterSort:{field:"name",dir:"asc"},
   rf:{q:"",levels:[],caps:[],roles:[],locs:[],skills:[],ctype:""},
-  sf:{q:"",caps:[],levels:[],risks:[],ctypes:[],projects:[]},supplySort:[{field:"name",dir:"asc"}],supplyView:"asignacion",logView:"bench",bajas:[],demandSort:[{field:"client",dir:"asc"}],df2:{statuses:[],caps:[],clients:[]},colGroups:{asignacion:{perfil:true,asignacion:true},disponibles:{perfil:true,asignacion:true},bajas:{perfil:true,baja:true}},df:{status:""}};
+  sf:{q:"",caps:[],levels:[],risks:[],ctypes:[],projects:[]},supplySort:[{field:"name",dir:"asc"}],supplyView:"asignacion",logView:"bench",bajas:[],demandSort:[{field:"client",dir:"asc"}],df2:{statuses:[],caps:[],clients:[]},demandView:"position",colGroups:{asignacion:{perfil:true,asignacion:true},disponibles:{perfil:true,asignacion:true},bajas:{perfil:true,baja:true}},df:{status:""}};
 let editSkills=[],editData={},openFDD=null,modalTabState="general";
 let currentPid=null,modalEditMode=false;
 
@@ -1182,6 +1182,132 @@ function tSupply(){
   return"";
 }
 // ── DEMAND ────────────────────────────────────────────────────────────────
+window._projOpen=window._projOpen||{}; // track expanded projects
+
+function renderProjectView(){
+  const active=S.demands.filter(d=>!d.archived);
+  // Group by project_id; standalone (no project_id) go under a special group
+  const groups={};
+  const standalone=[];
+  active.forEach(d=>{
+    if(d.project_id){(groups[d.project_id]=groups[d.project_id]||[]).push(d);}
+    else standalone.push(d);
+  });
+
+  const projIds=Object.keys(groups);
+  if(!projIds.length&&!standalone.length){
+    return `<div style="text-align:center;color:var(--t3);padding:40px">Sin demandas.</div>`;
+  }
+
+  const statusBadge=s=>`<span class="bdg ${scol(s)}" style="font-size:10px">${s}</span>`;
+
+  const posLine=d=>`<tr onclick="openDM('${d.id}')" style="cursor:pointer">
+    <td style="font-size:12px;padding:6px 8px">${d.role||"—"}</td>
+    <td style="font-size:12px;color:var(--t2);padding:6px 8px">${d.capability||"—"}</td>
+    <td style="font-size:12px;color:var(--t2);padding:6px 8px">${d.seniority||"—"}</td>
+    <td style="padding:6px 8px"><span class="bdg bg" style="font-size:10px">${d.chargeability_required||0}%</span></td>
+    <td style="font-size:12px;padding:6px 8px">${d.proposed_profile||'<span style="color:var(--t3)">—</span>'}</td>
+    <td style="padding:6px 8px">${statusBadge(d.status)}</td>
+  </tr>`;
+
+  const projCard=(pid)=>{
+    const positions=groups[pid];
+    const first=positions[0];
+    const filled=positions.filter(d=>d.status==="Asignado").length;
+    const total=positions.length;
+    const isOpen=window._projOpen[pid]===true;
+    const pct=total?Math.round(filled/total*100):0;
+    return `<div style="border:1px solid var(--bd);border-radius:10px;margin-bottom:12px;overflow:hidden">
+      <div onclick="window._projOpen['${pid}']=${isOpen?"false":"true"};render()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;background:var(--bg2)">
+        <span style="font-size:11px;color:var(--t3);transition:transform .15s;transform:rotate(${isOpen?"90":"0"}deg)">▶</span>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">${first.client} — ${first.project_reference}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px">${first.start_date?fds(first.start_date):"—"}${first.end_date?" → "+fds(first.end_date):""}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;font-weight:600;color:${filled===total?"var(--green)":"var(--acc)"}">${filled}/${total} cubiertas</div>
+          <div style="width:80px;height:5px;background:var(--bd);border-radius:3px;margin-top:4px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${filled===total?"var(--green)":"var(--acc)"}"></div></div>
+        </div>
+        <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
+          ${filled===total&&total>0?`<button onclick="window._projComplete('${pid}')" class="btn btns" style="font-size:11px;padding:3px 10px;border-color:var(--green);color:var(--green)">✓ Completar</button>`:""}
+          <button onclick="window._projAddPosition('${pid}')" class="btn btns" style="font-size:11px;padding:3px 10px">+ Posición</button>
+          <button onclick="window._projDelete('${pid}')" class="btn btns btnd" style="font-size:11px;padding:3px 10px">Eliminar</button>
+        </div>
+      </div>
+      ${isOpen?`<div style="padding:8px 16px 12px"><table style="width:100%"><thead><tr>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Rol</th>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Capability</th>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Seniority</th>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Carga</th>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Perfil propuesto</th>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Estado</th>
+      </tr></thead><tbody>${positions.map(posLine).join("")}</tbody></table></div>`:""}
+    </div>`;
+  };
+
+  // Sort projects by client name
+  projIds.sort((a,b)=>(groups[a][0].client||"").localeCompare(groups[b][0].client||""));
+
+  let html=`<div style="margin-top:4px">`;
+  html+=projIds.map(projCard).join("");
+
+  // Standalone positions under a "Sin proyecto" group
+  if(standalone.length){
+    const isOpen=window._projOpen['__standalone__']!==false; // default open
+    html+=`<div style="border:1px dashed var(--bd);border-radius:10px;margin-bottom:12px;overflow:hidden">
+      <div onclick="window._projOpen['__standalone__']=${isOpen?"false":"true"};render()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;background:var(--bg2)">
+        <span style="font-size:11px;color:var(--t3);transform:rotate(${isOpen?"90":"0"}deg)">▶</span>
+        <div style="flex:1"><div style="font-weight:600;font-size:14px;color:var(--t2)">Posiciones sueltas</div><div style="font-size:11px;color:var(--t3);margin-top:2px">Peticiones individuales sin proyecto</div></div>
+        <div style="font-size:12px;color:var(--t3)">${standalone.length}</div>
+      </div>
+      ${isOpen?`<div style="padding:8px 16px 12px"><table style="width:100%"><thead><tr>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Cliente</th>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Proyecto</th>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Rol</th>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Carga</th>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Perfil</th>
+        <th style="text-align:left;font-size:10px;color:var(--t3);padding:4px 8px">Estado</th>
+      </tr></thead><tbody>${standalone.map(d=>`<tr onclick="openDM('${d.id}')" style="cursor:pointer">
+        <td style="font-size:12px;padding:6px 8px;font-weight:500">${d.client||"—"}</td>
+        <td style="font-size:12px;color:var(--t2);padding:6px 8px">${d.project_reference||"—"}</td>
+        <td style="font-size:12px;padding:6px 8px">${d.role||"—"}</td>
+        <td style="padding:6px 8px"><span class="bdg bg" style="font-size:10px">${d.chargeability_required||0}%</span></td>
+        <td style="font-size:12px;padding:6px 8px">${d.proposed_profile||'<span style="color:var(--t3)">—</span>'}</td>
+        <td style="padding:6px 8px">${statusBadge(d.status)}</td>
+      </tr>`).join("")}</tbody></table></div>`:""}
+    </div>`;
+  }
+  html+=`</div>`;
+  return html;
+}
+
+// Project-level actions
+window._projComplete=async(pid)=>{
+  const positions=S.demands.filter(d=>d.project_id===pid&&!d.archived);
+  if(!confirm(`¿Completar el proyecto? Se archivarán sus ${positions.length} posiciones.`))return;
+  const ts=new Date().toISOString();
+  S.demands=S.demands.map(d=>d.project_id===pid&&!d.archived?{...d,archived:true,archived_at:ts}:d);
+  // Remove owner todos for each
+  for(const d of positions){await syncDemandTodo({...d,owner:""});}
+  await save();render();
+};
+window._projDelete=async(pid)=>{
+  const positions=S.demands.filter(d=>d.project_id===pid);
+  if(!confirm(`¿Eliminar el proyecto completo y sus ${positions.length} posiciones? Esta acción no se puede deshacer.`))return;
+  // Also unassign any linked assignments
+  const demandIds=new Set(positions.map(d=>d.id));
+  S.assigns=S.assigns.filter(a=>!(a.from_demand&&demandIds.has(a.from_demand)));
+  S.demands=S.demands.filter(d=>d.project_id!==pid);
+  for(const d of positions){await syncDemandTodo({...d,owner:""});}
+  await save();render();
+};
+window._projAddPosition=(pid)=>{
+  const existing=S.demands.find(d=>d.project_id===pid);
+  if(!existing)return;
+  // Open a new demand pre-filled with the project's client/project/dates and linked to project_id
+  openDM(null,{project_id:pid,client:existing.client,project_reference:existing.project_reference,start_date:existing.start_date,end_date:existing.end_date});
+};
+
 function tDemand(){
   const f=S.df2;
   const allClients=[...new Set(S.demands.map(d=>d.client).filter(Boolean))].sort();
@@ -1203,7 +1329,16 @@ function tDemand(){
 
   return`<div class="shdr" style="margin-bottom:16px">
     <div><span class="scnt" style="margin-left:0">${fd.length} de ${S.demands.length} peticiones</span></div>
-    <button class="btn btnp btns" onclick="openDM(null)">+ Nueva petición</button>
+    <div style="display:flex;gap:12px;align-items:center">
+      <div style="display:flex;gap:0;background:var(--bg2);border:1px solid var(--b);border-radius:6px;padding:2px">
+        <button onclick="S.demandView='position';render()" style="padding:5px 12px;border-radius:5px;font-size:12px;cursor:pointer;border:none;background:${S.demandView==='position'?'var(--bg1)':'transparent'};color:${S.demandView==='position'?'var(--t)':'var(--t2)'};font-family:inherit;font-weight:${S.demandView==='position'?'500':'400'}">Por posición</button>
+        <button onclick="S.demandView='project';render()" style="padding:5px 12px;border-radius:5px;font-size:12px;cursor:pointer;border:none;background:${S.demandView==='project'?'var(--bg1)':'transparent'};color:${S.demandView==='project'?'var(--t)':'var(--t2)'};font-family:inherit;font-weight:${S.demandView==='project'?'500':'400'}">Por proyecto</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btns" onclick="openProjectModal()" style="border-color:var(--acc);color:var(--acc)">+ Nuevo proyecto</button>
+        <button class="btn btnp btns" onclick="openDM(null)">+ Nueva petición</button>
+      </div>
+    </div>
   </div>
   <div class="fbar">
     ${dfdd("st","statuses","Estado",STATUSES)}
@@ -1211,7 +1346,7 @@ function tDemand(){
     ${dfdd("cli","clients","Cliente",allClients)}
     ${fCount>0?`<button class="btn btns" style="color:var(--t3);border-color:transparent" onclick="S.df2={statuses:[],caps:[],clients:[]};render()">× ${fCount}</button>`:""}
   </div>
-  <div class="tw" style="overflow-x:auto"><table style="min-width:1100px">
+  ${S.demandView==='project' ? renderProjectView() : `<div class="tw" style="overflow-x:auto"><table style="min-width:1100px">
     <thead><tr>
       ${thD("Cliente","client")}
       ${thD("Proyecto","project_reference")}
@@ -1240,7 +1375,7 @@ function tDemand(){
         <td style="font-size:12px;color:var(--t2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${lastNote?lastNote.text:""}</td>
       </tr>`;
     }).join("")}</tbody>
-  </table></div>
+  </table></div>`}
   ${(()=>{
     const resolved=S.demands.filter(d=>d.archived).sort((a,b)=>new Date(b.archived_at||0)-new Date(a.archived_at||0));
     if(!resolved.length)return"";
@@ -1895,11 +2030,112 @@ async function delBaja(id){S.bajas=S.bajas.filter(b=>b.id!==id);await save();cm(
 
 
 // ── DEMAND MODAL ──────────────────────────────────────────────────────────
-function openDM(id){
+// ═══ NEW PROJECT MODAL (multi-position) ═══
+window._projData={client:"",project_reference:"",start_date:"",end_date:"",positions:[]};
+
+function projPosRow(pos,i){
+  const capRoles=ROLES_BY_CAP[pos.capability]||[];
+  return `<div style="border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:8px;background:var(--bg2)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:600;color:var(--t2)">Posición ${i+1}</span>
+      <button onclick="window._projDelPos(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px">✕</button>
+    </div>
+    <div class="r2" style="margin-bottom:8px">
+      <div class="fld"><label>Capability</label><select class="fi" onchange="window._projSetPos(${i},'capability',this.value)">
+        <option value="">—</option>
+        ${CAPS.map(cp=>`<option value="${cp}" ${pos.capability===cp?"selected":""}>${cp}</option>`).join("")}
+      </select></div>
+      <div class="fld"><label>Rol</label>${capRoles.length?`<select class="fi" onchange="window._projSetPos(${i},'role',this.value)">
+        <option value="">—</option>
+        ${capRoles.map(r=>`<option value="${r}" ${pos.role===r?"selected":""}>${r}</option>`).join("")}
+      </select>`:`<input class="fi" value="${pos.role||''}" oninput="window._projSetPos(${i},'role',this.value)" placeholder="Rol"/>`}</div>
+    </div>
+    <div class="r2">
+      <div class="fld"><label>Seniority</label><select class="fi" onchange="window._projSetPos(${i},'seniority',this.value)">
+        ${SENIORITY.map(s=>`<option value="${s}" ${pos.seniority===s?"selected":""}>${s}</option>`).join("")}
+      </select></div>
+      <div class="fld"><label>Cargabilidad %</label><input type="number" min="0" max="100" class="fi" value="${pos.chargeability_required||100}" oninput="window._projSetPos(${i},'chargeability_required',parseInt(this.value)||0)"/></div>
+    </div>
+  </div>`;
+}
+
+function renderProjectModal(){
+  const d=window._projData;
+  document.getElementById("mroot").innerHTML=`
+  <div class="ov" id="pjov" onclick="if(event.target.id==='pjov')cm()">
+    <div class="modal" style="max-width:600px">
+      <div class="mhdr">
+        <div><div style="font-weight:500;font-size:15px">Nuevo proyecto</div><div style="font-size:12px;color:var(--t3)">Define varias posiciones a la vez</div></div>
+        <button onclick="cm()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--t3)">✕</button>
+      </div>
+      <div class="mbody">
+        <div class="r2">
+          <div class="fld"><label>Cliente</label><input id="pj-cli" class="fi" value="${d.client}" oninput="window._projData.client=this.value" placeholder="Ej: BMW"/></div>
+          <div class="fld"><label>Proyecto</label><input id="pj-proj" class="fi" value="${d.project_reference}" oninput="window._projData.project_reference=this.value" placeholder="Ej: iX Campaign 2026"/></div>
+        </div>
+        <div class="r2">
+          <div class="fld"><label>Fecha inicio</label><input id="pj-start" type="date" class="fi" value="${d.start_date}" oninput="window._projData.start_date=this.value"/></div>
+          <div class="fld"><label>Fecha fin</label><input id="pj-end" type="date" class="fi" value="${d.end_date}" oninput="window._projData.end_date=this.value"/></div>
+        </div>
+        <div style="margin-top:16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+          <span class="sect-lbl" style="margin:0">Posiciones · ${d.positions.length}</span>
+          <button onclick="window._projAddPos()" class="btn btns" style="font-size:12px;padding:4px 12px">+ Añadir posición</button>
+        </div>
+        ${d.positions.length?d.positions.map(projPosRow).join(""):'<div style="color:var(--t3);font-size:12px;text-align:center;padding:20px">Añade al menos una posición.</div>'}
+      </div>
+      <div class="mftr">
+        <div style="flex:1"></div>
+        <button class="btn btns" onclick="cm()">Cancelar</button>
+        <button class="btn btnp btns" onclick="window._projSave()">Crear proyecto</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+window.openProjectModal=()=>{
+  window._projData={client:"",project_reference:"",start_date:"",end_date:"",positions:[{capability:"",role:"",seniority:"Mid",chargeability_required:100}]};
+  renderProjectModal();
+};
+window._projAddPos=()=>{window._projData.positions.push({capability:"",role:"",seniority:"Mid",chargeability_required:100});renderProjectModal();};
+window._projDelPos=(i)=>{window._projData.positions.splice(i,1);renderProjectModal();};
+window._projSetPos=(i,field,val)=>{window._projData.positions[i][field]=val;if(field==='capability')window._projData.positions[i].role="";renderProjectModal();};
+window._projSave=async()=>{
+  const d=window._projData;
+  if(!d.client||!d.project_reference){alert("Indica cliente y nombre de proyecto.");return;}
+  if(!d.positions.length){alert("Añade al menos una posición.");return;}
+  const badPos=d.positions.find(p=>!p.role);
+  if(badPos){alert("Todas las posiciones necesitan un rol.");return;}
+  const projectId="proj_"+uid();
+  d.positions.forEach(pos=>{
+    S.demands.push({
+      id:uid(),
+      project_id:projectId,
+      client:d.client,
+      project_reference:d.project_reference,
+      start_date:d.start_date||null,
+      end_date:d.end_date||null,
+      role:pos.role,
+      capability:pos.capability,
+      seniority:pos.seniority,
+      contract_type:"Interno",
+      chargeability_required:pos.chargeability_required||100,
+      status:"Vacío",
+      proposed_profile:"",
+      notes:[],
+      created_at:new Date().toISOString()
+    });
+  });
+  await save();
+  cm();
+  render();
+};
+
+function openDM(id,prefill){
   let noteIdx=0; // 0 = most recent
+  const _prefill=prefill||{};
 
   function buildHTML(){
-    const d=id?S.demands.find(x=>x.id===id):null; // re-fetch each render (avoid stale reference)
+    const d=id?S.demands.find(x=>x.id===id):(Object.keys(_prefill).length?_prefill:null); // re-fetch each render; use prefill for new-from-project
     const notesRev=(d&&d.notes||[]).slice().reverse();
     const total=notesRev.length;
     noteIdx=Math.max(0,Math.min(noteIdx,total-1));
@@ -2050,7 +2286,7 @@ function openDM(id){
       }
       let savedDemand;
       if(id){savedDemand={...S.demands.find(d=>d.id===id),...data};S.demands=S.demands.map(d=>d.id===id?savedDemand:d);}
-      else{savedDemand={...data,id:demandId,notes:[],created_at:new Date().toISOString()};S.demands.push(savedDemand);}
+      else{savedDemand={...data,id:demandId,notes:[],created_at:new Date().toISOString()};if(_prefill.project_id)savedDemand.project_id=_prefill.project_id;S.demands.push(savedDemand);}
       await save();
       await syncDemandTodo(savedDemand);
       cm();render();
