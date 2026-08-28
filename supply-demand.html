@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-08-28 17:52" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-08-28 17:59" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-08-28 17:52"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-08-28 17:59"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -842,30 +842,24 @@ function showGate(){
 async function doPin(){const v=document.getElementById("pi")?.value;if(v===PIN){await loadData();showApp();render();}else{const el=document.getElementById("perr");if(el)el.style.display="block";}}
 function showApp(){document.getElementById("root").innerHTML=`<div><div class="tabs" id="tabs">${[["roster","Roster"],["supply","Supply"],["demand","Demand"],["dashboard","Dashboard"]].map(([id,l])=>`<div class="tab${S.tab===id?" on":""}" data-tab="${id}">${l}</div>`).join("")}</div><div class="content" id="mc"></div></div>`;document.getElementById("tabs").addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)return;S.tab=t.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab===S.tab));render();});document.addEventListener("click",e=>{if(!e.target.closest(".fdd"))closeFDD();});}
 
-let _searchTimer=null;
-function debouncedRender(){
-  // Update the filter state immediately (done inline by caller), but delay the heavy re-render
-  clearTimeout(_searchTimer);
-  _searchTimer=setTimeout(()=>render(),120);
-}
 function render(){
+  // Capture focused search field + cursor BEFORE re-render, so we can restore it after
+  const searchIds=["rf-q","sf-q","sf-q-disp"];
+  let focusedId=null, cursorPos=0;
+  const ae=document.activeElement;
+  if(ae&&searchIds.includes(ae.id)){focusedId=ae.id;cursorPos=ae.selectionStart||ae.value.length;}
+
   const mc=document.getElementById("mc");if(!mc)return;
   if(S.tab==="roster")mc.innerHTML=tRoster();
   else if(S.tab==="supply")mc.innerHTML=tSupply();
   else if(S.tab==="demand")mc.innerHTML=tDemand();
   else mc.innerHTML=tDash();
-  // Fix: restore search focus after re-render (roster + supply search fields)
-  setTimeout(()=>{
-    const ids=["rf-q","sf-q","sf-q-disp"];
-    for(const id of ids){
-      const el=document.getElementById(id);
-      if(el&&el.value){
-        // Only refocus the field that currently holds a value and isn't focused
-        const q=id==="rf-q"?(S.rf&&S.rf.q):(S.sf&&S.sf.q);
-        if(q&&document.activeElement!==el){el.focus();const l=el.value.length;el.setSelectionRange(l,l);}
-      }
-    }
-  },0);
+
+  // Restore focus to the exact field the user was typing in, at the same cursor position
+  if(focusedId){
+    const el=document.getElementById(focusedId);
+    if(el){el.focus();try{el.setSelectionRange(cursorPos,cursorPos);}catch(e){}}
+  }
 }
 
 // ── SORT ──────────────────────────────────────────────────────────────────
@@ -885,7 +879,7 @@ function filterBar(){
   const allRoles=[...new Set(S.profiles.map(p=>p.role).filter(Boolean))].sort();
   const f=S.rf;const tot=f.levels.length+f.caps.length+f.roles.length+f.locs.length+f.skills.length+(f.ctype?1:0)+(f.q?1:0);
   return`<div class="fbar">
-    <input id="rf-q" class="fsearch" placeholder="🔍  Nombre o EID..." value="${f.q}" oninput="S.rf.q=this.value;debouncedRender()"/>
+    <input id="rf-q" class="fsearch" placeholder="🔍  Nombre o EID..." value="${f.q}" oninput="S.rf.q=this.value;render()"/>
     ${fddM("lv","levels","Nivel",LEVELS.map(l=>({val:l,label:l,sub:LN[l]})))}
     <span class="cap-col">${fddM("cp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}</span>
     ${fddM("rl","roles","Rol",allRoles.map(r=>({val:r,label:r})))}
@@ -999,7 +993,7 @@ function tSupply(){
       <div style="display:flex;align-items:center;gap:16px">${vt}<span class="scnt" style="margin-left:0">${fp.length} perfiles</span></div>
     </div>
     <div class="fbar">
-      <input id="sf-q" class="fsearch" placeholder="Buscar perfil..." value="${f.q}" oninput="S.sf.q=this.value;debouncedRender()"/>
+      <input id="sf-q" class="fsearch" placeholder="Buscar perfil..." value="${f.q}" oninput="S.sf.q=this.value;render()"/>
       <span class="cap-col">${sfddM("cp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}</span>
       ${sfddM("lv","levels","Nivel",LEVELS.map(l=>({val:l,label:l,sub:LN[l]})))}
       ${sfddM("ct","ctypes","Tipo",CONTRACT_TYPES.map(t=>({val:t,label:t})))}
@@ -1041,7 +1035,7 @@ function tSupply(){
       <div style="display:flex;align-items:center;gap:16px">${vt}<span class="scnt" style="margin-left:0">${sorted.length} disponibles</span></div>
     </div>
     <div class="fbar">
-      <input id="sf-q-disp" class="fsearch" placeholder="Buscar perfil..." value="${f.q}" oninput="S.sf.q=this.value;debouncedRender()"/>
+      <input id="sf-q-disp" class="fsearch" placeholder="Buscar perfil..." value="${f.q}" oninput="S.sf.q=this.value;render()"/>
       ${sfddM("bcp","caps","Capability",CAPS.map(c=>({val:c,label:c})))}
       ${sfddM("blv","levels","Nivel",LEVELS.map(l=>({val:l,label:l,sub:LN[l]})))}
       ${sfddM("brk","risks","Riesgo",[{val:"high",label:"High"},{val:"mid",label:"Mid"},{val:"low",label:"Low"}])}
