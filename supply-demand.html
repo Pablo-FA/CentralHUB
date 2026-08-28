@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-15 12:36" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-08-28 17:21" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-07-15 12:36"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-08-28 17:21"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -716,6 +716,51 @@ async function loadVacations(){
     }
   }catch(e){console.warn('Vacations load error:',e);}
 }
+
+// ── MANUAL VACATION CRUD (writes directly to the vacations table) ──
+window._vacAdd=async(pid)=>{
+  const start=document.getElementById("vac-add-start")?.value;
+  const end=document.getElementById("vac-add-end")?.value;
+  if(!start||!end){alert("Indica fecha de inicio y fin.");return;}
+  if(new Date(end)<new Date(start)){alert("La fecha de fin no puede ser anterior a la de inicio.");return;}
+  const prof=S.profiles.find(p=>p.id===pid);
+  if(!prof)return;
+  const rec={
+    id:'vacman_'+uid(),
+    eid:prof.eid||'',
+    name:prof.name||'',
+    start_date:start,
+    end_date:end,
+    status:'Aprobada',
+    source:'manual'
+  };
+  try{
+    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/vacations',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Prefer':'return=minimal'},
+      body:JSON.stringify(rec)
+    });
+    if(!r.ok){const t=await r.text();alert("Error al guardar la vacación: "+t);return;}
+    await loadVacations();
+    render();
+    if(currentPid){renderPM();}
+  }catch(e){alert("Error de red al guardar la vacación.");console.warn(e);}
+};
+
+window._vacDel=async(vacId)=>{
+  if(!confirm("¿Eliminar esta vacación manual?"))return;
+  try{
+    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/vacations?id=eq.'+encodeURIComponent(vacId),{
+      method:'DELETE',
+      headers:{'apikey':'sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Authorization':'Bearer sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk','Prefer':'return=minimal'}
+    });
+    if(!r.ok){const t=await r.text();alert("Error al eliminar: "+t);return;}
+    await loadVacations();
+    render();
+    if(currentPid){renderPM();}
+  }catch(e){alert("Error de red al eliminar.");console.warn(e);}
+};
+
 async function save(){
   const now=new Date().toISOString();
   const rows=[
@@ -1474,16 +1519,8 @@ function vacTab(p){
   const now=new Date(); now.setHours(0,0,0,0);
   const YEAR=2026;
   const eid=(p.eid||'').toLowerCase().trim();
-  const mine=(S.vacations||[]).filter(v=>(v.eid||'').toLowerCase().trim()===eid);
-  // Filter to the current year (periods that start in 2026)
+  const mine=(S.vacations||[]).filter(v=>(v.eid||'').toLowerCase().trim()===eid || v.profile_id===p.id);
   const yearVacs=mine.filter(v=>new Date(v.start_date).getFullYear()===YEAR);
-
-  if(!eid){
-    return `<div class="mbody"><div style="padding:40px 20px;text-align:center;color:var(--t3)">Este perfil no tiene EID, no se pueden cruzar sus vacaciones.</div></div>`;
-  }
-  if(!yearVacs.length){
-    return `<div class="mbody"><div style="padding:40px 20px;text-align:center;color:var(--t3)">Sin vacaciones registradas para ${YEAR}.</div></div>`;
-  }
 
   // Classify each period
   const past=[], current=[], future=[];
@@ -1500,11 +1537,19 @@ function vacTab(p){
   const daysFuture=future.reduce((t,v)=>t+workingDays(v.start_date,v.end_date),0);
   const daysTotal=daysPast+daysCurrent+daysFuture;
 
-  const fmt=(v)=>{const d=workingDays(v.start_date,v.end_date);return `<tr>
-    <td style="font-size:12px">${fds(v.start_date)}</td>
-    <td style="font-size:12px">${fds(v.end_date)}</td>
-    <td style="text-align:right"><span class="bdg bg" style="font-size:11px">${d} ${d===1?'día':'días'}</span></td>
-  </tr>`;};
+  // Row formatter — manual rows get a delete button, excel rows get a lock icon
+  const fmt=(v)=>{
+    const d=workingDays(v.start_date,v.end_date);
+    const isManual=v.source==='manual';
+    return `<tr>
+      <td style="font-size:12px">${fds(v.start_date)}</td>
+      <td style="font-size:12px">${fds(v.end_date)}</td>
+      <td style="text-align:right"><span class="bdg bg" style="font-size:11px">${d} ${d===1?'día':'días'}</span></td>
+      <td style="text-align:right;width:60px">${isManual
+        ?`<button onclick="window._vacDel('${v.id}')" title="Eliminar vacación manual" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:2px 6px">✕</button>`
+        :`<span title="Del volcado de Excel · solo lectura" style="color:var(--t3);font-size:12px">🔒</span>`}</td>
+    </tr>`;
+  };
 
   const section=(title,arr,color)=>arr.length?`
     <div style="margin-top:18px">
@@ -1513,11 +1558,30 @@ function vacTab(p){
         <th style="text-align:left;font-size:10px;color:var(--t3)">Desde</th>
         <th style="text-align:left;font-size:10px;color:var(--t3)">Hasta</th>
         <th style="text-align:right;font-size:10px;color:var(--t3)">Laborables</th>
+        <th style="width:60px"></th>
       </tr></thead><tbody>${arr.map(fmt).join("")}</tbody></table>
     </div>`:"";
 
+  if(!eid){
+    return `<div class="mbody"><div style="padding:40px 20px;text-align:center;color:var(--t3)">Este perfil no tiene EID, no se pueden cruzar sus vacaciones.</div></div>`;
+  }
+
+  // Manual add form (always available in this tab)
+  const addForm=`
+    <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--bd)">
+      <div style="font-size:11px;font-weight:600;color:var(--acc);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Añadir vacaciones (manual)</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:130px"><label style="font-size:10px;color:var(--t3);display:block;margin-bottom:3px">Desde</label><input type="date" id="vac-add-start" class="fi" style="width:100%"/></div>
+        <div style="flex:1;min-width:130px"><label style="font-size:10px;color:var(--t3);display:block;margin-bottom:3px">Hasta</label><input type="date" id="vac-add-end" class="fi" style="width:100%"/></div>
+        <button onclick="window._vacAdd('${p.id}')" class="btn btnp btns" style="white-space:nowrap">+ Añadir</button>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:6px">Las vacaciones manuales conviven con el volcado del Excel y no se borran al actualizarlo.</div>
+    </div>`;
+
+  const hasAny=yearVacs.length>0;
+
   return `<div class="mbody">
-    <div style="display:flex;gap:12px;margin-bottom:8px">
+    ${hasAny?`<div style="display:flex;gap:12px;margin-bottom:8px">
       <div style="flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px">
         <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em">Disfrutadas ${YEAR}</div>
         <div style="font-size:26px;font-weight:600;margin-top:4px">${daysPast}<span style="font-size:13px;color:var(--t3);font-weight:400"> días</span></div>
@@ -1534,7 +1598,9 @@ function vacTab(p){
     ${current.length?`<div style="background:var(--green-bg,rgba(34,197,94,.1));border:1px solid var(--green);border-radius:8px;padding:10px 14px;margin-top:8px;font-size:13px;color:var(--green)">🌴 Actualmente de vacaciones (${daysCurrent} ${daysCurrent===1?'día laborable':'días laborables'} en curso)</div>`:""}
     ${section("En curso",current,"var(--green)")}
     ${section("Próximas",future,"var(--acc)")}
-    ${section("Disfrutadas",past,"var(--t3)")}
+    ${section("Disfrutadas",past,"var(--t3)")}`
+    :`<div style="padding:30px 20px;text-align:center;color:var(--t3)">Sin vacaciones registradas para ${YEAR}.</div>`}
+    ${addForm}
   </div>`;
 }
 
