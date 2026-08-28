@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-07-08 19:35" data-file="index"/>
+<meta name="build-stamp" content="2026-08-28 21:06" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -199,7 +199,7 @@ body{background:var(--bg)}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-07-08 19:35"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-08-28 21:06"};</script>
 </head>
 <body>
 
@@ -268,10 +268,9 @@ body{background:var(--bg)}
         <div class="nsi" id="nsi-supply" onclick="navToTab('supply')"><div class="nsi-dot"></div>Supply</div>
         <div class="nsi" id="nsi-demand" onclick="navToTab('demand')"><div class="nsi-dot"></div>Demand</div>
       </div>
-      <div class="ni" onclick="navTo('ph','Sales Tracking')">
+      <div class="ni" id="ni-sales" onclick="navTo('sales')">
         <i class="ti ti-trending-up"></i>
         <span class="ni-lbl">Sales Tracking</span>
-        <span class="ni-badge">Pronto</span>
       </div>
       <div class="ni" id="ni-pm" onclick="navTo('pm')">
         <i class="ti ti-chart-bar"></i>
@@ -389,6 +388,7 @@ async function loadBuildStamps(){
     {label:'Home',url:'index.html'},
     {label:'Supply & Demand',url:'supply-demand.html'},
     {label:'Project Health',url:'pm_tracker_v4.html'},
+    {label:'Sales Tracking',url:'sales-tracking.html'},
     {label:'Executive Hub',url:'executive-hub-cap.html'}
   ];
   const results=await Promise.all(files.map(async f=>{
@@ -513,6 +513,12 @@ function navTo(view,label){
     f.src="executive-hub-cap.html";
     f.style.display="block";
     currentTool="hub";
+  } else if(view==="sales"){
+    setActive("ni-sales");
+    const f=document.getElementById("tool-frame");
+    if(!f.src||!f.src.includes("sales-tracking")){f.src="sales-tracking.html";}
+    f.style.display="block";
+    currentTool="sales";
   } else if(view==="ph"){
     setActive(null);
     document.getElementById("ph-view").classList.add("on");
@@ -670,8 +676,10 @@ function renderTodos(){
   const el=document.getElementById("todo-list");
   if(!el)return;
   const todos=getTodos();
-  el.innerHTML=(todos.length===0?`<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin pendientes.</p>`:"")+
-    todos.map(t=>{const isDemand=t.source==="demand";return`<div class="todo-item">
+  const pending=todos.filter(t=>!t.done);
+  const done=todos.filter(t=>t.done);
+
+  const renderItem=(t)=>{const isDemand=t.source==="demand";return`<div class="todo-item">
         <div class="todo-chk${t.done?" dn":""}" onclick="toggleTodo('${t.id}')"></div>
         <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--acc-bg);color:var(--acc);font-weight:600;letter-spacing:.03em;margin-left:4px">DEMAND</span>`:""}</div>
         ${isDemand
@@ -681,7 +689,24 @@ function renderTodos(){
             ${TODO_USERS.map(u=>`<option value="${u}"${t.owner===u?" selected":""}>${u}</option>`).join("")}
           </select>
           <button class="todo-del" onclick="delTodo('${t.id}')">×</button>`}
-      </div>`;}).join("");
+      </div>`;};
+
+  let html = pending.length===0
+    ? `<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin pendientes.</p>`
+    : pending.map(renderItem).join("");
+
+  // Completed tasks in a collapsible section (closed by default)
+  if(done.length){
+    const open=window._doneTodosOpen===true;
+    html += `<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+      <div onclick="window._doneTodosOpen=${open?"false":"true"};renderTodos()" style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding:2px 0">
+        <span style="font-size:10px;color:var(--text3);transition:transform .15s;transform:rotate(${open?"90":"0"}deg);display:inline-block">▶</span>
+        <span style="font-size:11px;color:var(--text3);font-weight:500">Completadas · ${done.length}</span>
+      </div>
+      ${open?`<div style="margin-top:6px">${done.map(renderItem).join("")}</div>`:""}
+    </div>`;
+  }
+  el.innerHTML=html;
 }
 async function showHome(){
   if(!currentUser)return;
