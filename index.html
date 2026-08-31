@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-08-28 21:06" data-file="index"/>
+<meta name="build-stamp" content="2026-08-31 18:19" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -199,7 +199,7 @@ body{background:var(--bg)}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-08-28 21:06"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-08-31 18:19"};</script>
 </head>
 <body>
 
@@ -759,20 +759,7 @@ async function showHome(){
     </div>
     <div class="card">
       <div class="card-title">Pendientes</div>
-      <div id="todo-list">
-      ${todos.length===0?`<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin pendientes.</p>`:""}
-      ${todos.map(t=>{const isDemand=t.source==="demand";return`<div class="todo-item">
-        <div class="todo-chk${t.done?" dn":""}" onclick="toggleTodo('${t.id}')"></div>
-        <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--acc-bg);color:var(--acc);font-weight:600;letter-spacing:.03em;margin-left:4px">DEMAND</span>`:""}</div>
-        ${isDemand
-          ?`<span style="font-size:11px;color:var(--text3);white-space:nowrap">gestionar en Supply</span>`
-          :`<select class="todo-owner${t.owner?" assigned":""}" onchange="setTodoOwner('${t.id}',this.value)" onclick="event.stopPropagation()">
-            <option value="">— owner</option>
-            ${TODO_USERS.map(u=>`<option value="${u}"${t.owner===u?" selected":""}>${u}</option>`).join("")}
-          </select>
-          <button class="todo-del" onclick="delTodo('${t.id}')">×</button>`}
-      </div>`;}).join("")}
-      </div>
+      <div id="todo-list"></div>
       <div class="todo-add">
         <input id="todo-inp" class="todo-inp" placeholder="Añadir pendiente..." onkeydown="if(event.key==='Enter')addTodo()"/>
         <button class="todo-btn" onclick="addTodo()">+</button>
@@ -811,6 +798,8 @@ async function showHome(){
     <span style="opacity:.6">⚙ Build:</span>
     <span id="build-debug" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">cargando…</span>
   </div>`;
+  // Render todos with pending/completed split (single source of truth)
+  renderTodos();
   // Project row click delegation (must run after innerHTML is set)
   document.querySelectorAll('#home-view .proj-row').forEach(tr=>{
     tr.addEventListener('click',()=>navTo('pm'));
