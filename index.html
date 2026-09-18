@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-08-31 18:19" data-file="index"/>
+<meta name="build-stamp" content="2026-09-18 15:31" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -152,6 +152,7 @@ body{background:var(--bg)}
 .scard-val{font-size:24px;font-weight:600}
 .scard-sub{font-size:11px;color:var(--text3);margin-top:3px}
 .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.home-full{margin-bottom:24px}
 @media(max-width:860px){.home-grid{grid-template-columns:1fr}}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem}
 .card-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
@@ -195,11 +196,49 @@ body{background:var(--bg)}
 .todo-owner.assigned{background:var(--acc-bg);color:var(--acc);border-color:var(--acc-border)}
 .dark-btn i{font-size:14px}
 
+/* ═══ TASK MODAL + shared-task styles ═══ */
+.todo-item{display:flex;align-items:center;gap:10px;padding:8px 4px;cursor:pointer;border-radius:8px}
+.todo-item:hover{background:var(--surface2)}
+.todo-item.ro{opacity:.9}
+.todo-main{flex:1;min-width:0}
+.todo-assigned{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.asg-pill{font-size:9px;font-weight:600;padding:1px 7px;border-radius:10px;background:var(--acc-bg);color:var(--acc)}
+.ro-tag{font-size:9px;padding:1px 6px;border-radius:10px;background:var(--surface2);color:var(--text3);font-weight:600;margin-left:4px}
+.todo-sec-head{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px}
+.todo-sec-head:first-child{margin-top:2px}
+.todo-asg-quick{font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text3);font-family:inherit;cursor:pointer}
+.tmov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;z-index:200;overflow-y:auto}
+.tmodal{background:var(--surface);border-radius:16px;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column;max-height:calc(100vh - 80px)}
+.tmodal .tmh{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border)}
+.tmodal .tmh h3{font-size:16px;font-weight:700;margin:0}
+.tmodal .tmb{padding:18px 22px;overflow-y:auto;flex:1}
+.tmodal .tmf{display:flex;gap:10px;padding:14px 22px;border-top:1px solid var(--border);align-items:center}
+.tfld{margin-bottom:16px}
+.tfld label{display:block;font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px}
+.tfi{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:var(--bg);color:var(--text)}
+.tfi:focus{outline:none;border-color:var(--acc)}
+textarea.tfi{resize:vertical;min-height:70px}
+.tchk-row{display:flex;flex-wrap:wrap;gap:8px}
+.asg-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);cursor:pointer;user-select:none}
+.asg-chip.on{background:var(--acc-bg);border-color:var(--acc);color:var(--acc);font-weight:600}
+.tclose{background:none;border:none;font-size:20px;color:var(--text3);cursor:pointer;line-height:1}
+/* task comment log (mirrors sales tracking) */
+.tlog{background:var(--surface2);border-radius:10px;padding:12px;margin-top:4px}
+.tlog-nav{display:flex;align-items:center;gap:8px}
+.tlog-card{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;min-height:52px}
+.tlog-card .lts{font-size:10px;color:var(--text3);margin-bottom:3px}
+.tlog-card .ltx{font-size:13px;color:var(--text)}
+.tlog-btn{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text3);font-size:15px;cursor:pointer;flex-shrink:0}
+.tlog-btn:hover:not(:disabled){border-color:var(--acc);color:var(--acc)}
+.tlog-btn:disabled{opacity:.35;cursor:not-allowed}
+.tlog-add{display:flex;gap:8px;margin-top:8px}
 /* ═══ CAPABILITY HIDDEN (reversible: delete this block to restore) ═══ */
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"index",stamp:"2026-08-31 18:19"};</script>
+<div id="task-modal-root"></div>
+
+<script>window.__BUILD__={file:"index",stamp:"2026-09-18 15:31"};</script>
 </head>
 <body>
 
@@ -646,7 +685,13 @@ async function loadTodos(){
   return S_TODOS;
 }
 // Returns todos for the current user (from cache)
-function getTodos(){return S_TODOS.filter(t=>t.owner===(currentUser?.name||""));}
+function myName(){return currentUser?.name||"";}
+function isOwner(t){return t.owner===myName();}
+function isAssignedToMe(t){return Array.isArray(t.assigned)&&t.assigned.includes(myName());}
+// Tasks visible to me = ones I own + ones shared with me (assigned)
+function getTodos(){return S_TODOS.filter(t=>isOwner(t)||isAssignedToMe(t));}
+// "Individual" = I own it AND nobody is assigned. "Shared" = has at least one assigned person.
+function isShared(t){return Array.isArray(t.assigned)&&t.assigned.length>0;}
 // saveTodos removed — todos now persist individually to Supabase
 async function toggleTodo(id){
   const t=S_TODOS.find(x=>x.id===id);if(!t)return;
@@ -663,10 +708,131 @@ async function setTodoOwner(id,owner){
   t.owner=owner;renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({owner})});}catch(e){}
 }
+// Generic PATCH helper for a single task (updates only the given fields)
+async function patchTodo(id,fields){
+  const t=S_TODOS.find(x=>String(x.id)===String(id));
+  if(t)Object.assign(t,fields);
+  try{
+    await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),
+      {method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(fields)});
+  }catch(e){console.warn('patchTodo error',e);}
+}
+
+// Quick-assign from the inline dropdown: add a person to a task's assigned list
+async function quickAssign(id,person){
+  if(!person)return;
+  const t=S_TODOS.find(x=>String(x.id)===String(id));
+  if(!t)return;
+  if(!Array.isArray(t.assigned))t.assigned=[];
+  if(!t.assigned.includes(person))t.assigned.push(person);
+  renderTodos();
+  await patchTodo(id,{assigned:t.assigned});
+}
+async function quickUnassign(id,person){
+  const t=S_TODOS.find(x=>String(x.id)===String(id));
+  if(!t||!Array.isArray(t.assigned))return;
+  t.assigned=t.assigned.filter(p=>p!==person);
+  renderTodos();
+  await patchTodo(id,{assigned:t.assigned});
+}
+
+// ═══ TASK DETAIL MODAL ═══
+let _taskDraft=null, _taskCommentIdx=null;
+function openTaskModal(id){
+  const t=S_TODOS.find(x=>String(x.id)===String(id));
+  if(!t)return;
+  _taskDraft=JSON.parse(JSON.stringify(t));
+  if(!Array.isArray(_taskDraft.assigned))_taskDraft.assigned=[];
+  if(!Array.isArray(_taskDraft.log))_taskDraft.log=[];
+  _taskCommentIdx=null;
+  renderTaskModal();
+}
+function closeTaskModal(){document.getElementById("task-modal-root").innerHTML="";_taskDraft=null;}
+
+function renderTaskComment(){
+  const log=_taskDraft.log||[];
+  if(!log.length)return '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;min-height:52px">Sin comentarios.</div>';
+  const idx=_taskCommentIdx===null?log.length-1:_taskCommentIdx;
+  const l=log[idx];
+  const isRecent=idx===log.length-1;
+  const canBack=idx>0, canFwd=idx<log.length-1;
+  return `<button class="tlog-btn" ${canBack?'':'disabled'} onclick="navTaskComment(-1)" title="Anterior">‹</button>
+    <div class="tlog-card"><div class="lts">${fmtTaskDate(l.ts)}${isRecent?' · más reciente':''} · ${idx+1} de ${log.length}</div><div class="ltx">${l.txt}</div></div>
+    <button class="tlog-btn" ${canFwd?'':'disabled'} onclick="navTaskComment(1)" title="Siguiente">›</button>`;
+}
+function navTaskComment(dir){
+  const len=(_taskDraft.log||[]).length;
+  const cur=_taskCommentIdx===null?len-1:_taskCommentIdx;
+  let n=cur+dir; if(n<0)n=0; if(n>len-1)n=len-1;
+  _taskCommentIdx=n;
+  const nav=document.getElementById("tlog-nav");
+  if(nav)nav.innerHTML=renderTaskComment();
+}
+function fmtTaskDate(d){try{return new Date(d).toLocaleDateString("es-ES",{day:"2-digit",month:"short"});}catch(e){return d;}}
+
+function renderTaskModal(){
+  const t=_taskDraft;
+  const readOnly=t.owner!==myName();  // assigned viewers can't edit
+  const root=document.getElementById("task-modal-root");
+  root.innerHTML=`
+  <div class="tmov" id="tmov" onclick="if(event.target.id==='tmov')closeTaskModal()">
+    <div class="tmodal">
+      <div class="tmh">
+        <div><h3>Detalle de tarea</h3><div style="font-size:12px;color:var(--text3);margin-top:2px">${readOnly?'👁 Solo lectura · propiedad de '+t.owner:'Propietario: '+t.owner}</div></div>
+        <button class="tclose" onclick="closeTaskModal()">✕</button>
+      </div>
+      <div class="tmb">
+        <div class="tfld"><label>Tarea</label><input class="tfi" value="${(t.text||'').replace(/"/g,'&quot;')}" ${readOnly?'disabled':'oninput="_taskDraft.text=this.value"'}/></div>
+        <div class="tfld"><label>Descripción</label><textarea class="tfi" ${readOnly?'disabled':'oninput="_taskDraft.description=this.value"'} placeholder="Detalla la tarea…">${t.description||''}</textarea></div>
+        <div class="tfld"><label>Fecha límite</label><input type="date" class="tfi" style="max-width:180px" value="${t.deadline||''}" ${readOnly?'disabled':'onchange="_taskDraft.deadline=this.value"'}/></div>
+        <div class="tfld"><label>Compartida con ${readOnly?'':'<span style="font-weight:400;color:var(--text3)">· solo lectura para ellos</span>'}</label>
+          <div class="tchk-row">
+            ${TODO_USERS.filter(u=>u!==t.owner).map(u=>`<span class="asg-chip ${t.assigned.includes(u)?'on':''}" ${readOnly?'':`onclick="toggleTaskAssign('${u}')"`}>${t.assigned.includes(u)?'✓ ':''}${u}</span>`).join("")}
+          </div>
+        </div>
+        <div class="tfld" style="margin-bottom:0"><label>Comentarios</label>
+          <div class="tlog">
+            <div class="tlog-nav" id="tlog-nav">${renderTaskComment()}</div>
+            ${readOnly?'':`<div class="tlog-add"><input id="task-comment-inp" class="tfi" placeholder="Añadir comentario…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskComment();}"/><button class="todo-btn" onclick="addTaskComment()">+ Añadir</button></div>`}
+          </div>
+        </div>
+      </div>
+      <div class="tmf">
+        ${readOnly?'':`<button class="todo-btn" style="background:var(--acc);color:#fff" onclick="saveTask()">Guardar</button>`}
+        <div style="flex:1"></div>
+        <button class="todo-btn" onclick="closeTaskModal()">${readOnly?'Cerrar':'Cancelar'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+function toggleTaskAssign(u){
+  if(!Array.isArray(_taskDraft.assigned))_taskDraft.assigned=[];
+  if(_taskDraft.assigned.includes(u))_taskDraft.assigned=_taskDraft.assigned.filter(x=>x!==u);
+  else _taskDraft.assigned.push(u);
+  renderTaskModal();
+}
+function addTaskComment(){
+  const inp=document.getElementById("task-comment-inp");
+  if(!inp||!inp.value.trim())return;
+  if(!Array.isArray(_taskDraft.log))_taskDraft.log=[];
+  _taskDraft.log.push({ts:new Date().toISOString().slice(0,10),txt:inp.value.trim()});
+  _taskCommentIdx=null;
+  renderTaskModal();
+  setTimeout(()=>{const n=document.getElementById("task-comment-inp");if(n)n.focus();},0);
+}
+async function saveTask(){
+  const t=_taskDraft;
+  const live=S_TODOS.find(x=>String(x.id)===String(t.id));
+  if(live)Object.assign(live,{text:t.text,description:t.description,deadline:t.deadline||null,assigned:t.assigned,log:t.log});
+  closeTaskModal();
+  renderTodos();
+  await patchTodo(t.id,{text:t.text,description:t.description||null,deadline:t.deadline||null,assigned:t.assigned,log:t.log});
+}
+
 async function addTodo(){
   const inp=document.getElementById("todo-inp");
   if(!inp||!inp.value.trim())return;
-  const todo={id:Date.now()+"",owner:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual"};
+  const todo={id:Date.now()+"",owner:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[]};
   S_TODOS.push(todo); // optimistic
   inp.value="";renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(todo)});}catch(e){}
@@ -676,38 +842,70 @@ function renderTodos(){
   const el=document.getElementById("todo-list");
   if(!el)return;
   const todos=getTodos();
-  const pending=todos.filter(t=>!t.done);
-  const done=todos.filter(t=>t.done);
+  const mine=todos.filter(t=>isOwner(t)&&!isShared(t));      // individual, only me
+  const shared=todos.filter(t=>isShared(t));                  // has assigned people
+  const me=myName();
 
-  const renderItem=(t)=>{const isDemand=t.source==="demand";return`<div class="todo-item">
-        <div class="todo-chk${t.done?" dn":""}" onclick="toggleTodo('${t.id}')"></div>
-        <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--acc-bg);color:var(--acc);font-weight:600;letter-spacing:.03em;margin-left:4px">DEMAND</span>`:""}</div>
+  // Render a single task row. readOnly = I'm not the owner (assigned viewer).
+  const renderItem=(t)=>{
+    const isDemand=t.source==="demand";
+    const readOnly=!isOwner(t);
+    const assignedPills=isShared(t)
+      ? `<div class="todo-assigned">${(t.assigned||[]).map(a=>`<span class="asg-pill" title="${a}">${a.split(" ")[0]}</span>`).join("")}</div>`
+      : "";
+    return `<div class="todo-item ${readOnly?'ro':''}" onclick="openTaskModal('${t.id}')">
+        <div class="todo-chk${t.done?" dn":""}" ${readOnly?'':`onclick="event.stopPropagation();toggleTodo('${t.id}')"`}></div>
+        <div class="todo-main">
+          <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--acc-bg);color:var(--acc);font-weight:600;letter-spacing:.03em;margin-left:4px">DEMAND</span>`:""}${readOnly?` <span class="ro-tag" title="Solo lectura · propiedad de ${t.owner}">👁 ${t.owner.split(" ")[0]}</span>`:""}</div>
+          ${assignedPills}
+        </div>
         ${isDemand
           ?`<span style="font-size:11px;color:var(--text3);white-space:nowrap">gestionar en Supply</span>`
-          :`<select class="todo-owner${t.owner?" assigned":""}" onchange="setTodoOwner('${t.id}',this.value)" onclick="event.stopPropagation()">
-            <option value="">— owner</option>
-            ${TODO_USERS.map(u=>`<option value="${u}"${t.owner===u?" selected":""}>${u}</option>`).join("")}
-          </select>
-          <button class="todo-del" onclick="delTodo('${t.id}')">×</button>`}
-      </div>`;};
+          :readOnly
+            ?``
+            :`<select class="todo-asg-quick" onclick="event.stopPropagation()" onchange="quickAssign('${t.id}',this.value);this.value='';" title="Compartir con…">
+                <option value="">+ compartir</option>
+                ${TODO_USERS.filter(u=>u!==t.owner&&!(t.assigned||[]).includes(u)).map(u=>`<option value="${u}">${u}</option>`).join("")}
+              </select>
+              <button class="todo-del" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`}
+      </div>`;
+  };
 
-  let html = pending.length===0
-    ? `<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin pendientes.</p>`
-    : pending.map(renderItem).join("");
+  const sectionHead=(label,count)=>`<div class="todo-sec-head">${label}${count!=null?` · ${count}`:''}</div>`;
 
-  // Completed tasks in a collapsible section (closed by default)
-  if(done.length){
+  let html="";
+  // ── Mis tareas (individuales) ──
+  html += sectionHead("Mis tareas", mine.filter(t=>!t.done).length);
+  const minePending=mine.filter(t=>!t.done), mineDone=mine.filter(t=>t.done);
+  html += minePending.length? minePending.map(renderItem).join("")
+        : `<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin pendientes.</p>`;
+
+  // ── Tareas compartidas ──
+  if(shared.length){
+    const sharedPending=shared.filter(t=>!t.done), sharedDone=shared.filter(t=>t.done);
+    html += sectionHead("Tareas compartidas", sharedPending.length);
+    html += sharedPending.length? sharedPending.map(renderItem).join("")
+          : `<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin pendientes compartidas.</p>`;
+    // completed shared fold into the same completed section below
+    var allDone=mineDone.concat(sharedDone);
+  } else {
+    var allDone=mineDone;
+  }
+
+  // ── Completadas (colapsable, ambas categorías juntas) ──
+  if(allDone.length){
     const open=window._doneTodosOpen===true;
-    html += `<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+    html += `<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:8px">
       <div onclick="window._doneTodosOpen=${open?"false":"true"};renderTodos()" style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding:2px 0">
         <span style="font-size:10px;color:var(--text3);transition:transform .15s;transform:rotate(${open?"90":"0"}deg);display:inline-block">▶</span>
-        <span style="font-size:11px;color:var(--text3);font-weight:500">Completadas · ${done.length}</span>
+        <span style="font-size:11px;color:var(--text3);font-weight:500">Completadas · ${allDone.length}</span>
       </div>
-      ${open?`<div style="margin-top:6px">${done.map(renderItem).join("")}</div>`:""}
+      ${open?`<div style="margin-top:6px">${allDone.map(renderItem).join("")}</div>`:""}
     </div>`;
   }
   el.innerHTML=html;
 }
+
 async function showHome(){
   if(!currentUser)return;
   const [,m,activeProjects]=await Promise.all([loadTodos(),loadMetrics(),loadActiveProjects()]);
@@ -739,24 +937,7 @@ async function showHome(){
       <div class="scard-sub">Sin asignar · ver →</div>
     </div>
   </div>
-  <div class="home-grid">
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div class="card-title" style="margin:0">Proyectos activos</div>
-        <button class="todo-btn" onclick="navTo('pm')" style="font-size:11px;padding:4px 10px">Ver todos →</button>
-      </div>
-      ${activeProjects.length===0?
-        `<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin proyectos. Abre <span style="color:var(--acc);cursor:pointer" onclick="navTo('pm')">Project Health</span> para añadir.</p>`:
-        `<table style="width:100%;border-collapse:collapse"><thead><tr>
-          <th style="text-align:left;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Proyecto</th>
-          <th style="text-align:left;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)" class="cap-col">Capability</th>
-          <th style="text-align:right;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">FTEs</th>
-          <th style="text-align:right;padding:0 0 8px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Hasta</th>
-        </tr></thead><tbody>
-        ${activeProjects.map(p=>{const cap=p.capability||"";const col={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"}[cap]||"#888";return`<tr class="proj-row" style="cursor:pointer"><td style="padding:8px 0;border-bottom:1px solid var(--border);font-weight:500;font-size:13px">${p.name||"—"}</td><td class="cap-col" style="padding:8px 0;border-bottom:1px solid var(--border)">${cap?`<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${col}22;color:${col};font-weight:600">${cap}</span>`:"—"}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:12px;font-weight:500">${p.ftes!=null?p.ftes:(p.team||[]).length}</td><td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;font-size:11px;color:var(--text3)">${p.endDate?new Date(p.endDate+"T12:00:00").toLocaleDateString("es-ES",{day:"2-digit",month:"short"}):"—"}</td></tr>`;
-}).join("")}
-        </tbody></table>`}
-    </div>
+  <div class="home-full">
     <div class="card">
       <div class="card-title">Pendientes</div>
       <div id="todo-list"></div>
