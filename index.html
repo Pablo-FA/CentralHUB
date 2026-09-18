@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-09-18 15:31" data-file="index"/>
+<meta name="build-stamp" content="2026-09-18 16:02" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -205,6 +205,15 @@ body{background:var(--bg)}
 .asg-pill{font-size:9px;font-weight:600;padding:1px 7px;border-radius:10px;background:var(--acc-bg);color:var(--acc)}
 .ro-tag{font-size:9px;padding:1px 6px;border-radius:10px;background:var(--surface2);color:var(--text3);font-weight:600;margin-left:4px}
 .todo-sec-head{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px}
+.todo-group{margin-bottom:6px}
+.todo-group-head{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;padding:8px 8px;border-radius:8px;background:var(--surface2)}
+.todo-group-head:hover{background:var(--border)}
+.tg-caret{font-size:10px;color:var(--acc);transition:transform .15s;display:inline-block}
+.tg-name{font-size:12px;font-weight:700;color:var(--text);flex:1}
+.tg-count{font-size:11px;font-weight:600;color:var(--text3);background:var(--bg);border-radius:20px;padding:1px 9px}
+.todo-group-body{padding:2px 4px 8px}
+.todo-subhead{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;padding-left:2px}
+.todo-empty{color:var(--text3);font-size:12px;padding:4px 0 4px 2px}
 .todo-sec-head:first-child{margin-top:2px}
 .todo-asg-quick{font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text3);font-family:inherit;cursor:pointer}
 .tmov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;z-index:200;overflow-y:auto}
@@ -238,7 +247,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-09-18 15:31"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-09-18 16:02"};</script>
 </head>
 <body>
 
@@ -686,6 +695,7 @@ async function loadTodos(){
 }
 // Returns todos for the current user (from cache)
 function myName(){return currentUser?.name||"";}
+function getTaskGroups(){const s=new Set();S_TODOS.forEach(t=>{if(t.grp&&t.grp.trim())s.add(t.grp.trim());});return [...s].sort((a,b)=>a.localeCompare(b));}
 function isOwner(t){return t.owner===myName();}
 function isAssignedToMe(t){return Array.isArray(t.assigned)&&t.assigned.includes(myName());}
 // Tasks visible to me = ones I own + ones shared with me (assigned)
@@ -724,7 +734,12 @@ async function quickAssign(id,person){
   const t=S_TODOS.find(x=>String(x.id)===String(id));
   if(!t)return;
   if(!Array.isArray(t.assigned))t.assigned=[];
-  if(!t.assigned.includes(person))t.assigned.push(person);
+  if(person==="__all"){
+    // Share with everyone except the owner
+    t.assigned=TODO_USERS.filter(u=>u!==t.owner);
+  } else if(!t.assigned.includes(person)){
+    t.assigned.push(person);
+  }
   renderTodos();
   await patchTodo(id,{assigned:t.assigned});
 }
@@ -785,6 +800,10 @@ function renderTaskModal(){
         <div class="tfld"><label>Tarea</label><input class="tfi" value="${(t.text||'').replace(/"/g,'&quot;')}" ${readOnly?'disabled':'oninput="_taskDraft.text=this.value"'}/></div>
         <div class="tfld"><label>Descripción</label><textarea class="tfi" ${readOnly?'disabled':'oninput="_taskDraft.description=this.value"'} placeholder="Detalla la tarea…">${t.description||''}</textarea></div>
         <div class="tfld"><label>Fecha límite</label><input type="date" class="tfi" style="max-width:180px" value="${t.deadline||''}" ${readOnly?'disabled':'onchange="_taskDraft.deadline=this.value"'}/></div>
+        <div class="tfld"><label>Grupo / área <span style="font-weight:400;color:var(--text3)">· elige o escribe uno nuevo</span></label>
+          <input class="tfi" list="task-groups" value="${(t.grp||'').replace(/"/g,'&quot;')}" ${readOnly?'disabled':'oninput="_taskDraft.grp=this.value"'} placeholder="Sin grupo" style="max-width:280px"/>
+          <datalist id="task-groups">${getTaskGroups().map(g=>`<option value="${g}">`).join("")}</datalist>
+        </div>
         <div class="tfld"><label>Compartida con ${readOnly?'':'<span style="font-weight:400;color:var(--text3)">· solo lectura para ellos</span>'}</label>
           <div class="tchk-row">
             ${TODO_USERS.filter(u=>u!==t.owner).map(u=>`<span class="asg-chip ${t.assigned.includes(u)?'on':''}" ${readOnly?'':`onclick="toggleTaskAssign('${u}')"`}>${t.assigned.includes(u)?'✓ ':''}${u}</span>`).join("")}
@@ -822,17 +841,18 @@ function addTaskComment(){
 }
 async function saveTask(){
   const t=_taskDraft;
+  const grp=(t.grp&&t.grp.trim())?t.grp.trim():null;
   const live=S_TODOS.find(x=>String(x.id)===String(t.id));
-  if(live)Object.assign(live,{text:t.text,description:t.description,deadline:t.deadline||null,assigned:t.assigned,log:t.log});
+  if(live)Object.assign(live,{text:t.text,description:t.description,deadline:t.deadline||null,assigned:t.assigned,log:t.log,grp});
   closeTaskModal();
   renderTodos();
-  await patchTodo(t.id,{text:t.text,description:t.description||null,deadline:t.deadline||null,assigned:t.assigned,log:t.log});
+  await patchTodo(t.id,{text:t.text,description:t.description||null,deadline:t.deadline||null,assigned:t.assigned,log:t.log,grp});
 }
 
 async function addTodo(){
   const inp=document.getElementById("todo-inp");
   if(!inp||!inp.value.trim())return;
-  const todo={id:Date.now()+"",owner:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[]};
+  const todo={id:Date.now()+"",owner:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp:null};
   S_TODOS.push(todo); // optimistic
   inp.value="";renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(todo)});}catch(e){}
@@ -842,8 +862,6 @@ function renderTodos(){
   const el=document.getElementById("todo-list");
   if(!el)return;
   const todos=getTodos();
-  const mine=todos.filter(t=>isOwner(t)&&!isShared(t));      // individual, only me
-  const shared=todos.filter(t=>isShared(t));                  // has assigned people
   const me=myName();
 
   // Render a single task row. readOnly = I'm not the owner (assigned viewer).
@@ -865,46 +883,74 @@ function renderTodos(){
             ?``
             :`<select class="todo-asg-quick" onclick="event.stopPropagation()" onchange="quickAssign('${t.id}',this.value);this.value='';" title="Compartir con…">
                 <option value="">+ compartir</option>
+                ${TODO_USERS.filter(u=>u!==t.owner&&!(t.assigned||[]).includes(u)).length>1?`<option value="__all">Todos</option>`:''}
                 ${TODO_USERS.filter(u=>u!==t.owner&&!(t.assigned||[]).includes(u)).map(u=>`<option value="${u}">${u}</option>`).join("")}
               </select>
               <button class="todo-del" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`}
       </div>`;
   };
 
-  const sectionHead=(label,count)=>`<div class="todo-sec-head">${label}${count!=null?` · ${count}`:''}</div>`;
+  // Render the mine/shared subsections for a set of tasks (the "B" nesting)
+  const renderSubsections=(list)=>{
+    const mine=list.filter(t=>isOwner(t)&&!isShared(t));
+    const shared=list.filter(t=>isShared(t));
+    let h="";
+    const minePending=mine.filter(t=>!t.done);
+    if(mine.length){
+      h+=`<div class="todo-subhead">Mis tareas${minePending.length?` · ${minePending.length}`:''}</div>`;
+      h+= minePending.length? minePending.map(renderItem).join("") : `<p class="todo-empty">Sin pendientes.</p>`;
+    }
+    const sharedPending=shared.filter(t=>!t.done);
+    if(shared.length){
+      h+=`<div class="todo-subhead">Tareas compartidas${sharedPending.length?` · ${sharedPending.length}`:''}</div>`;
+      h+= sharedPending.length? sharedPending.map(renderItem).join("") : `<p class="todo-empty">Sin pendientes compartidas.</p>`;
+    }
+    return h;
+  };
+
+  // ── Group tasks by area (grp). null/empty → "Sin grupo" ──
+  const groups={};
+  todos.forEach(t=>{const g=(t.grp&&t.grp.trim())?t.grp.trim():"__nogroup";(groups[g]=groups[g]||[]).push(t);});
+  // Order: named groups alphabetically, "Sin grupo" last
+  const groupNames=Object.keys(groups).filter(g=>g!=="__nogroup").sort((a,b)=>a.localeCompare(b));
+  if(groups["__nogroup"])groupNames.push("__nogroup");
+
+  window._todoGroupOpen=window._todoGroupOpen||{}; // collapse state per group
 
   let html="";
-  // ── Mis tareas (individuales) ──
-  html += sectionHead("Mis tareas", mine.filter(t=>!t.done).length);
-  const minePending=mine.filter(t=>!t.done), mineDone=mine.filter(t=>t.done);
-  html += minePending.length? minePending.map(renderItem).join("")
-        : `<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin pendientes.</p>`;
+  const doneAll=[]; // collect completed across all groups
+  groupNames.forEach(g=>{
+    const list=groups[g];
+    const pending=list.filter(t=>!t.done);
+    list.filter(t=>t.done).forEach(t=>doneAll.push(t));
+    const label=g==="__nogroup"?"Sin grupo":g;
+    const isOpen=window._todoGroupOpen[g]!==false; // default open
+    html+=`<div class="todo-group">
+      <div class="todo-group-head" onclick="window._todoGroupOpen['${g.replace(/'/g,"\\'")}']=${isOpen?"false":"true"};renderTodos()">
+        <span class="tg-caret" style="transform:rotate(${isOpen?"90":"0"}deg)">▶</span>
+        <span class="tg-name">${label}</span>
+        <span class="tg-count">${pending.length}</span>
+      </div>
+      ${isOpen?`<div class="todo-group-body">${pending.length?renderSubsections(pending):`<p class="todo-empty">Sin pendientes.</p>`}</div>`:""}
+    </div>`;
+  });
 
-  // ── Tareas compartidas ──
-  if(shared.length){
-    const sharedPending=shared.filter(t=>!t.done), sharedDone=shared.filter(t=>t.done);
-    html += sectionHead("Tareas compartidas", sharedPending.length);
-    html += sharedPending.length? sharedPending.map(renderItem).join("")
-          : `<p style="color:var(--text3);font-size:12px;padding:4px 0">Sin pendientes compartidas.</p>`;
-    // completed shared fold into the same completed section below
-    var allDone=mineDone.concat(sharedDone);
-  } else {
-    var allDone=mineDone;
-  }
-
-  // ── Completadas (colapsable, ambas categorías juntas) ──
-  if(allDone.length){
+  // ── Completadas (colapsable, todas las áreas juntas) ──
+  if(doneAll.length){
     const open=window._doneTodosOpen===true;
-    html += `<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:8px">
+    html += `<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:8px">
       <div onclick="window._doneTodosOpen=${open?"false":"true"};renderTodos()" style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding:2px 0">
         <span style="font-size:10px;color:var(--text3);transition:transform .15s;transform:rotate(${open?"90":"0"}deg);display:inline-block">▶</span>
-        <span style="font-size:11px;color:var(--text3);font-weight:500">Completadas · ${allDone.length}</span>
+        <span style="font-size:11px;color:var(--text3);font-weight:500">Completadas · ${doneAll.length}</span>
       </div>
-      ${open?`<div style="margin-top:6px">${allDone.map(renderItem).join("")}</div>`:""}
+      ${open?`<div style="margin-top:6px">${doneAll.map(renderItem).join("")}</div>`:""}
     </div>`;
   }
+
+  if(!html)html=`<p class="todo-empty">Sin tareas.</p>`;
   el.innerHTML=html;
 }
+
 
 async function showHome(){
   if(!currentUser)return;
