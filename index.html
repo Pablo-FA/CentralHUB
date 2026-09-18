@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-09-18 16:02" data-file="index"/>
+<meta name="build-stamp" content="2026-09-18 16:16" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -214,6 +214,23 @@ body{background:var(--bg)}
 .todo-group-body{padding:2px 4px 8px}
 .todo-subhead{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;padding-left:2px}
 .todo-empty{color:var(--text3);font-size:12px;padding:4px 0 4px 2px}
+.todo-group-add{margin-top:6px;padding-left:2px}
+.todo-group-inp{width:100%;max-width:340px;padding:6px 10px;border:1px dashed var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:transparent;color:var(--text)}
+.todo-group-inp:focus{outline:none;border-color:var(--acc);border-style:solid;background:var(--bg)}
+.todo-group-inp::placeholder{color:var(--text3)}
+.todo-prio{display:inline-flex;align-items:center;flex-shrink:0}
+.prio-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);cursor:pointer;user-select:none;font-weight:500}
+.todo-ctrlbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.todo-ctrl-btn{padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text2,#5a6270);font-family:inherit;cursor:pointer;font-weight:500}
+.todo-ctrl-btn:hover{border-color:var(--acc);color:var(--acc)}
+.todo-prio-filter{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tpf-lbl{font-size:11px;color:var(--text3);font-weight:600}
+.tpf-chip{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text3);cursor:pointer;user-select:none;font-weight:500}
+.tpf-chip.on{font-weight:700}
+.tg-headmain{display:flex;align-items:center;gap:8px;flex:1;cursor:pointer}
+.tg-actions{display:flex;gap:2px;align-items:center}
+.tg-act{background:none;border:none;cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px;opacity:.6}
+.tg-act:hover{opacity:1;background:var(--bg)}
 .todo-sec-head:first-child{margin-top:2px}
 .todo-asg-quick{font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text3);font-family:inherit;cursor:pointer}
 .tmov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;z-index:200;overflow-y:auto}
@@ -247,7 +264,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-09-18 16:02"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-09-18 16:16"};</script>
 </head>
 <body>
 
@@ -696,6 +713,53 @@ async function loadTodos(){
 // Returns todos for the current user (from cache)
 function myName(){return currentUser?.name||"";}
 function getTaskGroups(){const s=new Set();S_TODOS.forEach(t=>{if(t.grp&&t.grp.trim())s.add(t.grp.trim());});return [...s].sort((a,b)=>a.localeCompare(b));}
+
+// Expand or collapse ALL groups at once
+function toggleAllGroups(expand){
+  const groups=getTaskGroups();
+  const all=groups.concat(['__nogroup']);
+  window._todoGroupOpen=window._todoGroupOpen||{};
+  all.forEach(g=>{window._todoGroupOpen[g]=expand;});
+  renderTodos();
+}
+
+// Rename a group: updates grp on all its tasks (local + Supabase)
+async function renameGroup(g){
+  const current=g;
+  const name=prompt(`Renombrar grupo "${current}":`, current);
+  if(name===null)return;
+  const newName=name.trim();
+  if(!newName||newName===current)return;
+  const affected=S_TODOS.filter(t=>t.grp===current&&(isOwner(t)));
+  if(!affected.length){alert("No hay tareas tuyas en este grupo para renombrar.");return;}
+  affected.forEach(t=>{t.grp=newName;});
+  // carry over collapse state
+  if(window._todoGroupOpen&&current in window._todoGroupOpen){window._todoGroupOpen[newName]=window._todoGroupOpen[current];delete window._todoGroupOpen[current];}
+  renderTodos();
+  for(const t of affected){await patchTodo(t.id,{grp:newName});}
+}
+
+// Share a whole group: apply chosen assignees to all tasks currently in the group
+// (batch action — new tasks added later are NOT auto-shared; that needs the group-members model + auth)
+async function shareGroup(g){
+  const mine=S_TODOS.filter(t=>t.grp===g&&isOwner(t));
+  if(!mine.length){alert("No hay tareas tuyas en este grupo.");return;}
+  const others=TODO_USERS.filter(u=>u!==myName());
+  const choice=prompt(`Compartir todas las tareas del grupo "${g}" con:\n\nEscribe un nombre exacto (${others.join(", ")}) o "Todos".\n\n(Se aplicará a las ${mine.length} tareas actuales del grupo. Las nuevas no se comparten solas.)`,"Todos");
+  if(choice===null)return;
+  const val=choice.trim();
+  let targets=[];
+  if(val.toLowerCase()==="todos")targets=others.slice();
+  else if(others.includes(val))targets=[val];
+  else {alert("Nombre no reconocido. Usa uno de: "+others.join(", ")+' o "Todos".');return;}
+  mine.forEach(t=>{
+    if(!Array.isArray(t.assigned))t.assigned=[];
+    targets.forEach(p=>{if(!t.assigned.includes(p))t.assigned.push(p);});
+  });
+  renderTodos();
+  for(const t of mine){await patchTodo(t.id,{assigned:t.assigned});}
+  alert(`✅ Grupo "${g}" compartido con ${targets.join(", ")} (${mine.length} tareas).`);
+}
 function isOwner(t){return t.owner===myName();}
 function isAssignedToMe(t){return Array.isArray(t.assigned)&&t.assigned.includes(myName());}
 // Tasks visible to me = ones I own + ones shared with me (assigned)
@@ -713,6 +777,17 @@ async function delTodo(id){
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"DELETE",headers:{...TODO_SB_H,"Prefer":"return=minimal"}});}catch(e){}
 }
 const TODO_USERS=['Pablo F.','Conrado P.','Fabio H.G.'];
+// ── Task priority ──
+const PRIO_LEVELS=[{id:'high',label:'Alta',color:'#dc2626'},{id:'mid',label:'Media',color:'#eab308'},{id:'low',label:'Baja',color:'#22c55e'}];
+const prioOf=t=>t.priority||'mid'; // default mid
+const prioMeta=id=>PRIO_LEVELS.find(p=>p.id===id)||PRIO_LEVELS[1];
+const prioRank=id=>id==='high'?0:id==='mid'?1:2;
+// Visual indicator: double-chevron (high, red) / single (mid, amber) / dash (low, grey)
+const PRIO_ICON={
+  high:`<svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px" title="Alta"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>`,
+  mid:`<svg viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px" title="Media"><polyline points="17 14 12 9 7 14"/></svg>`,
+  low:`<svg viewBox="0 0 24 24" fill="none" stroke="#9aa2b0" stroke-width="2.6" stroke-linecap="round" style="width:15px;height:15px" title="Baja"><line x1="6" y1="12" x2="18" y2="12"/></svg>`
+};
 async function setTodoOwner(id,owner){
   const t=S_TODOS.find(x=>x.id===id);if(!t)return;
   t.owner=owner;renderTodos();
@@ -804,6 +879,11 @@ function renderTaskModal(){
           <input class="tfi" list="task-groups" value="${(t.grp||'').replace(/"/g,'&quot;')}" ${readOnly?'disabled':'oninput="_taskDraft.grp=this.value"'} placeholder="Sin grupo" style="max-width:280px"/>
           <datalist id="task-groups">${getTaskGroups().map(g=>`<option value="${g}">`).join("")}</datalist>
         </div>
+        <div class="tfld"><label>Prioridad</label>
+          <div class="tchk-row">
+            ${PRIO_LEVELS.map(p=>`<span class="prio-chip ${prioOf(t)===p.id?'on':''}" style="${prioOf(t)===p.id?`border-color:${p.color};color:${p.color};background:${p.color}18`:''}" ${readOnly?'':`onclick="_taskDraft.priority='${p.id}';renderTaskModal()"`}><span style="display:inline-flex;width:14px;height:14px">${PRIO_ICON[p.id]}</span> ${p.label}</span>`).join("")}
+          </div>
+        </div>
         <div class="tfld"><label>Compartida con ${readOnly?'':'<span style="font-weight:400;color:var(--text3)">· solo lectura para ellos</span>'}</label>
           <div class="tchk-row">
             ${TODO_USERS.filter(u=>u!==t.owner).map(u=>`<span class="asg-chip ${t.assigned.includes(u)?'on':''}" ${readOnly?'':`onclick="toggleTaskAssign('${u}')"`}>${t.assigned.includes(u)?'✓ ':''}${u}</span>`).join("")}
@@ -842,20 +922,38 @@ function addTaskComment(){
 async function saveTask(){
   const t=_taskDraft;
   const grp=(t.grp&&t.grp.trim())?t.grp.trim():null;
+  const priority=t.priority||'mid';
   const live=S_TODOS.find(x=>String(x.id)===String(t.id));
-  if(live)Object.assign(live,{text:t.text,description:t.description,deadline:t.deadline||null,assigned:t.assigned,log:t.log,grp});
+  if(live)Object.assign(live,{text:t.text,description:t.description,deadline:t.deadline||null,assigned:t.assigned,log:t.log,grp,priority});
   closeTaskModal();
   renderTodos();
-  await patchTodo(t.id,{text:t.text,description:t.description||null,deadline:t.deadline||null,assigned:t.assigned,log:t.log,grp});
+  await patchTodo(t.id,{text:t.text,description:t.description||null,deadline:t.deadline||null,assigned:t.assigned,log:t.log,grp,priority});
 }
 
 async function addTodo(){
   const inp=document.getElementById("todo-inp");
   if(!inp||!inp.value.trim())return;
-  const todo={id:Date.now()+"",owner:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp:null};
+  const todo={id:Date.now()+"",owner:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp:null,priority:"mid"};
   S_TODOS.push(todo); // optimistic
   inp.value="";renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(todo)});}catch(e){}
+}
+
+// Add a task directly inside a group (grp preset). group='' means "no group".
+async function addTodoToGroup(group,inp){
+  if(!inp||!inp.value.trim())return;
+  const grp=group&&group.trim()?group.trim():null;
+  const todo={id:Date.now()+"",owner:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp,priority:"mid"};
+  S_TODOS.push(todo);
+  inp.value="";
+  renderTodos();
+  // Re-focus the same group's input after re-render
+  setTimeout(()=>{
+    const inputs=[...document.querySelectorAll('.todo-group-inp')];
+    const match=inputs.find(i=>i.getAttribute('placeholder')&&i.getAttribute('placeholder').includes(grp||'sin grupo'));
+    if(match)match.focus();
+  },0);
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(todo)});}catch(e){console.warn('addTodoToGroup error',e);}
 }
 
 function renderTodos(){
@@ -872,6 +970,7 @@ function renderTodos(){
       ? `<div class="todo-assigned">${(t.assigned||[]).map(a=>`<span class="asg-pill" title="${a}">${a.split(" ")[0]}</span>`).join("")}</div>`
       : "";
     return `<div class="todo-item ${readOnly?'ro':''}" onclick="openTaskModal('${t.id}')">
+        <span class="todo-prio" title="Prioridad ${prioMeta(prioOf(t)).label}">${PRIO_ICON[prioOf(t)]}</span>
         <div class="todo-chk${t.done?" dn":""}" ${readOnly?'':`onclick="event.stopPropagation();toggleTodo('${t.id}')"`}></div>
         <div class="todo-main">
           <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--acc-bg);color:var(--acc);font-weight:600;letter-spacing:.03em;margin-left:4px">DEMAND</span>`:""}${readOnly?` <span class="ro-tag" title="Solo lectura · propiedad de ${t.owner}">👁 ${t.owner.split(" ")[0]}</span>`:""}</div>
@@ -891,21 +990,12 @@ function renderTodos(){
   };
 
   // Render the mine/shared subsections for a set of tasks (the "B" nesting)
-  const renderSubsections=(list)=>{
-    const mine=list.filter(t=>isOwner(t)&&!isShared(t));
-    const shared=list.filter(t=>isShared(t));
-    let h="";
-    const minePending=mine.filter(t=>!t.done);
-    if(mine.length){
-      h+=`<div class="todo-subhead">Mis tareas${minePending.length?` · ${minePending.length}`:''}</div>`;
-      h+= minePending.length? minePending.map(renderItem).join("") : `<p class="todo-empty">Sin pendientes.</p>`;
-    }
-    const sharedPending=shared.filter(t=>!t.done);
-    if(shared.length){
-      h+=`<div class="todo-subhead">Tareas compartidas${sharedPending.length?` · ${sharedPending.length}`:''}</div>`;
-      h+= sharedPending.length? sharedPending.map(renderItem).join("") : `<p class="todo-empty">Sin pendientes compartidas.</p>`;
-    }
-    return h;
+  const byPrio=(a,b)=>prioRank(prioOf(a))-prioRank(prioOf(b));
+  const passPrio=t=>!window._todoPrioFilter||prioOf(t)===window._todoPrioFilter;
+  // Flat list of pending tasks in a group, sorted by priority (no mine/shared split)
+  const renderGroupTasks=(list)=>{
+    const pending=list.filter(t=>!t.done&&passPrio(t)).sort(byPrio);
+    return pending.length? pending.map(renderItem).join("") : `<p class="todo-empty">Sin pendientes.</p>`;
   };
 
   // ── Group tasks by area (grp). null/empty → "Sin grupo" ──
@@ -916,8 +1006,21 @@ function renderTodos(){
   if(groups["__nogroup"])groupNames.push("__nogroup");
 
   window._todoGroupOpen=window._todoGroupOpen||{}; // collapse state per group
+  window._todoPrioFilter=window._todoPrioFilter||''; // '', 'high','mid','low'
 
-  let html="";
+  // Are all groups currently expanded? (to decide the toggle-all button state)
+  const anyCollapsed=groupNames.some(g=>window._todoGroupOpen[g]===false);
+
+  // ── Control bar: expand/collapse all + priority filter ──
+  let html=`<div class="todo-ctrlbar">
+    <button class="todo-ctrl-btn" onclick="toggleAllGroups(${anyCollapsed?'true':'false'})" title="${anyCollapsed?'Expandir todo':'Colapsar todo'}">
+      <span style="font-size:11px">${anyCollapsed?'⊕ Expandir todo':'⊖ Colapsar todo'}</span>
+    </button>
+    <div class="todo-prio-filter">
+      <span class="tpf-lbl">Prioridad:</span>
+      ${[{id:'',label:'Todas'}].concat(PRIO_LEVELS).map(p=>`<span class="tpf-chip ${window._todoPrioFilter===p.id?'on':''}" ${p.id&&p.color?`style="${window._todoPrioFilter===p.id?`background:${p.color}18;color:${p.color};border-color:${p.color}`:''}"`:''} onclick="window._todoPrioFilter='${p.id}';renderTodos()">${p.label}</span>`).join("")}
+    </div>
+  </div>`;
   const doneAll=[]; // collect completed across all groups
   groupNames.forEach(g=>{
     const list=groups[g];
@@ -926,12 +1029,23 @@ function renderTodos(){
     const label=g==="__nogroup"?"Sin grupo":g;
     const isOpen=window._todoGroupOpen[g]!==false; // default open
     html+=`<div class="todo-group">
-      <div class="todo-group-head" onclick="window._todoGroupOpen['${g.replace(/'/g,"\\'")}']=${isOpen?"false":"true"};renderTodos()">
-        <span class="tg-caret" style="transform:rotate(${isOpen?"90":"0"}deg)">▶</span>
-        <span class="tg-name">${label}</span>
-        <span class="tg-count">${pending.length}</span>
+      <div class="todo-group-head">
+        <div class="tg-headmain" onclick="window._todoGroupOpen['${g.replace(/'/g,"\\'")}']=${isOpen?"false":"true"};renderTodos()">
+          <span class="tg-caret" style="transform:rotate(${isOpen?"90":"0"}deg)">▶</span>
+          <span class="tg-name">${label}</span>
+          <span class="tg-count">${pending.length}</span>
+        </div>
+        ${g!=="__nogroup"?`<div class="tg-actions">
+          <button class="tg-act" title="Compartir grupo" onclick="event.stopPropagation();shareGroup('${g.replace(/'/g,"\\'")}')">👥</button>
+          <button class="tg-act" title="Renombrar grupo" onclick="event.stopPropagation();renameGroup('${g.replace(/'/g,"\\'")}')">✏️</button>
+        </div>`:''}
       </div>
-      ${isOpen?`<div class="todo-group-body">${pending.length?renderSubsections(pending):`<p class="todo-empty">Sin pendientes.</p>`}</div>`:""}
+      ${isOpen?`<div class="todo-group-body">
+        ${renderGroupTasks(list)}
+        <div class="todo-group-add">
+          <input class="todo-group-inp" placeholder="+ Añadir tarea en ${label==='Sin grupo'?'sin grupo':label.replace(/"/g,'&quot;')}…" onkeydown="if(event.key==='Enter'){addTodoToGroup('${g==='__nogroup'?'':g.replace(/'/g,"\\'")}',this);}"/>
+        </div>
+      </div>`:""}
     </div>`;
   });
 
