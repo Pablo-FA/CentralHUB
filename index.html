@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-09-30 10:45" data-file="index"/>
+<meta name="build-stamp" content="2026-09-30 11:00" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -218,6 +218,16 @@ body{background:var(--bg)}
 .todo-group-inp{width:100%;max-width:340px;padding:6px 10px;border:1px dashed var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:transparent;color:var(--text)}
 .todo-group-inp:focus{outline:none;border-color:var(--acc);border-style:solid;background:var(--bg)}
 .todo-group-inp::placeholder{color:var(--text3)}
+.todo-item .todo-txt{flex:1;min-width:0}
+.todo-right{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
+.own-bubble{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 10px 2px 2px;white-space:nowrap}
+.own-bubble b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--border);color:var(--text2);font-size:9px;font-weight:700}
+.own-bubble.me{background:var(--acc-bg);border-color:var(--acc-border);color:var(--acc)}
+.own-bubble.me b{background:var(--acc);color:#fff}
+.todo-lock{background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:2px 4px;border-radius:6px;opacity:.55;display:inline-flex}
+.todo-lock:hover{opacity:1;background:var(--surface2)}
+.todo-lock.on{color:var(--acc);opacity:1}
+.demand-tag{font-size:9px;padding:1px 6px;border-radius:10px;background:var(--acc-bg);color:var(--acc);font-weight:600;letter-spacing:.03em;margin-left:4px}
 .own-tag{font-size:9px;padding:1px 7px;border-radius:10px;background:var(--surface2);color:var(--text3);font-weight:600;margin-left:4px}
 .priv-tag{font-size:10px;margin-left:3px}
 .priv-toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2,#5a6270);cursor:pointer}
@@ -294,6 +304,45 @@ textarea.tfi{resize:vertical;min-height:70px}
 .cal-up-date small{display:block;font-size:8px;font-weight:600;opacity:.85;text-transform:uppercase}
 .cal-up-txt{font-size:12px;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cal-up-owner{font-size:9px;color:var(--text3)}
+.cal-seg{display:flex;gap:4px;margin-bottom:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px}
+.cal-seg button{flex:1;border:none;background:transparent;color:var(--text3);font-family:inherit;font-size:12px;font-weight:600;padding:5px 8px;border-radius:6px;cursor:pointer}
+.cal-seg button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.cal-seg .cal-today{flex:0 0 auto;color:var(--acc)}
+/* Week — split (1/3): days as rows */
+.cal-week{display:grid;grid-template-columns:1fr;gap:6px}
+.cal-day{display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:start;padding:6px;border-radius:10px;border:1px solid var(--border);background:var(--surface)}
+.cal-day.empty{padding:3px 6px;opacity:.75}
+.cal-day.wkend{background:var(--surface2)}
+.cal-day.today{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-bg)}
+.cal-day-lbl{display:flex;flex-direction:column;align-items:center;line-height:1.1;padding-top:2px}
+.cal-day-lbl span{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+.cal-day-lbl b{font-size:15px;font-weight:700;color:var(--text)}
+.cal-day.today .cal-day-lbl b{color:var(--acc)}
+.cal-day-stack{display:flex;flex-direction:column;gap:5px;min-width:0}
+.cal-none{font-size:11px;color:var(--text3);padding:4px 0}
+.cal-card{background:var(--surface2);border:1px solid var(--border);border-left:3px solid;border-radius:7px;padding:6px 8px;cursor:pointer;transition:all .12s;min-width:0}
+.cal-card:hover{border-color:var(--acc);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.cal-card-t{font-size:12px;font-weight:600;color:var(--text);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cal-card-m{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-av{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--border);color:var(--text2);font-size:8px;font-weight:700;flex-shrink:0}
+.cal-av.me{background:var(--acc);color:#fff}
+/* Week — full width: 7 columns */
+.cal-only .cal-week{grid-template-columns:repeat(7,1fr)}
+.cal-only .cal-day{display:flex;flex-direction:column;min-height:260px;padding:8px}
+.cal-only .cal-day.empty{padding:8px;opacity:1}
+.cal-only .cal-day-lbl{flex-direction:row;gap:6px;align-items:baseline;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:6px;width:100%}
+/* Month */
+.cal-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.cal-mcell{min-height:74px;border:1px solid var(--border);border-radius:7px;padding:3px;display:flex;flex-direction:column;gap:2px;background:var(--surface);min-width:0;cursor:pointer}
+.cal-mcell.other{background:transparent;border-color:transparent;cursor:default}
+.cal-mcell.today{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-bg)}
+.cal-mnum{font-size:10px;font-weight:700;color:var(--text3);padding:0 2px}
+.cal-mcell.today .cal-mnum{color:var(--acc)}
+.cal-chip{font-size:9.5px;font-weight:600;line-height:1.25;background:var(--surface2);border-left:3px solid;border-radius:4px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.cal-chip:hover{background:var(--acc-bg)}
+.cal-more{font-size:9px;font-weight:700;color:var(--acc);padding:0 3px}
+.cal-only .cal-mcell{min-height:120px;padding:5px}
+.cal-only .cal-chip{font-size:11px;padding:3px 6px}
 @media(max-width:1100px){.tc-split{grid-template-columns:1fr}}
 /* ═══ CAPABILITY HIDDEN (reversible: delete this block to restore) ═══ */
 .cap-col{display:none !important;}
@@ -301,7 +350,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-09-30 10:45"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-09-30 11:00"};</script>
 </head>
 <body>
 
@@ -377,6 +426,10 @@ textarea.tfi{resize:vertical;min-height:70px}
       <div class="ni" id="ni-pm" onclick="navTo('pm')">
         <i class="ti ti-chart-bar"></i>
         <span class="ni-lbl">Project Health</span>
+      </div>
+      <div class="ni" id="ni-rate" onclick="navTo('rate')">
+        <i class="ti ti-receipt-2"></i>
+        <span class="ni-lbl">Tarifario</span>
       </div>
       <div class="ni" onclick="navTo('ph','Flex')">
         <i class="ti ti-hexagon"></i>
@@ -491,6 +544,7 @@ async function loadBuildStamps(){
     {label:'Supply & Demand',url:'supply-demand.html'},
     {label:'Project Health',url:'pm_tracker_v4.html'},
     {label:'Sales Tracking',url:'sales-tracking.html'},
+    {label:'Tarifario',url:'rate-card.html'},
     {label:'Executive Hub',url:'executive-hub-cap.html'}
   ];
   const results=await Promise.all(files.map(async f=>{
@@ -615,6 +669,12 @@ function navTo(view,label){
     f.src="executive-hub-cap.html";
     f.style.display="block";
     currentTool="hub";
+  } else if(view==="rate"){
+    setActive("ni-rate");
+    const f=document.getElementById("tool-frame");
+    if(!f.src||!f.src.includes("rate-card")){f.src="rate-card.html";}
+    f.style.display="block";
+    currentTool="rate";
   } else if(view==="sales"){
     setActive("ni-sales");
     const f=document.getElementById("tool-frame");
@@ -767,8 +827,8 @@ async function renameGroup(g){
   if(name===null)return;
   const newName=name.trim();
   if(!newName||newName===current)return;
-  const affected=S_TODOS.filter(t=>t.grp===current&&(isOwner(t)));
-  if(!affected.length){alert("No hay tareas tuyas en este grupo para renombrar.");return;}
+  const affected=S_TODOS.filter(t=>t.grp===current&&canManageTask(t));
+  if(!affected.length){alert("No tienes permiso sobre tareas de este grupo.");return;}
   affected.forEach(t=>{t.grp=newName;});
   // carry over collapse state
   if(window._todoGroupOpen&&current in window._todoGroupOpen){window._todoGroupOpen[newName]=window._todoGroupOpen[current];delete window._todoGroupOpen[current];}
@@ -800,6 +860,11 @@ async function shareGroup(g){
 function isOwner(t){return t.owner===myName();}
 function creatorOf(t){return t.creator||t.owner;}          // fallback to owner for legacy tasks
 function isCreator(t){return creatorOf(t)===myName();}
+const SUPERADMIN="Pablo F.";
+function isSuperAdmin(){return myName()===SUPERADMIN;}
+function canManageTask(t){return isOwner(t)||isCreator(t)||isSuperAdmin();}   // edit / delete
+function canCompleteTask(t){return isOwner(t)||isSuperAdmin();}                // tick done
+function initials(n){return (n||"?").split(/[\s.]+/).filter(Boolean).map(x=>x[0]).join("").slice(0,2).toUpperCase();}
 function isAssignedToMe(t){return Array.isArray(t.assigned)&&t.assigned.includes(myName());}
 // Visibility model: everything is PUBLIC by default. Private tasks are visible ONLY to their creator.
 function canSee(t){
@@ -851,6 +916,14 @@ async function patchTodo(id,fields){
   }catch(e){console.warn('patchTodo error',e);}
 }
 
+// Lock / unlock a task (only its creator)
+async function togglePrivate(id){
+  const t=S_TODOS.find(x=>String(x.id)===String(id));
+  if(!t||!isCreator(t))return;
+  t.private=!t.private;
+  renderTodos();
+  await patchTodo(id,{private:t.private});
+}
 // Quick-assign from the inline dropdown: add a person to a task's assigned list
 async function quickAssign(id,person){
   if(!person)return;
@@ -912,7 +985,7 @@ function renderTaskModal(){
   const t=_taskDraft;
   const iAmCreator=creatorOf(t)===myName();
   const iAmOwner=t.owner===myName();
-  const canManage=iAmCreator||iAmOwner;   // edit fields / delete
+  const canManage=iAmCreator||iAmOwner||isSuperAdmin();   // edit fields / delete (superadmin: all)
   const ro=!canManage;                     // read-only for fields (but everyone can comment)
   const root=document.getElementById("task-modal-root");
   root.innerHTML=`
@@ -1055,62 +1128,103 @@ function applyPanels(){
 function calMilestones(){
   return S_TODOS.filter(t=>t.deadline&&canSee(t)&&!t.done);
 }
-function calMove(dir){_calRef.setMonth(_calRef.getMonth()+dir);renderCalendar();}
+let _calView='week';
+let _calWeek=(()=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d;})(); // Monday
+const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const MON=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const MONL=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const DOW=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+
+function setCalView(v){
+  _calView=v;
+  if(v==='month'){_calRef=new Date(_calWeek);_calRef.setDate(1);}
+  renderCalendar();
+}
+function calToday(){
+  const d=new Date();d.setHours(12,0,0,0);
+  _calWeek=new Date(d);_calWeek.setDate(d.getDate()-((d.getDay()+6)%7));
+  _calRef=new Date(d);_calRef.setDate(1);
+  renderCalendar();
+}
+function calMove(dir){
+  if(_calView==='week')_calWeek.setDate(_calWeek.getDate()+7*dir);
+  else _calRef.setMonth(_calRef.getMonth()+dir);
+  renderCalendar();
+}
+function calJumpWeek(ds){
+  const d=new Date(ds+"T12:00:00");
+  _calWeek=new Date(d);_calWeek.setDate(d.getDate()-((d.getDay()+6)%7));
+  _calView='week';renderCalendar();
+}
+function calByDate(){
+  const by={};
+  calMilestones().forEach(t=>{(by[t.deadline]=by[t.deadline]||[]).push(t);});
+  Object.values(by).forEach(l=>l.sort((a,b)=>prioRank(prioOf(a))-prioRank(prioOf(b))));
+  return by;
+}
+// Full card (week view)
+function calCard(t){
+  const col=prioMeta(prioOf(t)).color;
+  return `<div class="cal-card" style="border-left-color:${col}" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="${(t.text||'').replace(/"/g,'&quot;')}">
+    <div class="cal-card-t">${t.text}</div>
+    <div class="cal-card-m"><span class="cal-av ${isOwner(t)?'me':''}">${initials(t.owner)}</span>${(t.owner||'').split(" ")[0]}${t.grp?` · ${t.grp}`:''}</div>
+  </div>`;
+}
+// Compact chip (month view)
+function calChip(t){
+  const col=prioMeta(prioOf(t)).color;
+  return `<div class="cal-chip" style="border-left-color:${col}" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="${(t.text||'').replace(/"/g,'&quot;')} · ${t.owner||''}">${t.text}</div>`;
+}
 
 function renderCalendar(){
   const grid=document.getElementById('cal-grid');
   const titleEl=document.getElementById('cal-title');
   if(!grid)return;
+  document.querySelectorAll('#cal-seg button[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===_calView));
+  const by=calByDate(), todayStr=ymd(new Date());
+  const upEl=document.getElementById('cal-upcoming');
+
+  if(_calView==='week'){
+    const end=new Date(_calWeek);end.setDate(end.getDate()+6);
+    titleEl.textContent=_calWeek.getMonth()===end.getMonth()
+      ? `${_calWeek.getDate()} – ${end.getDate()} ${MON[end.getMonth()]} ${end.getFullYear()}`
+      : `${_calWeek.getDate()} ${MON[_calWeek.getMonth()]} – ${end.getDate()} ${MON[end.getMonth()]}`;
+    let h=`<div class="cal-week">`;
+    for(let i=0;i<7;i++){
+      const d=new Date(_calWeek);d.setDate(d.getDate()+i);
+      const ds=ymd(d), items=by[ds]||[];
+      h+=`<div class="cal-day ${ds===todayStr?'today':''} ${items.length?'':'empty'} ${i>4?'wkend':''}">
+        <div class="cal-day-lbl"><span>${DOW[i]}</span><b>${d.getDate()}</b></div>
+        <div class="cal-day-stack">${items.map(calCard).join("")||'<span class="cal-none">—</span>'}</div>
+      </div>`;
+    }
+    grid.innerHTML=h+`</div>`;
+    if(upEl)upEl.innerHTML='';
+    return;
+  }
+
+  // Month view
   const year=_calRef.getFullYear(), month=_calRef.getMonth();
-  const monthNames=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-  if(titleEl)titleEl.textContent=`${monthNames[month]} ${year}`;
-
-  // Milestones by date-string for this view
-  const ms=calMilestones();
-  const byDate={};
-  ms.forEach(t=>{(byDate[t.deadline]=byDate[t.deadline]||[]).push(t);});
-
-  const first=new Date(year,month,1);
-  let startDow=(first.getDay()+6)%7; // Monday=0
-  const daysInMonth=new Date(year,month+1,0).getDate();
-  const today=new Date(); const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-
-  const dows=["L","M","X","J","V","S","D"];
-  let html=`<div class="cal-grid">`;
-  dows.forEach(d=>html+=`<div class="cal-dow">${d}</div>`);
-  // leading blanks
-  for(let i=0;i<startDow;i++)html+=`<div class="cal-cell other"></div>`;
-  for(let d=1;d<=daysInMonth;d++){
+  titleEl.textContent=`${MONL[month]} ${year}`;
+  const startDow=(new Date(year,month,1).getDay()+6)%7;
+  const days=new Date(year,month+1,0).getDate();
+  let h=`<div class="cal-month">`+DOW.map(d=>`<div class="cal-dow">${d[0]}</div>`).join("");
+  for(let i=0;i<startDow;i++)h+=`<div class="cal-mcell other"></div>`;
+  for(let d=1;d<=days;d++){
     const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const items=byDate[ds]||[];
-    const isToday=ds===todayStr;
-    const dots=items.slice(0,4).map(t=>`<span class="cal-dot" style="background:${prioMeta(prioOf(t)).color}"></span>`).join("");
-    html+=`<div class="cal-cell ${isToday?'today':''} ${items.length?'has-milestone':''}" ${items.length?`onclick="calDayClick('${ds}')" title="${items.length} hito(s)"`:''}>
-      <span>${d}</span>
-      ${items.length?`<div class="cal-dots">${dots}</div>`:''}
+    const items=by[ds]||[], max=3;
+    h+=`<div class="cal-mcell ${ds===todayStr?'today':''}" ${items.length?`onclick="calJumpWeek('${ds}')"`:''}>
+      <div class="cal-mnum">${d}</div>
+      ${items.slice(0,max).map(calChip).join("")}
+      ${items.length>max?`<div class="cal-more" onclick="event.stopPropagation();calJumpWeek('${ds}')">+${items.length-max} más</div>`:''}
     </div>`;
   }
-  html+=`</div>`;
-  grid.innerHTML=html;
-
-  // Upcoming milestones list (next ones from today, across months)
-  const up=ms.filter(t=>t.deadline>=todayStr).sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,6);
-  const upEl=document.getElementById('cal-upcoming');
+  grid.innerHTML=h+`</div>`;
   if(upEl){
-    upEl.innerHTML=up.length?`<div class="cal-upcoming"><div class="cal-up-title">Próximos hitos</div>${up.map(t=>{
-      const dt=new Date(t.deadline+"T12:00:00");
-      const dd=dt.getDate(); const mm=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][dt.getMonth()];
-      return `<div class="cal-up-item" onclick="openTaskModal('${t.id}')">
-        <div class="cal-up-date">${dd}<small>${mm}</small></div>
-        <div style="flex:1;min-width:0"><div class="cal-up-txt">${t.text}</div><div class="cal-up-owner">${t.owner||''}${t.grp?' · '+t.grp:''}</div></div>
-      </div>`;
-    }).join("")}</div>`:`<div class="cal-upcoming"><div class="cal-up-title">Próximos hitos</div><p style="color:var(--text3);font-size:12px">Sin hitos próximos. Añade una fecha límite a una tarea.</p></div>`;
+    const up=calMilestones().filter(t=>t.deadline>=todayStr).sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,5);
+    upEl.innerHTML=`<div class="cal-upcoming"><div class="cal-up-title">Próximos hitos</div>${up.length?up.map(t=>{const dt=new Date(t.deadline+"T12:00:00");
+      return `<div class="cal-up-item" onclick="openTaskModal('${t.id}')"><div class="cal-up-date">${dt.getDate()}<small>${MON[dt.getMonth()]}</small></div><div style="flex:1;min-width:0"><div class="cal-up-txt">${t.text}</div><div class="cal-up-owner">${t.owner||''}${t.grp?' · '+t.grp:''}</div></div></div>`;}).join(""):'<p style="color:var(--text3);font-size:12px">Sin hitos próximos.</p>'}</div>`;
   }
-}
-function calDayClick(ds){
-  const items=calMilestones().filter(t=>t.deadline===ds);
-  if(items.length===1)openTaskModal(items[0].id);
-  else if(items.length>1)openTaskModal(items[0].id); // open first; could be a day-list later
 }
 
 function renderTodos(){
@@ -1122,34 +1236,23 @@ function renderTodos(){
   // Render a single task row. readOnly = I'm not the owner (assigned viewer).
   const renderItem=(t)=>{
     const isDemand=t.source==="demand";
-    const iAmOwner=isOwner(t);
-    const iAmCreator=isCreator(t);
-    const canManage=iAmOwner||iAmCreator;   // edit/delete
-    const assignedPills=isShared(t)
-      ? `<div class="todo-assigned">${(t.assigned||[]).map(a=>`<span class="asg-pill" title="${a}">${a.split(" ")[0]}</span>`).join("")}</div>`
-      : "";
-    // Ownership tag: show who has to do it when it's not me
-    const ownerTag = !iAmOwner ? ` <span class="own-tag" title="Responsable: ${t.owner}">👤 ${t.owner.split(" ")[0]}</span>` : "";
-    const privTag = t.private ? ` <span class="priv-tag" title="Privada · solo tú la ves">🔒</span>` : "";
-    return `<div class="todo-item ${!iAmOwner?'ro':''}" onclick="openTaskModal('${t.id}')">
+    const canEdit=canManageTask(t), canDone=canCompleteTask(t);
+    const lockBtn = isCreator(t)
+      ? `<button class="todo-lock ${t.private?'on':''}" title="${t.private?'Privada · solo tú la ves (clic para hacerla pública)':'Pública · clic para hacerla privada'}" onclick="event.stopPropagation();togglePrivate('${t.id}')"><i class="ti ti-lock${t.private?'':'-open'}"></i></button>`
+      : ``;
+    return `<div class="todo-item ${!canEdit?'ro':''}" onclick="openTaskModal('${t.id}')">
         <span class="todo-prio" title="Prioridad ${prioMeta(prioOf(t)).label}">${PRIO_ICON[prioOf(t)]}</span>
-        <div class="todo-chk${t.done?" dn":""}" ${iAmOwner?`onclick="event.stopPropagation();toggleTodo('${t.id}')"`:'title="Solo el responsable puede completarla"'}></div>
-        <div class="todo-main">
-          <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--acc-bg);color:var(--acc);font-weight:600;letter-spacing:.03em;margin-left:4px">DEMAND</span>`:""}${ownerTag}${privTag}</div>
-          ${assignedPills}
+        <div class="todo-chk${t.done?" dn":""}" ${canDone?`onclick="event.stopPropagation();toggleTodo('${t.id}')"`:'title="Solo el responsable puede completarla"'}></div>
+        <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span class="demand-tag">DEMAND</span>`:""}</div>
+        <div class="todo-right">
+          ${isDemand?`<span style="font-size:11px;color:var(--text3);white-space:nowrap">gestionar en Supply</span>`:''}
+          <span class="own-bubble ${isOwner(t)?'me':''}" title="Responsable: ${t.owner||'—'}"><b>${initials(t.owner)}</b>${(t.owner||'—').split(" ")[0]}</span>
+          ${isDemand?'':lockBtn}
+          ${!isDemand&&canEdit?`<button class="todo-del" title="Eliminar" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`:''}
         </div>
-        ${isDemand
-          ?`<span style="font-size:11px;color:var(--text3);white-space:nowrap">gestionar en Supply</span>`
-          :canManage
-            ?`<select class="todo-asg-quick" onclick="event.stopPropagation()" onchange="quickAssign('${t.id}',this.value);this.value='';" title="Compartir con…">
-                <option value="">+ compartir</option>
-                ${TODO_USERS.filter(u=>u!==t.owner&&!(t.assigned||[]).includes(u)).length>1?`<option value="__all">Todos</option>`:''}
-                ${TODO_USERS.filter(u=>u!==t.owner&&!(t.assigned||[]).includes(u)).map(u=>`<option value="${u}">${u}</option>`).join("")}
-              </select>
-              <button class="todo-del" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`
-            :``}
       </div>`;
-  }
+  };
+
 ;
 
   // Render the mine/shared subsections for a set of tasks (the "B" nesting)
@@ -1204,7 +1307,6 @@ function renderTodos(){
           <span class="tg-count">${pending.length}</span>
         </div>
         ${g!=="__nogroup"?`<div class="tg-actions">
-          <button class="tg-act" title="Compartir grupo" onclick="event.stopPropagation();shareGroup('${g.replace(/'/g,"\\'")}')">👥</button>
           <button class="tg-act" title="Renombrar grupo" onclick="event.stopPropagation();renameGroup('${g.replace(/'/g,"\\'")}')">✏️</button>
         </div>`:''}
       </div>
@@ -1286,6 +1388,11 @@ async function showHome(){
           <button class="cal-nav" onclick="calMove(-1)">‹</button>
           <div class="cal-title" id="cal-title">—</div>
           <button class="cal-nav" onclick="calMove(1)">›</button>
+        </div>
+        <div class="cal-seg" id="cal-seg">
+          <button data-v="week" onclick="setCalView('week')">Semana</button>
+          <button data-v="month" onclick="setCalView('month')">Mes</button>
+          <button class="cal-today" onclick="calToday()">Hoy</button>
         </div>
         <div id="cal-grid"></div>
         <div id="cal-upcoming"></div>
