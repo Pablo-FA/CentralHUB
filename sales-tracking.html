@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sales Tracking · Command HUB</title>
-<meta name="build-stamp" content="2026-09-30 11:25" data-file="sales-tracking"/>
+<meta name="build-stamp" content="2026-09-30 12:03" data-file="sales-tracking"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -256,7 +256,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 <div id="modal-root"></div>
 
 <script>
-window.__BUILD__={file:"sales-tracking",stamp:"2026-09-30 11:25"};
+window.__BUILD__={file:"sales-tracking",stamp:"2026-09-30 12:03"};
 // ── Theme sync with parent shell ──
 (function(){
   function applyTheme(t){if(t==='dark')document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');}
@@ -310,6 +310,27 @@ const SB_KEY='sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk';
 const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
 const SB_HW={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'resolution=merge-duplicates,return=minimal'};
 
+// ── DATA NORMALIZATION (a single incomplete record must never break the view) ──
+const firstName=n=>(n&&String(n).trim())?String(n).trim().split(" ")[0]:"—";
+function normalizeOpp(o){
+  o=o||{};
+  if(o.id==null)o.id=Date.now()+Math.floor(Math.random()*1000);
+  ["client","name","owner","type","industry","songContact","sa","contractId","deadline","startDate","length"].forEach(k=>{if(o[k]==null)o[k]="";});
+  if(!o.status)o.status="idle";
+  if(!o.priority)o.priority="Mid";
+  if(!o.winProb)o.winProb="Mid";
+  if(!o.lengthUnit)o.lengthUnit="Months";
+  ["log","statusLog","locations","services","partners"].forEach(k=>{if(!Array.isArray(o[k]))o[k]=[];});
+  if(!o.staffing||typeof o.staffing!=="object")o.staffing={};
+  return o;
+}
+// Run each renderer isolated: if one fails, the others still paint
+function renderAll(){
+  [buildHead,renderKanban,renderTable,renderServices,renderKPIs].forEach(fn=>{
+    try{fn();}catch(e){console.error("Render error in "+fn.name+":",e);}
+  });
+}
+
 // ── SAFE PERSISTENCE ──
 // Never overwrite the DB blindly: saves re-read the server copy and merge by id.
 let LOAD_OK=false;              // saves are blocked unless the last load succeeded
@@ -331,7 +352,7 @@ async function fetchServerOpps(){
   const r=await fetch(SB_URL+'/sd_data?key=eq.sales_opps&select=data',{headers:SB_H,cache:'no-store'});
   if(!r.ok)throw new Error('HTTP '+r.status);
   const rows=await r.json();
-  return (rows.length&&Array.isArray(rows[0].data))?rows[0].data:[];
+  return (rows.length&&Array.isArray(rows[0].data))?rows[0].data.map(normalizeOpp):[];
 }
 async function loadOpps(){
   try{
@@ -374,7 +395,7 @@ function renderSyncBanner(){
     <span style="flex:1"><b>Sin conexión con la base de datos.</b> Para proteger tus oportunidades, el guardado está bloqueado hasta que se cargue correctamente.</span>
     <button class="btn" onclick="retryLoad()">Reintentar</button></div>`;
 }
-async function retryLoad(){await loadOpps();buildHead();renderKanban();renderTable();renderServices();renderKPIs();}
+async function retryLoad(){await loadOpps();renderAll();}
 // Recovery helpers (browser console): salesBackups() lists local snapshots; salesRestore(i) merges one back (never deletes)
 window.salesBackups=()=>{const a=JSON.parse(localStorage.getItem('sales_opps_snapshots')||'[]');console.table(a.map((s,i)=>({i,ts:s.ts,reason:s.reason,count:s.count,clients:s.data.map(o=>o.client).join(', ')})));return a.length;};
 window.salesRestore=async(i)=>{
@@ -409,7 +430,7 @@ function cardHTML(o,showSub){
     <div class="client">${o.client}</div>
     <div class="oppname">${o.name}</div>
     ${showSub?`<div class="substate">${statusLabel(o.status)}</div>`:''}
-    <div class="foot"><span class="deadline">📅 ${fdate(o.deadline)}</span><span class="owner-pill">${o.owner.split(" ")[0]}</span></div>
+    <div class="foot"><span class="deadline">📅 ${fdate(o.deadline)}</span><span class="owner-pill">${firstName(o.owner)}</span></div>
   </div>`;
 }
 const sortByPrio=opps=>opps.slice().sort((a,b)=>prioRank(a.priority)-prioRank(b.priority));
@@ -463,8 +484,8 @@ const PRIO_ICON={
 let openDropdown=null; // which column's dropdown is open
 
 function buildHead(){
-  const cl=[...new Set(OPPS.map(o=>o.client))].sort();
-  const ow=[...new Set(OPPS.map(o=>o.owner))].sort();
+  const cl=[...new Set(OPPS.map(o=>o.client).filter(Boolean))].sort();
+  const ow=[...new Set(OPPS.map(o=>o.owner).filter(Boolean))].sort();
   const winOpts=[{v:"",l:"Todas"},{v:"High",l:"High"},{v:"Mid",l:"Mid"},{v:"Low",l:"Low"}];
   // Filterable column with funnel dropdown
   const mkFilter=(key,label,opts,current)=>{
@@ -495,7 +516,7 @@ function buildHead(){
     mkSort("revenue","Revenue")+
     mkSort("cci","CCI")+
     mkSort("fte","FTEs")+
-    mkFilter("owner","Owner",[{v:"",l:"Todos"},...ow.map(o=>({v:o,l:o.split(" ")[0]}))],hf.owner)+
+    mkFilter("owner","Owner",[{v:"",l:"Todos"},...ow.filter(Boolean).map(o=>({v:o,l:firstName(o)}))],hf.owner)+
     mkSort("deadline","Deadline");
 }
 function toggleDropdown(key,e){openDropdown=openDropdown===key?null:key;buildHead();}
@@ -535,9 +556,9 @@ function renderTable(){
     <td><span class="pill" style="background:var(--bg2);color:var(--t2)">${statusLabel(o.status)}</span></td>
     <td><span class="pill" style="background:${probBg(o.winProb)};color:${probColor(o.winProb)}">${o.winProb}</span></td>
     <td style="font-weight:600">${o.revenue?fmtK(o.revenue):"—"}</td>
-    <td style="color:${o.cci>=36?'var(--purple)':o.cci>=29?'var(--green)':'var(--red)'}">${o.cci}%</td>
+    <td style="color:${o.cci==null||o.cci===''?'var(--t3)':o.cci>=36?'var(--purple)':o.cci>=29?'var(--green)':'var(--red)'}">${o.cci==null||o.cci===''?'—':o.cci+'%'}</td>
     <td>${fte||"—"}</td>
-    <td style="font-size:12px">${o.owner.split(" ")[0]}</td>
+    <td style="font-size:12px">${firstName(o.owner)}</td>
     <td style="font-size:12px;color:var(--t2)">${fdate(o.deadline)}</td>
   </tr>`;}).join("")||'<tr><td colspan="10" style="text-align:center;color:var(--t3);padding:30px">Sin resultados.</td></tr>';
 }
@@ -560,8 +581,10 @@ function renderServices(){
 // ─── MODAL with FIXED LOG PANEL ───
 let _draft=null, _logTab="comments", _draftIsNew=false;
 function openOpp(id){
-  const o=id?JSON.parse(JSON.stringify(OPPS.find(x=>x.id===id))):{staffing:{},log:[],statusLog:[{status:"idle",ts:new Date().toISOString().slice(0,10)}],revShare:false,locations:[],services:[],partners:[],status:"idle",priority:"Mid",winProb:"Mid"};
-  _draft=o;_logTab="comments";_commentIdx=null;_draftIsNew=!id;renderModal(!id);
+  const found=id!=null?OPPS.find(x=>String(x.id)===String(id)):null;
+  const o=found?normalizeOpp(JSON.parse(JSON.stringify(found))):normalizeOpp({statusLog:[{status:"idle",ts:new Date().toISOString().slice(0,10)}],revShare:false});
+  if(!found)delete o.id; // new: id assigned on save
+  _draft=o;_logTab="comments";_commentIdx=null;_draftIsNew=!found;renderModal(!found);
 }
 // Status timeline selector (option A: all states as nodes)
 function renderStatusTimeline(o){
@@ -627,8 +650,8 @@ function renderModal(isNew){
           <div class="fld-stack">
             <div class="r2"><div class="fld"><label>Cliente</label><input class="fi" value="${o.client||''}" oninput="_draft.client=this.value"/></div><div class="fld"><label>Oportunidad</label><input class="fi" value="${o.name||''}" oninput="_draft.name=this.value"/></div></div>
             <div class="r3">
-              <div class="fld"><label>Type</label><select class="fi" onchange="_draft.type=this.value">${TYPES.map(t=>`<option ${o.type===t?'selected':''}>${t}</option>`).join("")}</select></div>
-              <div class="fld"><label>Industry</label><select class="fi" onchange="_draft.industry=this.value">${INDUSTRIES.map(i=>`<option ${o.industry===i?'selected':''}>${i}</option>`).join("")}</select></div>
+              <div class="fld"><label>Type</label><select class="fi" onchange="_draft.type=this.value"><option value="" ${!o.type?'selected':''} disabled>Selecciona…</option>${TYPES.map(t=>`<option ${o.type===t?'selected':''}>${t}</option>`).join("")}</select></div>
+              <div class="fld"><label>Industry</label><select class="fi" onchange="_draft.industry=this.value"><option value="" ${!o.industry?'selected':''} disabled>Selecciona…</option>${INDUSTRIES.map(i=>`<option ${o.industry===i?'selected':''}>${i}</option>`).join("")}</select></div>
               <div class="fld"><label>Contract Id</label><input class="fi" value="${o.contractId||''}" oninput="_draft.contractId=this.value"/></div>
             </div>
             <div class="fld"><label>Services <span style="color:var(--t3);font-weight:400">· lista editable</span></label><div style="margin-bottom:6px">${(o.services||[]).map(s=>`<span class="multi-tag">${s} <span class="fx" style="cursor:pointer;color:var(--acc);opacity:.6" onclick="_draft.services=_draft.services.filter(x=>x!=='${s.replace(/'/g,"\\'")}');renderModal(_draftIsNew)">✕</span></span>`).join("")||'<span style="color:var(--t3);font-size:12px">Ninguno</span>'}</div><select class="fi" onchange="addService(this.value)"><option value="">+ Añadir servicio…</option>${SERVICES.filter(s=>!(o.services||[]).includes(s)).map(s=>`<option>${s}</option>`).join("")}<option value="__new">➕ Crear nuevo…</option></select></div>
@@ -658,7 +681,7 @@ function renderModal(isNew){
           <div class="sect">Roles</div>
           <div class="fld-stack">
             <div class="r3">
-              <div class="fld"><label>MO Owner</label><select class="fi" onchange="_draft.owner=this.value">${OWNERS.map(p=>`<option ${o.owner===p?'selected':''}>${p}</option>`).join("")}</select></div>
+              <div class="fld"><label>MO Owner</label><select class="fi" onchange="_draft.owner=this.value"><option value="" ${!o.owner?'selected':''} disabled>Selecciona owner…</option>${OWNERS.map(p=>`<option ${o.owner===p?'selected':''}>${p}</option>`).join("")}</select></div>
               <div class="fld"><label>Account/Sales Owner <span style="color:var(--t3);font-weight:400">(Song)</span></label><input class="fi" value="${o.songContact||''}" oninput="_draft.songContact=this.value"/></div>
               <div class="fld"><label>SA <span style="color:var(--t3);font-weight:400">(Solution Architect)</span></label><input class="fi" list="sa-list" value="${o.sa||''}" placeholder="Elegir o escribir nombre…" oninput="_draft.sa=this.value"/><datalist id="sa-list">${SA_PEOPLE.map(p=>`<option value="${p}">`).join("")}</datalist></div>
             </div>
@@ -760,7 +783,7 @@ async function addComment(isNew){
 }
 async function saveOpp(){
   const o=_draft;
-  if(!o.client||!o.name){alert("Indica cliente y nombre de oportunidad.");return;}
+  if(!o.client||!o.name||!o.owner){alert("Indica cliente, nombre de oportunidad y MO Owner.");return;}
   if(_draftIsNew){
     o.id=Date.now(); // simple unique id
     if(!o.statusLog||!o.statusLog.length)o.statusLog=[{status:o.status||"idle",ts:new Date().toISOString().slice(0,10)}];
@@ -772,7 +795,7 @@ async function saveOpp(){
   markDirty(o.id);
   if(!(await saveOpps()))return;   // keep modal open if save failed
   closeModal();
-  buildHead();renderKanban();renderTable();renderServices();renderKPIs();
+  renderAll();
 }
 async function deleteOpp(id){
   const o=OPPS.find(x=>String(x.id)===String(id));
@@ -782,7 +805,7 @@ async function deleteOpp(id){
   markDeleted(id);
   if(!(await saveOpps()))return;
   closeModal();
-  buildHead();renderKanban();renderTable();renderServices();renderKPIs();
+  renderAll();
 }
 function closeModal(){document.getElementById("modal-root").innerHTML="";}
 // Map Sales capabilities → S&D capability set (for the demand.capability field)
@@ -856,7 +879,7 @@ async function convertToDemand(oppId){
   await saveOpps();
 
   closeModal();
-  buildHead();renderKanban();renderTable();renderServices();renderKPIs();
+  renderAll();
   alert(`✅ Convertida.\n\nSe crearon ${totalPos} posiciones en Demand agrupadas como proyecto. Ve al módulo Supply & Demand → Demand (vista "Por proyecto") para staffearlas.`);
 }
 const WINPROB_PCT={Low:25,Mid:50,High:80};
@@ -887,7 +910,7 @@ function setView(v,btn){
 }
 (async function init(){
   await loadOpps();
-  buildHead();renderKanban();renderTable();renderServices();renderKPIs();
+  renderAll();
 })();
 </script>
 </body>
