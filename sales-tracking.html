@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sales Tracking · Command HUB</title>
-<meta name="build-stamp" content="2026-08-28 21:45" data-file="sales-tracking"/>
+<meta name="build-stamp" content="2026-09-30 11:25" data-file="sales-tracking"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -256,7 +256,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 <div id="modal-root"></div>
 
 <script>
-window.__BUILD__={file:"sales-tracking",stamp:"2026-08-28 21:45"};
+window.__BUILD__={file:"sales-tracking",stamp:"2026-09-30 11:25"};
 // ── Theme sync with parent shell ──
 (function(){
   function applyTheme(t){if(t==='dark')document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');}
@@ -310,25 +310,83 @@ const SB_KEY='sb_publishable_1SvgHd-wgfDHIoS8kj2UVw_t2xxCnWk';
 const SB_H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
 const SB_HW={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'resolution=merge-duplicates,return=minimal'};
 
-async function loadOpps(){
-  // Start empty. Only ever populate from what's actually saved in Supabase.
-  OPPS=[];
+// ── SAFE PERSISTENCE ──
+// Never overwrite the DB blindly: saves re-read the server copy and merge by id.
+let LOAD_OK=false;              // saves are blocked unless the last load succeeded
+const _dirty=new Set();         // ids created/edited locally since last save
+const _deleted=new Set();       // ids deleted locally since last save
+const markDirty=id=>_dirty.add(String(id));
+const markDeleted=id=>{_deleted.add(String(id));_dirty.delete(String(id));};
+
+// Local rolling snapshots (last 15) as an extra safety net for recovery
+function snapshot(list,reason){
   try{
-    const r=await fetch(SB_URL+'/sd_data?key=eq.sales_opps&select=data',{headers:SB_H,cache:'no-store'});
-    if(r.ok){
-      const rows=await r.json();
-      if(rows.length&&Array.isArray(rows[0].data))OPPS=rows[0].data;
-    }
-  }catch(e){console.warn('Sales load error:',e);}
+    const k='sales_opps_snapshots';
+    const arr=JSON.parse(localStorage.getItem(k)||'[]');
+    arr.unshift({ts:new Date().toISOString(),reason,count:list.length,data:list});
+    localStorage.setItem(k,JSON.stringify(arr.slice(0,15)));
+  }catch(e){}
+}
+async function fetchServerOpps(){
+  const r=await fetch(SB_URL+'/sd_data?key=eq.sales_opps&select=data',{headers:SB_H,cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const rows=await r.json();
+  return (rows.length&&Array.isArray(rows[0].data))?rows[0].data:[];
+}
+async function loadOpps(){
+  try{
+    OPPS=await fetchServerOpps();
+    LOAD_OK=true;
+    snapshot(OPPS,'load');
+  }catch(e){
+    console.warn('Sales load error:',e);
+    LOAD_OK=false;   // keep whatever is on screen, but block saving
+  }
+  renderSyncBanner();
 }
 async function saveOpps(){
+  if(!LOAD_OK){
+    alert("No se pudo cargar la base de datos al abrir el módulo.\n\nPara proteger las oportunidades existentes, el guardado está bloqueado. Recarga la página y vuelve a intentarlo.");
+    return false;
+  }
+  let server;
+  try{ server=await fetchServerOpps(); }
+  catch(e){ alert("Sin conexión con la base de datos. No se ha guardado nada para no sobrescribir datos. Inténtalo de nuevo."); return false; }
+  // Merge: server truth + my local creations/edits − my local deletions
+  const merged=server.filter(o=>!_deleted.has(String(o.id)));
+  OPPS.filter(o=>_dirty.has(String(o.id))).forEach(o=>{
+    const i=merged.findIndex(x=>String(x.id)===String(o.id));
+    if(i>=0)merged[i]=o; else merged.push(o);
+  });
   try{
-    await fetch(SB_URL+'/sd_data',{
-      method:'POST',headers:SB_HW,
-      body:JSON.stringify([{key:'sales_opps',data:OPPS,updated_at:new Date().toISOString()}])
-    });
-  }catch(e){console.warn('Sales save error:',e);}
+    const r=await fetch(SB_URL+'/sd_data',{method:'POST',headers:SB_HW,
+      body:JSON.stringify([{key:'sales_opps',data:merged,updated_at:new Date().toISOString()}])});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+  }catch(e){ alert("Error al guardar ("+e.message+"). Tus cambios siguen en pantalla; inténtalo de nuevo."); return false; }
+  OPPS=merged; _dirty.clear(); _deleted.clear();
+  snapshot(OPPS,'save');
+  return true;
 }
+function renderSyncBanner(){
+  let b=document.getElementById('sync-banner');
+  if(!b){b=document.createElement('div');b.id='sync-banner';const w=document.querySelector('.wrap');if(w)w.prepend(b);}
+  b.innerHTML=LOAD_OK?'':`<div style="display:flex;align-items:center;gap:12px;background:var(--red-bg);border:1px solid var(--red);color:var(--red);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px">
+    <span style="flex:1"><b>Sin conexión con la base de datos.</b> Para proteger tus oportunidades, el guardado está bloqueado hasta que se cargue correctamente.</span>
+    <button class="btn" onclick="retryLoad()">Reintentar</button></div>`;
+}
+async function retryLoad(){await loadOpps();buildHead();renderKanban();renderTable();renderServices();renderKPIs();}
+// Recovery helpers (browser console): salesBackups() lists local snapshots; salesRestore(i) merges one back (never deletes)
+window.salesBackups=()=>{const a=JSON.parse(localStorage.getItem('sales_opps_snapshots')||'[]');console.table(a.map((s,i)=>({i,ts:s.ts,reason:s.reason,count:s.count,clients:s.data.map(o=>o.client).join(', ')})));return a.length;};
+window.salesRestore=async(i)=>{
+  const a=JSON.parse(localStorage.getItem('sales_opps_snapshots')||'[]');const snap=a[i];if(!snap)return 'No existe esa copia';
+  const server=await fetchServerOpps();const ids=new Set(server.map(o=>String(o.id)));
+  const missing=snap.data.filter(o=>!ids.has(String(o.id)));
+  missing.forEach(o=>{OPPS.push(o);markDirty(o.id);});
+  if(!missing.length)return 'Nada que restaurar: todas las oportunidades de esa copia ya están en la BD';
+  LOAD_OK=true;const ok=await saveOpps();retryLoad();
+  return ok?`Restauradas ${missing.length}: `+missing.map(o=>o.client+' — '+o.name).join(' | '):'Fallo al guardar';
+};
+
 
 const fmtK=v=>v>=1000000?"€"+(v/1000000).toFixed(2)+"M":"€"+Math.round(v/1000)+"K";
 const fmtThousands=v=>{if(v===""||v==null)return"";const n=String(v).replace(/\D/g,"");if(!n)return"";return n.replace(/\B(?=(\d{3})+(?!\d))/g,".");};
@@ -695,7 +753,7 @@ async function addComment(isNew){
   // Persist immediately if this is an existing (already-saved) opportunity
   if(!isNew){
     const i=OPPS.findIndex(x=>String(x.id)===String(_draft.id));
-    if(i>=0){OPPS[i]=_draft;await saveOpps();}
+    if(i>=0){OPPS[i]=_draft;markDirty(_draft.id);await saveOpps();}
   }
   renderModal(isNew);
   setTimeout(()=>{const n=document.getElementById("new-comment");if(n)n.focus();},0);
@@ -708,10 +766,11 @@ async function saveOpp(){
     if(!o.statusLog||!o.statusLog.length)o.statusLog=[{status:o.status||"idle",ts:new Date().toISOString().slice(0,10)}];
     OPPS.push(o);
   } else {
-    const i=OPPS.findIndex(x=>x.id===o.id);
+    const i=OPPS.findIndex(x=>String(x.id)===String(o.id));
     if(i>=0)OPPS[i]=o; else OPPS.push(o);
   }
-  await saveOpps();
+  markDirty(o.id);
+  if(!(await saveOpps()))return;   // keep modal open if save failed
   closeModal();
   buildHead();renderKanban();renderTable();renderServices();renderKPIs();
 }
@@ -720,7 +779,8 @@ async function deleteOpp(id){
   if(!o)return;
   if(!confirm(`¿Eliminar la oportunidad "${o.client} — ${o.name}"? Esta acción no se puede deshacer.`))return;
   OPPS=OPPS.filter(x=>String(x.id)!==String(id));
-  await saveOpps();
+  markDeleted(id);
+  if(!(await saveOpps()))return;
   closeModal();
   buildHead();renderKanban();renderTable();renderServices();renderKPIs();
 }
@@ -792,6 +852,7 @@ async function convertToDemand(oppId){
   o.log.push({ts:new Date().toISOString().slice(0,10),txt:`✅ Convertida a demanda: ${totalPos} posiciones generadas en el módulo Demand (proyecto vinculado).`});
   const i=OPPS.findIndex(x=>String(x.id)===String(o.id));
   if(i>=0)OPPS[i]=o;
+  markDirty(o.id);
   await saveOpps();
 
   closeModal();
