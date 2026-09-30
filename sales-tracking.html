@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sales Tracking · Command HUB</title>
-<meta name="build-stamp" content="2026-09-30 12:03" data-file="sales-tracking"/>
+<meta name="build-stamp" content="2026-09-30 12:15" data-file="sales-tracking"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -256,7 +256,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 <div id="modal-root"></div>
 
 <script>
-window.__BUILD__={file:"sales-tracking",stamp:"2026-09-30 12:03"};
+window.__BUILD__={file:"sales-tracking",stamp:"2026-09-30 12:15"};
 // ── Theme sync with parent shell ──
 (function(){
   function applyTheme(t){if(t==='dark')document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');}
@@ -615,12 +615,19 @@ function togglePartner(p,on){
 // Slider for priority / win probability (3 levels)
 function render3Slider(field,levels,current,colorFn){
   const idx=Math.max(0,levels.indexOf(current));
-  return `<div class="slider-wrap">
+  return `<div class="slider-wrap" data-field="${field}">
     <input type="range" min="0" max="${levels.length-1}" step="1" value="${idx}" oninput="set3Slider('${field}',${JSON.stringify(levels).replace(/"/g,'&quot;')},this.value)"/>
     <div class="slider-labels">${levels.map((l,i)=>`<span class="${i===idx?'on':''}" onclick="set3Slider('${field}',${JSON.stringify(levels).replace(/"/g,'&quot;')},${i})">${l}</span>`).join("")}</div>
   </div>`;
 }
-function set3Slider(field,levels,i){_draft[field]=levels[parseInt(i)];renderModal(_draftIsNew);}
+function set3Slider(field,levels,i){
+  i=parseInt(i);
+  _draft[field]=levels[i];
+  const w=document.querySelector('.slider-wrap[data-field="'+field+'"]');
+  if(!w){renderModal(_draftIsNew);return;}
+  const r=w.querySelector('input[type=range]'); if(r&&String(r.value)!==String(i))r.value=i;
+  w.querySelectorAll('.slider-labels span').forEach((s,j)=>s.classList.toggle('on',j===i));
+}
 function addService(val){
   if(!val)return;
   if(!_draft.services)_draft.services=[];
@@ -638,6 +645,8 @@ function addService(val){
 }
 
 function renderModal(isNew){
+  const _mb=document.querySelector('#modal-root .mbody'); const _keepScroll=_mb?_mb.scrollTop:0;
+  requestAnimationFrame(()=>{const nb=document.querySelector('#modal-root .mbody'); if(nb)nb.scrollTop=_keepScroll;});
   const o=_draft;const fte=totalFTE(o);
   document.getElementById("modal-root").innerHTML=`
   <div class="ov" id="ov" onclick="if(event.target.id==='ov')closeModal()">
