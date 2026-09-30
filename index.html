@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-09-30 11:00" data-file="index"/>
+<meta name="build-stamp" content="2026-09-30 12:44" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -344,13 +344,65 @@ textarea.tfi{resize:vertical;min-height:70px}
 .cal-only .cal-mcell{min-height:120px;padding:5px}
 .cal-only .cal-chip{font-size:11px;padding:3px 6px}
 @media(max-width:1100px){.tc-split{grid-template-columns:1fr}}
+/* ═══ TASK MODAL v2: details + comments container ═══ */
+.tmodal.wide{max-width:1000px}
+.tm-split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;padding:18px 22px;overflow:hidden;flex:1;min-height:0}
+.tm-main{overflow-y:auto;min-width:0;padding-right:2px}
+.tm-row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.tm-grow{flex:1;min-width:150px}
+.tm-date{flex:0 0 170px}
+.tm-lockcol{flex:0 0 auto}
+.tm-lock{width:38px;height:37px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text3);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.tm-lock:hover:not(:disabled){border-color:var(--acc);color:var(--acc)}
+.tm-lock.on{background:var(--acc-bg);border-color:var(--acc);color:var(--acc)}
+.tm-lock:disabled{opacity:.45;cursor:not-allowed}
+.tm-comments{display:flex;flex-direction:column;min-height:0;max-height:62vh;background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tmc-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text)}
+.tmc-count{font-size:11px;font-weight:700;color:var(--text3);background:var(--surface);border-radius:20px;padding:1px 9px}
+.tmc-thread{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-height:180px}
+.tmc-empty{margin:auto;text-align:center;font-size:12px;color:var(--text3);line-height:1.6}
+.tmc-msg{display:flex;gap:8px;align-items:flex-start}
+.tmc-msg.me{flex-direction:row-reverse}
+.tmc-av{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--border);color:var(--text2);font-size:10px;font-weight:700;flex-shrink:0}
+.tmc-av.me{background:var(--acc);color:#fff}
+.tmc-bubble{max-width:82%;background:var(--surface);border:1px solid var(--border);border-radius:12px;border-top-left-radius:4px;padding:7px 10px}
+.tmc-msg.me .tmc-bubble{background:var(--acc-bg);border-color:var(--acc-border);border-top-left-radius:12px;border-top-right-radius:4px}
+.tmc-meta{font-size:10px;color:var(--text3);margin-bottom:2px}
+.tmc-meta b{color:var(--text2)}
+.tmc-txt{font-size:13px;color:var(--text);line-height:1.45;word-wrap:break-word}
+.mention{color:var(--acc);font-weight:700;background:var(--acc-bg);border-radius:4px;padding:0 3px}
+.tmc-compose{position:relative;display:flex;gap:8px;padding:10px;border-top:1px solid var(--border);background:var(--surface)}
+.tmc-send{display:flex;align-items:center;justify-content:center;background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important;min-width:40px}
+.mention-pop{position:absolute;left:10px;bottom:calc(100% + 4px);min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-md);padding:4px;display:none;z-index:5}
+.mention-pop.on{display:block}
+.mp-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;font-size:12px;cursor:pointer;color:var(--text)}
+.mp-item.on,.mp-item:hover{background:var(--acc-bg);color:var(--acc)}
+.mention-flag{font-size:10px;font-weight:700;color:#fff;background:var(--acc);border-radius:20px;padding:1px 7px}
+@media(max-width:860px){.tm-split{grid-template-columns:1fr;overflow-y:auto}.tm-comments{max-height:none}}
+/* ═══ NOTIFICATION BELL ═══ */
+.nb-wrap{position:relative}
+.nb-btn{position:relative;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
+.nb-btn:hover{border-color:var(--acc);color:var(--acc)}
+.nb-badge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:9px;background:#dc2626;color:#fff;font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--surface)}
+.nb-panel{position:absolute;right:0;top:calc(100% + 8px);width:360px;max-height:460px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-md),0 20px 50px rgba(0,0,0,.12);display:none;flex-direction:column;overflow:hidden;z-index:300}
+.nb-panel.on{display:flex}
+.nb-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.nb-head button{background:none;border:none;color:var(--acc);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer}
+.nb-list{overflow-y:auto}
+.nb-item{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer}
+.nb-item:hover{background:var(--surface2)}
+.nb-item.unread{background:var(--acc-bg)}
+.nb-t{font-size:12px;color:var(--text);line-height:1.4}
+.nb-x{font-size:12px;color:var(--text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.nb-when{font-size:10px;color:var(--text3);margin-top:3px}
+.nb-empty{padding:28px;text-align:center;font-size:12px;color:var(--text3)}
 /* ═══ CAPABILITY HIDDEN (reversible: delete this block to restore) ═══ */
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-09-30 11:00"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-09-30 12:44"};</script>
 </head>
 <body>
 
@@ -388,6 +440,10 @@ textarea.tfi{resize:vertical;min-height:70px}
       <span class="tb-brand-sub">Marketing Operations</span>
     </div>
     <div class="tb-r">
+      <div class="nb-wrap">
+        <button class="nb-btn" onclick="toggleNotifPanel(event)" title="Notificaciones"><i class="ti ti-bell"></i><span class="nb-badge" id="nb-badge"></span></button>
+        <div class="nb-panel" id="nb-panel"></div>
+      </div>
       <div class="tb-date" id="tb-date"></div>
       <div class="theme-toggle" onclick="toggleDark()" title="Cambiar tema">
         <i class="ti ti-sun" id="icon-sun"></i>
@@ -947,12 +1003,75 @@ async function quickUnassign(id,person){
   await patchTodo(id,{assigned:t.assigned});
 }
 
+// ═══ NOTIFICATIONS (@mentions) ═══
+let S_NOTIFS=[], _notifTimer=null;
+async function loadNotifs(){
+  if(!myName())return;
+  try{
+    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/notifications?recipient=eq.'+encodeURIComponent(myName())+'&order=created_at.desc&limit=40',{headers:TODO_SB_H,cache:'no-store'});
+    S_NOTIFS=r.ok?await r.json():[];
+  }catch(e){S_NOTIFS=[];}
+  renderBell();
+  if(document.getElementById('todo-list'))renderTodos();
+}
+function startNotifPolling(){if(_notifTimer)return;_notifTimer=setInterval(loadNotifs,60000);}
+async function sendMentionNotifs(t,entry,mentions){
+  const rows=mentions.map(u=>({id:'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),recipient:u,task_id:String(t.id),author:entry.by,excerpt:entry.txt.slice(0,140),read:false}));
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/notifications',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(rows)});}
+  catch(e){console.warn('notif error',e);}
+}
+function unreadFor(taskId){return S_NOTIFS.filter(n=>!n.read&&String(n.task_id)===String(taskId)).length;}
+function timeAgo(iso){const m=Math.round((Date.now()-new Date(iso))/60000);if(m<1)return'ahora';if(m<60)return m+' min';const h=Math.round(m/60);if(h<24)return h+' h';return Math.round(h/24)+' d';}
+function renderBell(){
+  const badge=document.getElementById('nb-badge'), panel=document.getElementById('nb-panel');
+  if(!badge)return;
+  const un=S_NOTIFS.filter(n=>!n.read).length;
+  badge.textContent=un>9?'9+':un; badge.style.display=un?'flex':'none';
+  if(!panel)return;
+  panel.innerHTML=`<div class="nb-head"><b>Notificaciones</b>${un?`<button onclick="markAllNotifsRead()">Marcar todas como leídas</button>`:''}</div>
+    <div class="nb-list">${S_NOTIFS.length?S_NOTIFS.map(n=>{
+      const t=S_TODOS.find(x=>String(x.id)===String(n.task_id));
+      return `<div class="nb-item ${n.read?'':'unread'}" onclick="openNotif('${n.id}')">
+        <span class="tmc-av">${initials(n.author||'?')}</span>
+        <div style="flex:1;min-width:0">
+          <div class="nb-t"><b>${escHtml(firstOf(n.author||'—'))}</b> te mencionó en <b>${escHtml(t?t.text:'una tarea')}</b></div>
+          <div class="nb-x">${renderCommentTxt(n.excerpt||'')}</div>
+          <div class="nb-when">${timeAgo(n.created_at)}</div>
+        </div>
+      </div>`;}).join(""):'<div class="nb-empty">No tienes menciones.</div>'}</div>`;
+}
+function toggleNotifPanel(e){
+  e.stopPropagation();
+  const p=document.getElementById('nb-panel'); if(!p)return;
+  p.classList.toggle('on'); if(p.classList.contains('on'))loadNotifs();
+}
+document.addEventListener('click',e=>{const p=document.getElementById('nb-panel');if(p&&p.classList.contains('on')&&!e.target.closest('.nb-wrap'))p.classList.remove('on');});
+async function markNotifRead(id){
+  const n=S_NOTIFS.find(x=>x.id===id); if(!n||n.read)return; n.read=true; renderBell();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/notifications?id=eq.'+encodeURIComponent(id),{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({read:true})});}catch(e){}
+}
+async function markAllNotifsRead(){
+  S_NOTIFS.forEach(n=>n.read=true); renderBell(); if(document.getElementById('todo-list'))renderTodos();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/notifications?recipient=eq.'+encodeURIComponent(myName())+'&read=eq.false',{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({read:true})});}catch(e){}
+}
+async function openNotif(id){
+  const n=S_NOTIFS.find(x=>x.id===id); if(!n)return;
+  document.getElementById('nb-panel').classList.remove('on');
+  const hv=document.getElementById('home-view'); if(hv&&getComputedStyle(hv).display==='none')navTo('home');
+  if(!S_TODOS.find(x=>String(x.id)===String(n.task_id)))await loadTodos();
+  if(S_TODOS.find(x=>String(x.id)===String(n.task_id)))openTaskModal(n.task_id);
+  else alert('Esta tarea ya no existe o es privada.');
+  // opening a task clears all its mentions for me
+  S_NOTIFS.filter(x=>!x.read&&String(x.task_id)===String(n.task_id)).forEach(x=>markNotifRead(x.id));
+}
+
 // ═══ TASK DETAIL MODAL ═══
 let _taskDraft=null, _taskCommentIdx=null;
 function openTaskModal(id){
   const t=S_TODOS.find(x=>String(x.id)===String(id));
   if(!t)return;
   _taskDraft=JSON.parse(JSON.stringify(t));
+  S_NOTIFS.filter(x=>!x.read&&String(x.task_id)===String(id)).forEach(x=>markNotifRead(x.id));
   if(!Array.isArray(_taskDraft.assigned))_taskDraft.assigned=[];
   if(!Array.isArray(_taskDraft.log))_taskDraft.log=[];
   _taskCommentIdx=null;
@@ -960,78 +1079,132 @@ function openTaskModal(id){
 }
 function closeTaskModal(){document.getElementById("task-modal-root").innerHTML="";_taskDraft=null;}
 
-function renderTaskComment(){
-  const log=_taskDraft.log||[];
-  if(!log.length)return '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;min-height:52px">Sin comentarios.</div>';
-  const idx=_taskCommentIdx===null?log.length-1:_taskCommentIdx;
-  const l=log[idx];
-  const isRecent=idx===log.length-1;
-  const canBack=idx>0, canFwd=idx<log.length-1;
-  return `<button class="tlog-btn" ${canBack?'':'disabled'} onclick="navTaskComment(-1)" title="Anterior">‹</button>
-    <div class="tlog-card"><div class="lts">${fmtTaskDate(l.ts)}${isRecent?' · más reciente':''} · ${idx+1} de ${log.length}</div><div class="ltx">${l.txt}</div></div>
-    <button class="tlog-btn" ${canFwd?'':'disabled'} onclick="navTaskComment(1)" title="Siguiente">›</button>`;
+function escHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+const normTxt=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const firstOf=u=>String(u).split(" ")[0];
+function userByFirst(fn){return TODO_USERS.find(u=>normTxt(firstOf(u))===normTxt(fn));}
+function parseMentions(txt){
+  const out=new Set();
+  (String(txt).match(/@([\p{L}]+)/gu)||[]).forEach(m=>{const u=userByFirst(m.slice(1));if(u)out.add(u);});
+  return [...out];
 }
-function navTaskComment(dir){
-  const len=(_taskDraft.log||[]).length;
-  const cur=_taskCommentIdx===null?len-1:_taskCommentIdx;
-  let n=cur+dir; if(n<0)n=0; if(n>len-1)n=len-1;
-  _taskCommentIdx=n;
-  const nav=document.getElementById("tlog-nav");
-  if(nav)nav.innerHTML=renderTaskComment();
+function renderCommentTxt(txt){
+  return escHtml(txt).replace(/@([\p{L}]+)/gu,(m,fn)=>userByFirst(fn)?`<span class="mention">@${escHtml(fn)}</span>`:m);
+}
+function renderTaskThread(){
+  const log=_taskDraft.log||[];
+  if(!log.length)return '<div class="tmc-empty">Sin comentarios todavía.<br>Menciona a alguien con <b>@</b> para avisarle.</div>';
+  return log.map(l=>{
+    const me=l.by&&l.by===myName();
+    return `<div class="tmc-msg ${me?'me':''}">
+      <span class="tmc-av ${me?'me':''}" title="${escHtml(l.by||'—')}">${initials(l.by||'?')}</span>
+      <div class="tmc-bubble">
+        <div class="tmc-meta"><b>${escHtml(l.by?firstOf(l.by):'—')}</b> · ${fmtTaskDate(l.ts)}</div>
+        <div class="tmc-txt">${renderCommentTxt(l.txt)}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+function scrollThreadBottom(){requestAnimationFrame(()=>{const th=document.getElementById('tmc-thread');if(th)th.scrollTop=th.scrollHeight;});}
+
+// @-autocomplete
+let _mIdx=0,_mList=[];
+function mentionInput(inp){
+  const pos=inp.selectionStart, before=inp.value.slice(0,pos);
+  const m=before.match(/@([\p{L}]*)$/u);
+  const pop=document.getElementById('mention-pop');
+  if(!m){pop.classList.remove('on');_mList=[];return;}
+  const q=normTxt(m[1]);
+  _mList=TODO_USERS.filter(u=>u!==myName()&&normTxt(firstOf(u)).startsWith(q));
+  if(!_mList.length){pop.classList.remove('on');return;}
+  _mIdx=Math.min(_mIdx,_mList.length-1);
+  pop.innerHTML=_mList.map((u,i)=>`<div class="mp-item ${i===_mIdx?'on':''}" onmousedown="event.preventDefault();pickMention(${i})"><span class="tmc-av">${initials(u)}</span>${u}</div>`).join("");
+  pop.classList.add('on');
+}
+function pickMention(i){
+  const inp=document.getElementById('task-comment-inp'); const u=_mList[i]; if(!inp||!u)return;
+  const pos=inp.selectionStart, before=inp.value.slice(0,pos).replace(/@([\p{L}]*)$/u,'@'+firstOf(u)+' ');
+  inp.value=before+inp.value.slice(pos); inp.focus(); inp.setSelectionRange(before.length,before.length);
+  document.getElementById('mention-pop').classList.remove('on'); _mList=[]; _mIdx=0;
+}
+function mentionKey(e,inp){
+  const open=document.getElementById('mention-pop').classList.contains('on')&&_mList.length;
+  if(open&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();_mIdx=(_mIdx+(e.key==='ArrowDown'?1:-1)+_mList.length)%_mList.length;mentionInput(inp);return;}
+  if(open&&(e.key==='Enter'||e.key==='Tab')){e.preventDefault();pickMention(_mIdx);return;}
+  if(e.key==='Escape'){document.getElementById('mention-pop').classList.remove('on');return;}
+  if(e.key==='Enter'){e.preventDefault();addTaskComment();}
 }
 function fmtTaskDate(d){try{return new Date(d).toLocaleDateString("es-ES",{day:"2-digit",month:"short"});}catch(e){return d;}}
 
 function renderTaskModal(){
   const t=_taskDraft;
   const iAmCreator=creatorOf(t)===myName();
-  const iAmOwner=t.owner===myName();
-  const canManage=iAmCreator||iAmOwner||isSuperAdmin();   // edit fields / delete (superadmin: all)
-  const ro=!canManage;                     // read-only for fields (but everyone can comment)
+  const canManage=t.owner===myName()||iAmCreator||isSuperAdmin();
+  const ro=!canManage;
   const root=document.getElementById("task-modal-root");
   root.innerHTML=`
   <div class="tmov" id="tmov" onclick="if(event.target.id==='tmov')closeTaskModal()">
-    <div class="tmodal">
+    <div class="tmodal wide">
       <div class="tmh">
-        <div><h3>Detalle de tarea</h3><div style="font-size:12px;color:var(--text3);margin-top:2px">${t.private?'🔒 Privada · ':''}Responsable: ${t.owner||'—'}${creatorOf(t)&&creatorOf(t)!==t.owner?' · creada por '+creatorOf(t):''}${ro?' · 👁 solo lectura':''}</div></div>
+        <div><h3>Detalle de tarea</h3><div style="font-size:12px;color:var(--text3);margin-top:2px">Responsable: ${t.owner||'—'}${creatorOf(t)&&creatorOf(t)!==t.owner?' · creada por '+creatorOf(t):''}${ro?' · 👁 solo lectura':''}</div></div>
         <button class="tclose" onclick="closeTaskModal()">✕</button>
       </div>
-      <div class="tmb">
-        <div class="tfld"><label>Tarea</label><input class="tfi" value="${(t.text||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.text=this.value"'}/></div>
-        <div class="tfld"><label>Descripción</label><textarea class="tfi" ${ro?'disabled':'oninput="_taskDraft.description=this.value"'} placeholder="Detalla la tarea…">${t.description||''}</textarea></div>
-        <div class="tchk-row" style="gap:12px">
-          <div class="tfld" style="flex:1;min-width:150px"><label>Responsable (owner)</label>
-            <select class="tfi" ${ro?'disabled':'onchange="_taskDraft.owner=this.value"'}>
-              ${TODO_USERS.map(u=>`<option ${t.owner===u?'selected':''}>${u}</option>`).join("")}
-            </select>
+      <div class="tm-split">
+        <div class="tm-main">
+          <div class="tfld"><label>Tarea</label><input class="tfi" value="${(t.text||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.text=this.value"'}/></div>
+          <div class="tfld"><label>Descripción</label><textarea class="tfi" ${ro?'disabled':'oninput="_taskDraft.description=this.value"'} placeholder="Detalla la tarea…">${t.description||''}</textarea></div>
+          <div class="tm-row">
+            <div class="tfld tm-grow"><label>Responsable</label>
+              <select class="tfi" ${ro?'disabled':'onchange="_taskDraft.owner=this.value"'}>
+                ${TODO_USERS.map(u=>`<option ${t.owner===u?'selected':''}>${u}</option>`).join("")}
+              </select>
+            </div>
+            <div class="tfld tm-grow"><label>Grupo / área</label>
+              <input class="tfi" list="task-groups" value="${(t.grp||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.grp=this.value"'} placeholder="Sin grupo"/>
+              <datalist id="task-groups">${getTaskGroups().map(g=>`<option value="${g}">`).join("")}</datalist>
+            </div>
+            <div class="tfld tm-lockcol"><label>&nbsp;</label>
+              <button type="button" id="tm-lock" class="tm-lock ${t.private?'on':''}" ${iAmCreator?'onclick="toggleDraftPrivate()"':'disabled'} title="${iAmCreator?(t.private?'Privada · solo tú la ves':'Pública · clic para hacerla privada'):'Solo el creador puede cambiar la privacidad'}"><i class="ti ti-lock${t.private?'':'-open'}"></i></button>
+            </div>
           </div>
-          <div class="tfld" style="flex:1;min-width:150px"><label>Fecha límite</label><input type="date" class="tfi" value="${t.deadline||''}" ${ro?'disabled':'onchange="_taskDraft.deadline=this.value"'}/></div>
-        </div>
-        <div class="tfld"><label>Grupo / área <span style="font-weight:400;color:var(--text3)">· elige o escribe uno nuevo</span></label>
-          <input class="tfi" list="task-groups" value="${(t.grp||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.grp=this.value"'} placeholder="Sin grupo" style="max-width:280px"/>
-          <datalist id="task-groups">${getTaskGroups().map(g=>`<option value="${g}">`).join("")}</datalist>
-        </div>
-        <div class="tfld"><label>Prioridad</label>
-          <div class="tchk-row">
-            ${PRIO_LEVELS.map(p=>`<span class="prio-chip ${prioOf(t)===p.id?'on':''}" style="${prioOf(t)===p.id?`border-color:${p.color};color:${p.color};background:${p.color}18`:''}" ${ro?'':`onclick="_taskDraft.priority='${p.id}';renderTaskModal()"`}><span style="display:inline-flex;width:14px;height:14px">${PRIO_ICON[p.id]}</span> ${p.label}</span>`).join("")}
-          </div>
-        </div>
-        ${iAmCreator?`<div class="tfld"><label>Privacidad</label>
-          <label class="priv-toggle"><input type="checkbox" ${t.private?'checked':''} onchange="_taskDraft.private=this.checked;renderTaskModal()"/> <span>🔒 Privada · solo tú (creador) la ves</span></label>
-        </div>`:''}
-        <div class="tfld"><label>Comentarios <span style="font-weight:400;color:var(--text3)">· cualquiera puede comentar</span></label>
-          <div class="tlog">
-            <div class="tlog-nav" id="tlog-nav">${renderTaskComment()}</div>
-            <div class="tlog-add"><input id="task-comment-inp" class="tfi" placeholder="Añadir comentario…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskComment();}"/><button class="todo-btn" onclick="addTaskComment()">+ Añadir</button></div>
+          <div class="tm-row">
+            <div class="tfld tm-date"><label>Fecha límite</label><input type="date" class="tfi" value="${t.deadline||''}" ${ro?'disabled':'onchange="_taskDraft.deadline=this.value"'}/></div>
+            <div class="tfld tm-grow"><label>Prioridad</label>
+              <div class="tchk-row" id="tm-prio">${renderTaskPrioChips(ro)}</div>
+            </div>
           </div>
         </div>
+        <aside class="tm-comments">
+          <div class="tmc-head"><span>Comentarios</span><span class="tmc-count" id="tmc-count">${(t.log||[]).length}</span></div>
+          <div class="tmc-thread" id="tmc-thread">${renderTaskThread()}</div>
+          <div class="tmc-compose">
+            <div class="mention-pop" id="mention-pop"></div>
+            <input id="task-comment-inp" class="tfi" placeholder="Escribe un comentario… usa @ para mencionar" autocomplete="off"
+              oninput="mentionInput(this)" onkeydown="mentionKey(event,this)"/>
+            <button class="todo-btn tmc-send" onclick="addTaskComment()" title="Enviar"><i class="ti ti-send"></i></button>
+          </div>
+        </aside>
       </div>
       <div class="tmf">
-        ${canManage?`<button class="todo-btn" style="background:var(--acc);color:#fff" onclick="saveTask()">Guardar</button>`:`<button class="todo-btn" style="background:var(--acc);color:#fff" onclick="saveTaskComment()">Guardar comentario</button>`}
+        ${canManage?`<button class="todo-btn" style="background:var(--acc);color:#fff" onclick="saveTask()">Guardar</button>`:''}
         <div style="flex:1"></div>
         <button class="todo-btn" onclick="closeTaskModal()">${canManage?'Cancelar':'Cerrar'}</button>
       </div>
     </div>
   </div>`;
+  scrollThreadBottom();
+}
+function renderTaskPrioChips(ro){
+  const t=_taskDraft;
+  return PRIO_LEVELS.map(p=>`<span class="prio-chip ${prioOf(t)===p.id?'on':''}" style="${prioOf(t)===p.id?`border-color:${p.color};color:${p.color};background:${p.color}18`:''}" ${ro?'':`onclick="setDraftPrio('${p.id}')"`}><span style="display:inline-flex;width:14px;height:14px">${PRIO_ICON[p.id]}</span> ${p.label}</span>`).join("");
+}
+function setDraftPrio(id){_taskDraft.priority=id;const w=document.getElementById('tm-prio');if(w)w.innerHTML=renderTaskPrioChips(false);}
+function toggleDraftPrivate(){
+  _taskDraft.private=!_taskDraft.private;
+  const b=document.getElementById('tm-lock'); if(!b)return;
+  b.classList.toggle('on',_taskDraft.private);
+  b.innerHTML=`<i class="ti ti-lock${_taskDraft.private?'':'-open'}"></i>`;
+  b.title=_taskDraft.private?'Privada · solo tú la ves':'Pública · clic para hacerla privada';
 }
 
 function toggleTaskAssign(u){
@@ -1040,20 +1213,36 @@ function toggleTaskAssign(u){
   else _taskDraft.assigned.push(u);
   renderTaskModal();
 }
-function addTaskComment(){
+async function addTaskComment(){
   const inp=document.getElementById("task-comment-inp");
-  if(!inp||!inp.value.trim())return;
-  if(!Array.isArray(_taskDraft.log))_taskDraft.log=[];
-  _taskDraft.log.push({ts:new Date().toISOString().slice(0,10),txt:inp.value.trim()});
-  _taskCommentIdx=null;
-  renderTaskModal();
-  setTimeout(()=>{const n=document.getElementById("task-comment-inp");if(n)n.focus();},0);
+  if(!inp||!inp.value.trim()||!_taskDraft)return;
+  const txt=inp.value.trim();
+  const mentions=parseMentions(txt).filter(u=>u!==myName());
+  const entry={ts:new Date().toISOString(),txt,by:myName(),mentions};
+  inp.value="";
+  // Re-read the server log first so concurrent comments from others are never overwritten
+  let log=Array.isArray(_taskDraft.log)?_taskDraft.log.slice():[];
+  try{
+    const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(_taskDraft.id)+'&select=log',{headers:TODO_SB_H,cache:'no-store'});
+    if(r.ok){const rows=await r.json();if(rows.length&&Array.isArray(rows[0].log))log=rows[0].log;}
+  }catch(e){}
+  log.push(entry);
+  _taskDraft.log=log;
+  const live=S_TODOS.find(x=>String(x.id)===String(_taskDraft.id)); if(live)live.log=log;
+  const th=document.getElementById('tmc-thread'); if(th)th.innerHTML=renderTaskThread();
+  const cnt=document.getElementById('tmc-count'); if(cnt)cnt.textContent=log.length;
+  scrollThreadBottom();
+  inp.focus();
+  try{
+    await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(_taskDraft.id),{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({log})});
+  }catch(e){console.warn('comment save error',e);}
+  if(mentions.length)await sendMentionNotifs(_taskDraft,entry,mentions);
 }
 async function saveTask(){
   const t=_taskDraft;
   const grp=(t.grp&&t.grp.trim())?t.grp.trim():null;
   const priority=t.priority||'mid';
-  const fields={text:t.text,description:t.description||null,deadline:t.deadline||null,assigned:t.assigned,log:t.log,grp,priority,owner:t.owner,private:!!t.private};
+  const fields={text:t.text,description:t.description||null,deadline:t.deadline||null,grp,priority,owner:t.owner,private:!!t.private};
   const live=S_TODOS.find(x=>String(x.id)===String(t.id));
   if(live)Object.assign(live,fields);
   closeTaskModal();
@@ -1246,6 +1435,7 @@ function renderTodos(){
         <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span class="demand-tag">DEMAND</span>`:""}</div>
         <div class="todo-right">
           ${isDemand?`<span style="font-size:11px;color:var(--text3);white-space:nowrap">gestionar en Supply</span>`:''}
+          ${unreadFor(t.id)?`<span class="mention-flag" title="Te han mencionado">@${unreadFor(t.id)}</span>`:''}
           <span class="own-bubble ${isOwner(t)?'me':''}" title="Responsable: ${t.owner||'—'}"><b>${initials(t.owner)}</b>${(t.owner||'—').split(" ")[0]}</span>
           ${isDemand?'':lockBtn}
           ${!isDemand&&canEdit?`<button class="todo-del" title="Eliminar" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`:''}
@@ -1435,6 +1625,8 @@ async function showHome(){
   renderTodos();
   // Init the tasks/calendar split panels (both visible by default)
   applyPanels();
+  // Mentions: load now and keep polling
+  loadNotifs(); startNotifPolling();
   // Project row click delegation (must run after innerHTML is set)
   document.querySelectorAll('#home-view .proj-row').forEach(tr=>{
     tr.addEventListener('click',()=>navTo('pm'));
