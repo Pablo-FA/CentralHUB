@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-09-30 12:44" data-file="index"/>
+<meta name="build-stamp" content="2026-09-30 12:51" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -344,41 +344,62 @@ textarea.tfi{resize:vertical;min-height:70px}
 .cal-only .cal-mcell{min-height:120px;padding:5px}
 .cal-only .cal-chip{font-size:11px;padding:3px 6px}
 @media(max-width:1100px){.tc-split{grid-template-columns:1fr}}
-/* ═══ TASK MODAL v2: details + comments container ═══ */
-.tmodal.wide{max-width:1000px}
-.tm-split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;padding:18px 22px;overflow:hidden;flex:1;min-height:0}
-.tm-main{overflow-y:auto;min-width:0;padding-right:2px}
-.tm-row{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
-.tm-grow{flex:1;min-width:150px}
-.tm-date{flex:0 0 170px}
-.tm-lockcol{flex:0 0 auto}
-.tm-lock{width:38px;height:37px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text3);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+/* ═══ TASK MODAL v3: two stacked frames + clean grid ═══ */
+.tm-stack{width:100%;max-width:640px;display:flex;flex-direction:column;gap:12px;margin:0 auto}
+.tm-frame{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.tm-stack .tmodal{max-width:none;max-height:none}
+.tm-stack .tmb{overflow:visible}
+/* 3-column grid: two equal columns + 38px lock column → every row shares the same edges */
+.tm-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 38px;column-gap:12px;row-gap:18px}
+.tm-grid .tfld{margin:0;min-width:0}
+.tm-grid .tfld label{display:block;font-size:11px;font-weight:600;color:var(--text3);margin-bottom:6px;line-height:1.2}
+.tm-full{grid-column:1 / -1}
+.tm-span2{grid-column:2 / -1}
+.tm-lockcell{align-self:end}
+/* unified controls: same height, border, radius, background */
+.tm-ctl{height:38px;padding:0 12px;box-sizing:border-box;font-size:13px;line-height:38px}
+.tm-grid textarea.tfi{min-height:84px;padding:10px 12px;box-sizing:border-box;line-height:1.5}
+.tm-select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:34px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center}
+.tm-grid input[type=date].tm-ctl{line-height:normal}
+.tm-lock{width:38px;height:38px;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text3);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
 .tm-lock:hover:not(:disabled){border-color:var(--acc);color:var(--acc)}
 .tm-lock.on{background:var(--acc-bg);border-color:var(--acc);color:var(--acc)}
 .tm-lock:disabled{opacity:.45;cursor:not-allowed}
-.tm-comments{display:flex;flex-direction:column;min-height:0;max-height:62vh;background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.tmc-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text)}
-.tmc-count{font-size:11px;font-weight:700;color:var(--text3);background:var(--surface);border-radius:20px;padding:1px 9px}
-.tmc-thread{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-height:180px}
+/* priority segmented control */
+.tm-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;height:38px}
+.tm-seg-btn{display:flex;align-items:center;justify-content:center;gap:6px;height:38px;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text2);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .12s}
+.tm-seg-btn:hover:not(:disabled):not(.on){border-color:var(--border2);color:var(--text)}
+.tm-seg-btn:disabled{cursor:default}
+.tm-seg-ic{display:inline-flex;width:14px;height:14px}
+.tm-seg-ic svg{width:14px!important;height:14px!important}
+/* comments frame */
+.tm-comments{display:flex;flex-direction:column}
+.tmc-head{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text)}
+.tmc-count{font-size:11px;font-weight:700;color:var(--text3);background:var(--surface2);border-radius:20px;padding:1px 9px}
+.tmc-thread{overflow-y:auto;padding:14px 22px;display:flex;flex-direction:column;gap:10px;min-height:110px;max-height:300px}
 .tmc-empty{margin:auto;text-align:center;font-size:12px;color:var(--text3);line-height:1.6}
 .tmc-msg{display:flex;gap:8px;align-items:flex-start}
 .tmc-msg.me{flex-direction:row-reverse}
 .tmc-av{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--border);color:var(--text2);font-size:10px;font-weight:700;flex-shrink:0}
 .tmc-av.me{background:var(--acc);color:#fff}
-.tmc-bubble{max-width:82%;background:var(--surface);border:1px solid var(--border);border-radius:12px;border-top-left-radius:4px;padding:7px 10px}
+.tmc-bubble{max-width:80%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;border-top-left-radius:4px;padding:7px 11px}
 .tmc-msg.me .tmc-bubble{background:var(--acc-bg);border-color:var(--acc-border);border-top-left-radius:12px;border-top-right-radius:4px}
 .tmc-meta{font-size:10px;color:var(--text3);margin-bottom:2px}
 .tmc-meta b{color:var(--text2)}
 .tmc-txt{font-size:13px;color:var(--text);line-height:1.45;word-wrap:break-word}
 .mention{color:var(--acc);font-weight:700;background:var(--acc-bg);border-radius:4px;padding:0 3px}
-.tmc-compose{position:relative;display:flex;gap:8px;padding:10px;border-top:1px solid var(--border);background:var(--surface)}
-.tmc-send{display:flex;align-items:center;justify-content:center;background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important;min-width:40px}
-.mention-pop{position:absolute;left:10px;bottom:calc(100% + 4px);min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-md);padding:4px;display:none;z-index:5}
+.tmc-compose{position:relative;display:flex;gap:10px;padding:14px 22px;border-top:1px solid var(--border)}
+.tmc-compose .tfi{flex:1}
+.tmc-send{width:38px;height:38px;flex-shrink:0;border:none;border-radius:8px;background:var(--acc);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.tmc-send:hover{filter:brightness(1.08)}
+.mention-pop{position:absolute;left:22px;bottom:calc(100% - 8px);min-width:220px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-md),0 12px 30px rgba(0,0,0,.18);padding:4px;display:none;z-index:5}
 .mention-pop.on{display:block}
 .mp-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;font-size:12px;cursor:pointer;color:var(--text)}
 .mp-item.on,.mp-item:hover{background:var(--acc-bg);color:var(--acc)}
 .mention-flag{font-size:10px;font-weight:700;color:#fff;background:var(--acc);border-radius:20px;padding:1px 7px}
-@media(max-width:860px){.tm-split{grid-template-columns:1fr;overflow-y:auto}.tm-comments{max-height:none}}
+@media(max-width:560px){.tm-grid{grid-template-columns:minmax(0,1fr) 38px}.tm-grid>.tfld:not(.tm-lockcell){grid-column:1 / -1}.tm-lockcell{grid-column:2;grid-row:auto}.tm-span2{grid-column:1 / -1}}
 /* ═══ NOTIFICATION BELL ═══ */
 .nb-wrap{position:relative}
 .nb-btn{position:relative;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
@@ -402,7 +423,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-09-30 12:44"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-09-30 12:51"};</script>
 </head>
 <body>
 
@@ -1143,52 +1164,55 @@ function renderTaskModal(){
   const ro=!canManage;
   const root=document.getElementById("task-modal-root");
   root.innerHTML=`
-  <div class="tmov" id="tmov" onclick="if(event.target.id==='tmov')closeTaskModal()">
-    <div class="tmodal wide">
-      <div class="tmh">
-        <div><h3>Detalle de tarea</h3><div style="font-size:12px;color:var(--text3);margin-top:2px">Responsable: ${t.owner||'—'}${creatorOf(t)&&creatorOf(t)!==t.owner?' · creada por '+creatorOf(t):''}${ro?' · 👁 solo lectura':''}</div></div>
-        <button class="tclose" onclick="closeTaskModal()">✕</button>
-      </div>
-      <div class="tm-split">
-        <div class="tm-main">
-          <div class="tfld"><label>Tarea</label><input class="tfi" value="${(t.text||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.text=this.value"'}/></div>
-          <div class="tfld"><label>Descripción</label><textarea class="tfi" ${ro?'disabled':'oninput="_taskDraft.description=this.value"'} placeholder="Detalla la tarea…">${t.description||''}</textarea></div>
-          <div class="tm-row">
-            <div class="tfld tm-grow"><label>Responsable</label>
-              <select class="tfi" ${ro?'disabled':'onchange="_taskDraft.owner=this.value"'}>
+  <div class="tmov" id="tmov" onclick="if(event.target.id==='tmov'||event.target.id==='tm-stack')closeTaskModal()">
+    <div class="tm-stack" id="tm-stack">
+      <!-- Frame 1 · task details -->
+      <div class="tmodal tm-frame">
+        <div class="tmh">
+          <div><h3>Detalle de tarea</h3><div style="font-size:12px;color:var(--text3);margin-top:2px">Responsable: ${t.owner||'—'}${creatorOf(t)&&creatorOf(t)!==t.owner?' · creada por '+creatorOf(t):''}${ro?' · 👁 solo lectura':''}</div></div>
+          <button class="tclose" onclick="closeTaskModal()">✕</button>
+        </div>
+        <div class="tmb">
+          <div class="tm-grid">
+            <div class="tfld tm-full"><label>Tarea</label><input class="tfi tm-ctl" value="${(t.text||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.text=this.value"'}/></div>
+            <div class="tfld tm-full"><label>Descripción</label><textarea class="tfi" ${ro?'disabled':'oninput="_taskDraft.description=this.value"'} placeholder="Detalla la tarea…">${t.description||''}</textarea></div>
+
+            <div class="tfld"><label>Responsable</label>
+              <select class="tfi tm-ctl tm-select" ${ro?'disabled':'onchange="_taskDraft.owner=this.value"'}>
                 ${TODO_USERS.map(u=>`<option ${t.owner===u?'selected':''}>${u}</option>`).join("")}
               </select>
             </div>
-            <div class="tfld tm-grow"><label>Grupo / área</label>
-              <input class="tfi" list="task-groups" value="${(t.grp||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.grp=this.value"'} placeholder="Sin grupo"/>
+            <div class="tfld"><label>Grupo / área</label>
+              <input class="tfi tm-ctl" list="task-groups" value="${(t.grp||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.grp=this.value"'} placeholder="Sin grupo"/>
               <datalist id="task-groups">${getTaskGroups().map(g=>`<option value="${g}">`).join("")}</datalist>
             </div>
-            <div class="tfld tm-lockcol"><label>&nbsp;</label>
+            <div class="tfld tm-lockcell">
               <button type="button" id="tm-lock" class="tm-lock ${t.private?'on':''}" ${iAmCreator?'onclick="toggleDraftPrivate()"':'disabled'} title="${iAmCreator?(t.private?'Privada · solo tú la ves':'Pública · clic para hacerla privada'):'Solo el creador puede cambiar la privacidad'}"><i class="ti ti-lock${t.private?'':'-open'}"></i></button>
             </div>
-          </div>
-          <div class="tm-row">
-            <div class="tfld tm-date"><label>Fecha límite</label><input type="date" class="tfi" value="${t.deadline||''}" ${ro?'disabled':'onchange="_taskDraft.deadline=this.value"'}/></div>
-            <div class="tfld tm-grow"><label>Prioridad</label>
-              <div class="tchk-row" id="tm-prio">${renderTaskPrioChips(ro)}</div>
+
+            <div class="tfld"><label>Fecha límite</label><input type="date" class="tfi tm-ctl" value="${t.deadline||''}" ${ro?'disabled':'onchange="_taskDraft.deadline=this.value"'}/></div>
+            <div class="tfld tm-span2"><label>Prioridad</label>
+              <div class="tm-seg" id="tm-prio">${renderTaskPrioChips(ro)}</div>
             </div>
           </div>
         </div>
-        <aside class="tm-comments">
-          <div class="tmc-head"><span>Comentarios</span><span class="tmc-count" id="tmc-count">${(t.log||[]).length}</span></div>
-          <div class="tmc-thread" id="tmc-thread">${renderTaskThread()}</div>
-          <div class="tmc-compose">
-            <div class="mention-pop" id="mention-pop"></div>
-            <input id="task-comment-inp" class="tfi" placeholder="Escribe un comentario… usa @ para mencionar" autocomplete="off"
-              oninput="mentionInput(this)" onkeydown="mentionKey(event,this)"/>
-            <button class="todo-btn tmc-send" onclick="addTaskComment()" title="Enviar"><i class="ti ti-send"></i></button>
-          </div>
-        </aside>
+        <div class="tmf">
+          ${canManage?`<button class="todo-btn" style="background:var(--acc);color:#fff;border-color:var(--acc)" onclick="saveTask()">Guardar</button>`:''}
+          <div style="flex:1"></div>
+          <button class="todo-btn" onclick="closeTaskModal()">${canManage?'Cancelar':'Cerrar'}</button>
+        </div>
       </div>
-      <div class="tmf">
-        ${canManage?`<button class="todo-btn" style="background:var(--acc);color:#fff" onclick="saveTask()">Guardar</button>`:''}
-        <div style="flex:1"></div>
-        <button class="todo-btn" onclick="closeTaskModal()">${canManage?'Cancelar':'Cerrar'}</button>
+
+      <!-- Frame 2 · comments -->
+      <div class="tm-frame tm-comments">
+        <div class="tmc-head"><span>Comentarios</span><span class="tmc-count" id="tmc-count">${(t.log||[]).length}</span></div>
+        <div class="tmc-thread" id="tmc-thread">${renderTaskThread()}</div>
+        <div class="tmc-compose">
+          <div class="mention-pop" id="mention-pop"></div>
+          <input id="task-comment-inp" class="tfi tm-ctl" placeholder="Escribe un comentario… usa @ para mencionar" autocomplete="off"
+            oninput="mentionInput(this)" onkeydown="mentionKey(event,this)"/>
+          <button class="tmc-send" onclick="addTaskComment()" title="Enviar"><i class="ti ti-send"></i></button>
+        </div>
       </div>
     </div>
   </div>`;
@@ -1196,7 +1220,8 @@ function renderTaskModal(){
 }
 function renderTaskPrioChips(ro){
   const t=_taskDraft;
-  return PRIO_LEVELS.map(p=>`<span class="prio-chip ${prioOf(t)===p.id?'on':''}" style="${prioOf(t)===p.id?`border-color:${p.color};color:${p.color};background:${p.color}18`:''}" ${ro?'':`onclick="setDraftPrio('${p.id}')"`}><span style="display:inline-flex;width:14px;height:14px">${PRIO_ICON[p.id]}</span> ${p.label}</span>`).join("");
+  return PRIO_LEVELS.map(p=>{const on=prioOf(t)===p.id;
+    return `<button type="button" class="tm-seg-btn ${on?'on':''}" style="${on?`color:${p.color};background:${p.color}1f;box-shadow:inset 0 0 0 1px ${p.color}`:''}" ${ro?'disabled':`onclick="setDraftPrio('${p.id}')"`}><span class="tm-seg-ic">${PRIO_ICON[p.id]}</span>${p.label}</button>`;}).join("");
 }
 function setDraftPrio(id){_taskDraft.priority=id;const w=document.getElementById('tm-prio');if(w)w.innerHTML=renderTaskPrioChips(false);}
 function toggleDraftPrivate(){
