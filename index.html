@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-09-18 16:16" data-file="index"/>
+<meta name="build-stamp" content="2026-09-30 10:45" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -218,11 +218,15 @@ body{background:var(--bg)}
 .todo-group-inp{width:100%;max-width:340px;padding:6px 10px;border:1px dashed var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:transparent;color:var(--text)}
 .todo-group-inp:focus{outline:none;border-color:var(--acc);border-style:solid;background:var(--bg)}
 .todo-group-inp::placeholder{color:var(--text3)}
+.own-tag{font-size:9px;padding:1px 7px;border-radius:10px;background:var(--surface2);color:var(--text3);font-weight:600;margin-left:4px}
+.priv-tag{font-size:10px;margin-left:3px}
+.priv-toggle{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2,#5a6270);cursor:pointer}
 .todo-prio{display:inline-flex;align-items:center;flex-shrink:0}
 .prio-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);cursor:pointer;user-select:none;font-weight:500}
 .todo-ctrlbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .todo-ctrl-btn{padding:5px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text2,#5a6270);font-family:inherit;cursor:pointer;font-weight:500}
 .todo-ctrl-btn:hover{border-color:var(--acc);color:var(--acc)}
+.todo-ctrl-btn.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 .todo-prio-filter{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .tpf-lbl{font-size:11px;color:var(--text3);font-weight:600}
 .tpf-chip{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text3);cursor:pointer;user-select:none;font-weight:500}
@@ -258,13 +262,46 @@ textarea.tfi{resize:vertical;min-height:70px}
 .tlog-btn:hover:not(:disabled){border-color:var(--acc);color:var(--acc)}
 .tlog-btn:disabled{opacity:.35;cursor:not-allowed}
 .tlog-add{display:flex;gap:8px;margin-top:8px}
+/* ═══ TASKS + CALENDAR SPLIT ═══ */
+.tc-tabs{display:flex;gap:6px;margin-bottom:12px}
+.tc-tab{display:flex;align-items:center;gap:6px;padding:7px 16px;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text3);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .12s}
+.tc-tab:hover{border-color:var(--acc)}
+.tc-tab.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.tc-tab i{font-size:15px}
+.tc-split{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+.tc-split.tasks-only{grid-template-columns:1fr}
+.tc-split.cal-only{grid-template-columns:1fr}
+.tc-panel{min-width:0}
+/* Calendar */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-title{font-size:14px;font-weight:700;text-transform:capitalize}
+.cal-nav{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text2,#5a6270);font-size:15px;cursor:pointer}
+.cal-nav:hover{border-color:var(--acc);color:var(--acc)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dow{font-size:9px;font-weight:700;color:var(--text3);text-align:center;padding:3px 0;text-transform:uppercase}
+.cal-cell{aspect-ratio:1;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:3px 0;font-size:11px;position:relative;cursor:default}
+.cal-cell.other{opacity:.3}
+.cal-cell.today{background:var(--acc-bg);font-weight:700;color:var(--acc)}
+.cal-cell .cal-dots{display:flex;gap:2px;margin-top:2px;flex-wrap:wrap;justify-content:center;max-width:90%}
+.cal-dot{width:5px;height:5px;border-radius:50%}
+.cal-cell.has-milestone{cursor:pointer}
+.cal-cell.has-milestone:hover{background:var(--surface2)}
+.cal-upcoming{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+.cal-up-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.cal-up-item{display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;border-radius:7px}
+.cal-up-item:hover{background:var(--surface2)}
+.cal-up-date{font-size:10px;font-weight:700;color:#fff;background:var(--acc);border-radius:6px;padding:3px 7px;text-align:center;min-width:38px;line-height:1.1;flex-shrink:0}
+.cal-up-date small{display:block;font-size:8px;font-weight:600;opacity:.85;text-transform:uppercase}
+.cal-up-txt{font-size:12px;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-up-owner{font-size:9px;color:var(--text3)}
+@media(max-width:1100px){.tc-split{grid-template-columns:1fr}}
 /* ═══ CAPABILITY HIDDEN (reversible: delete this block to restore) ═══ */
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-09-18 16:16"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-09-30 10:45"};</script>
 </head>
 <body>
 
@@ -761,10 +798,21 @@ async function shareGroup(g){
   alert(`✅ Grupo "${g}" compartido con ${targets.join(", ")} (${mine.length} tareas).`);
 }
 function isOwner(t){return t.owner===myName();}
+function creatorOf(t){return t.creator||t.owner;}          // fallback to owner for legacy tasks
+function isCreator(t){return creatorOf(t)===myName();}
 function isAssignedToMe(t){return Array.isArray(t.assigned)&&t.assigned.includes(myName());}
-// Tasks visible to me = ones I own + ones shared with me (assigned)
-function getTodos(){return S_TODOS.filter(t=>isOwner(t)||isAssignedToMe(t));}
-// "Individual" = I own it AND nobody is assigned. "Shared" = has at least one assigned person.
+// Visibility model: everything is PUBLIC by default. Private tasks are visible ONLY to their creator.
+function canSee(t){
+  if(t.private)return isCreator(t);   // private → only the creator
+  return true;                        // public → everyone
+}
+// Base visibility + the "Solo mías" filter (owner === me)
+function getTodos(){
+  let list=S_TODOS.filter(canSee);
+  if(window._todoMineOnly)list=list.filter(t=>isOwner(t));
+  return list;
+}
+// "Shared" only means it has assignees (used just for the assignee pills now).
 function isShared(t){return Array.isArray(t.assigned)&&t.assigned.length>0;}
 // saveTodos removed — todos now persist individually to Supabase
 async function toggleTodo(id){
@@ -862,48 +910,57 @@ function fmtTaskDate(d){try{return new Date(d).toLocaleDateString("es-ES",{day:"
 
 function renderTaskModal(){
   const t=_taskDraft;
-  const readOnly=t.owner!==myName();  // assigned viewers can't edit
+  const iAmCreator=creatorOf(t)===myName();
+  const iAmOwner=t.owner===myName();
+  const canManage=iAmCreator||iAmOwner;   // edit fields / delete
+  const ro=!canManage;                     // read-only for fields (but everyone can comment)
   const root=document.getElementById("task-modal-root");
   root.innerHTML=`
   <div class="tmov" id="tmov" onclick="if(event.target.id==='tmov')closeTaskModal()">
     <div class="tmodal">
       <div class="tmh">
-        <div><h3>Detalle de tarea</h3><div style="font-size:12px;color:var(--text3);margin-top:2px">${readOnly?'👁 Solo lectura · propiedad de '+t.owner:'Propietario: '+t.owner}</div></div>
+        <div><h3>Detalle de tarea</h3><div style="font-size:12px;color:var(--text3);margin-top:2px">${t.private?'🔒 Privada · ':''}Responsable: ${t.owner||'—'}${creatorOf(t)&&creatorOf(t)!==t.owner?' · creada por '+creatorOf(t):''}${ro?' · 👁 solo lectura':''}</div></div>
         <button class="tclose" onclick="closeTaskModal()">✕</button>
       </div>
       <div class="tmb">
-        <div class="tfld"><label>Tarea</label><input class="tfi" value="${(t.text||'').replace(/"/g,'&quot;')}" ${readOnly?'disabled':'oninput="_taskDraft.text=this.value"'}/></div>
-        <div class="tfld"><label>Descripción</label><textarea class="tfi" ${readOnly?'disabled':'oninput="_taskDraft.description=this.value"'} placeholder="Detalla la tarea…">${t.description||''}</textarea></div>
-        <div class="tfld"><label>Fecha límite</label><input type="date" class="tfi" style="max-width:180px" value="${t.deadline||''}" ${readOnly?'disabled':'onchange="_taskDraft.deadline=this.value"'}/></div>
+        <div class="tfld"><label>Tarea</label><input class="tfi" value="${(t.text||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.text=this.value"'}/></div>
+        <div class="tfld"><label>Descripción</label><textarea class="tfi" ${ro?'disabled':'oninput="_taskDraft.description=this.value"'} placeholder="Detalla la tarea…">${t.description||''}</textarea></div>
+        <div class="tchk-row" style="gap:12px">
+          <div class="tfld" style="flex:1;min-width:150px"><label>Responsable (owner)</label>
+            <select class="tfi" ${ro?'disabled':'onchange="_taskDraft.owner=this.value"'}>
+              ${TODO_USERS.map(u=>`<option ${t.owner===u?'selected':''}>${u}</option>`).join("")}
+            </select>
+          </div>
+          <div class="tfld" style="flex:1;min-width:150px"><label>Fecha límite</label><input type="date" class="tfi" value="${t.deadline||''}" ${ro?'disabled':'onchange="_taskDraft.deadline=this.value"'}/></div>
+        </div>
         <div class="tfld"><label>Grupo / área <span style="font-weight:400;color:var(--text3)">· elige o escribe uno nuevo</span></label>
-          <input class="tfi" list="task-groups" value="${(t.grp||'').replace(/"/g,'&quot;')}" ${readOnly?'disabled':'oninput="_taskDraft.grp=this.value"'} placeholder="Sin grupo" style="max-width:280px"/>
+          <input class="tfi" list="task-groups" value="${(t.grp||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.grp=this.value"'} placeholder="Sin grupo" style="max-width:280px"/>
           <datalist id="task-groups">${getTaskGroups().map(g=>`<option value="${g}">`).join("")}</datalist>
         </div>
         <div class="tfld"><label>Prioridad</label>
           <div class="tchk-row">
-            ${PRIO_LEVELS.map(p=>`<span class="prio-chip ${prioOf(t)===p.id?'on':''}" style="${prioOf(t)===p.id?`border-color:${p.color};color:${p.color};background:${p.color}18`:''}" ${readOnly?'':`onclick="_taskDraft.priority='${p.id}';renderTaskModal()"`}><span style="display:inline-flex;width:14px;height:14px">${PRIO_ICON[p.id]}</span> ${p.label}</span>`).join("")}
+            ${PRIO_LEVELS.map(p=>`<span class="prio-chip ${prioOf(t)===p.id?'on':''}" style="${prioOf(t)===p.id?`border-color:${p.color};color:${p.color};background:${p.color}18`:''}" ${ro?'':`onclick="_taskDraft.priority='${p.id}';renderTaskModal()"`}><span style="display:inline-flex;width:14px;height:14px">${PRIO_ICON[p.id]}</span> ${p.label}</span>`).join("")}
           </div>
         </div>
-        <div class="tfld"><label>Compartida con ${readOnly?'':'<span style="font-weight:400;color:var(--text3)">· solo lectura para ellos</span>'}</label>
-          <div class="tchk-row">
-            ${TODO_USERS.filter(u=>u!==t.owner).map(u=>`<span class="asg-chip ${t.assigned.includes(u)?'on':''}" ${readOnly?'':`onclick="toggleTaskAssign('${u}')"`}>${t.assigned.includes(u)?'✓ ':''}${u}</span>`).join("")}
-          </div>
-        </div>
-        <div class="tfld" style="margin-bottom:0"><label>Comentarios</label>
+        ${iAmCreator?`<div class="tfld"><label>Privacidad</label>
+          <label class="priv-toggle"><input type="checkbox" ${t.private?'checked':''} onchange="_taskDraft.private=this.checked;renderTaskModal()"/> <span>🔒 Privada · solo tú (creador) la ves</span></label>
+        </div>`:''}
+        <div class="tfld"><label>Comentarios <span style="font-weight:400;color:var(--text3)">· cualquiera puede comentar</span></label>
           <div class="tlog">
             <div class="tlog-nav" id="tlog-nav">${renderTaskComment()}</div>
-            ${readOnly?'':`<div class="tlog-add"><input id="task-comment-inp" class="tfi" placeholder="Añadir comentario…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskComment();}"/><button class="todo-btn" onclick="addTaskComment()">+ Añadir</button></div>`}
+            <div class="tlog-add"><input id="task-comment-inp" class="tfi" placeholder="Añadir comentario…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTaskComment();}"/><button class="todo-btn" onclick="addTaskComment()">+ Añadir</button></div>
           </div>
         </div>
       </div>
       <div class="tmf">
-        ${readOnly?'':`<button class="todo-btn" style="background:var(--acc);color:#fff" onclick="saveTask()">Guardar</button>`}
+        ${canManage?`<button class="todo-btn" style="background:var(--acc);color:#fff" onclick="saveTask()">Guardar</button>`:`<button class="todo-btn" style="background:var(--acc);color:#fff" onclick="saveTaskComment()">Guardar comentario</button>`}
         <div style="flex:1"></div>
-        <button class="todo-btn" onclick="closeTaskModal()">${readOnly?'Cerrar':'Cancelar'}</button>
+        <button class="todo-btn" onclick="closeTaskModal()">${canManage?'Cancelar':'Cerrar'}</button>
       </div>
     </div>
   </div>`;
 }
+
 function toggleTaskAssign(u){
   if(!Array.isArray(_taskDraft.assigned))_taskDraft.assigned=[];
   if(_taskDraft.assigned.includes(u))_taskDraft.assigned=_taskDraft.assigned.filter(x=>x!==u);
@@ -923,17 +980,27 @@ async function saveTask(){
   const t=_taskDraft;
   const grp=(t.grp&&t.grp.trim())?t.grp.trim():null;
   const priority=t.priority||'mid';
+  const fields={text:t.text,description:t.description||null,deadline:t.deadline||null,assigned:t.assigned,log:t.log,grp,priority,owner:t.owner,private:!!t.private};
   const live=S_TODOS.find(x=>String(x.id)===String(t.id));
-  if(live)Object.assign(live,{text:t.text,description:t.description,deadline:t.deadline||null,assigned:t.assigned,log:t.log,grp,priority});
+  if(live)Object.assign(live,fields);
   closeTaskModal();
   renderTodos();
-  await patchTodo(t.id,{text:t.text,description:t.description||null,deadline:t.deadline||null,assigned:t.assigned,log:t.log,grp,priority});
+  await patchTodo(t.id,fields);
+}
+// For non-managers: they can only add comments. Persist just the log.
+async function saveTaskComment(){
+  const t=_taskDraft;
+  const live=S_TODOS.find(x=>String(x.id)===String(t.id));
+  if(live)live.log=t.log;
+  closeTaskModal();
+  renderTodos();
+  await patchTodo(t.id,{log:t.log});
 }
 
 async function addTodo(){
   const inp=document.getElementById("todo-inp");
   if(!inp||!inp.value.trim())return;
-  const todo={id:Date.now()+"",owner:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp:null,priority:"mid"};
+  const todo={id:Date.now()+"",owner:currentUser?.name||"",creator:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp:null,priority:"mid",private:false};
   S_TODOS.push(todo); // optimistic
   inp.value="";renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(todo)});}catch(e){}
@@ -943,7 +1010,7 @@ async function addTodo(){
 async function addTodoToGroup(group,inp){
   if(!inp||!inp.value.trim())return;
   const grp=group&&group.trim()?group.trim():null;
-  const todo={id:Date.now()+"",owner:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp,priority:"mid"};
+  const todo={id:Date.now()+"",owner:currentUser?.name||"",creator:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp,priority:"mid",private:false};
   S_TODOS.push(todo);
   inp.value="";
   renderTodos();
@@ -956,6 +1023,96 @@ async function addTodoToGroup(group,inp){
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(todo)});}catch(e){console.warn('addTodoToGroup error',e);}
 }
 
+// ═══ TASKS/CALENDAR PANELS + CALENDAR ═══
+let _panels={tasks:true,cal:true};   // both visible by default
+let _calRef=new Date();              // month currently shown
+_calRef.setDate(1);
+
+function togglePanel(which){
+  // Option A: never allow both off — keep at least one visible
+  const other=which==='tasks'?'cal':'tasks';
+  if(_panels[which]&&!_panels[other])return; // trying to close the only open one → ignore
+  _panels[which]=!_panels[which];
+  applyPanels();
+}
+function applyPanels(){
+  const split=document.getElementById('tc-split');
+  const pT=document.getElementById('panel-tasks');
+  const pC=document.getElementById('panel-cal');
+  const tabT=document.getElementById('tab-tasks');
+  const tabC=document.getElementById('tab-cal');
+  if(!split)return;
+  pT.style.display=_panels.tasks?'':'none';
+  pC.style.display=_panels.cal?'':'none';
+  split.classList.toggle('tasks-only',_panels.tasks&&!_panels.cal);
+  split.classList.toggle('cal-only',_panels.cal&&!_panels.tasks);
+  if(tabT)tabT.classList.toggle('on',_panels.tasks);
+  if(tabC)tabC.classList.toggle('on',_panels.cal);
+  if(_panels.cal)renderCalendar();
+}
+
+// Tasks with a deadline that I can see = calendar milestones
+function calMilestones(){
+  return S_TODOS.filter(t=>t.deadline&&canSee(t)&&!t.done);
+}
+function calMove(dir){_calRef.setMonth(_calRef.getMonth()+dir);renderCalendar();}
+
+function renderCalendar(){
+  const grid=document.getElementById('cal-grid');
+  const titleEl=document.getElementById('cal-title');
+  if(!grid)return;
+  const year=_calRef.getFullYear(), month=_calRef.getMonth();
+  const monthNames=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  if(titleEl)titleEl.textContent=`${monthNames[month]} ${year}`;
+
+  // Milestones by date-string for this view
+  const ms=calMilestones();
+  const byDate={};
+  ms.forEach(t=>{(byDate[t.deadline]=byDate[t.deadline]||[]).push(t);});
+
+  const first=new Date(year,month,1);
+  let startDow=(first.getDay()+6)%7; // Monday=0
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const today=new Date(); const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  const dows=["L","M","X","J","V","S","D"];
+  let html=`<div class="cal-grid">`;
+  dows.forEach(d=>html+=`<div class="cal-dow">${d}</div>`);
+  // leading blanks
+  for(let i=0;i<startDow;i++)html+=`<div class="cal-cell other"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const items=byDate[ds]||[];
+    const isToday=ds===todayStr;
+    const dots=items.slice(0,4).map(t=>`<span class="cal-dot" style="background:${prioMeta(prioOf(t)).color}"></span>`).join("");
+    html+=`<div class="cal-cell ${isToday?'today':''} ${items.length?'has-milestone':''}" ${items.length?`onclick="calDayClick('${ds}')" title="${items.length} hito(s)"`:''}>
+      <span>${d}</span>
+      ${items.length?`<div class="cal-dots">${dots}</div>`:''}
+    </div>`;
+  }
+  html+=`</div>`;
+  grid.innerHTML=html;
+
+  // Upcoming milestones list (next ones from today, across months)
+  const up=ms.filter(t=>t.deadline>=todayStr).sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,6);
+  const upEl=document.getElementById('cal-upcoming');
+  if(upEl){
+    upEl.innerHTML=up.length?`<div class="cal-upcoming"><div class="cal-up-title">Próximos hitos</div>${up.map(t=>{
+      const dt=new Date(t.deadline+"T12:00:00");
+      const dd=dt.getDate(); const mm=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][dt.getMonth()];
+      return `<div class="cal-up-item" onclick="openTaskModal('${t.id}')">
+        <div class="cal-up-date">${dd}<small>${mm}</small></div>
+        <div style="flex:1;min-width:0"><div class="cal-up-txt">${t.text}</div><div class="cal-up-owner">${t.owner||''}${t.grp?' · '+t.grp:''}</div></div>
+      </div>`;
+    }).join("")}</div>`:`<div class="cal-upcoming"><div class="cal-up-title">Próximos hitos</div><p style="color:var(--text3);font-size:12px">Sin hitos próximos. Añade una fecha límite a una tarea.</p></div>`;
+  }
+}
+function calDayClick(ds){
+  const items=calMilestones().filter(t=>t.deadline===ds);
+  if(items.length===1)openTaskModal(items[0].id);
+  else if(items.length>1)openTaskModal(items[0].id); // open first; could be a day-list later
+}
+
 function renderTodos(){
   const el=document.getElementById("todo-list");
   if(!el)return;
@@ -965,29 +1122,35 @@ function renderTodos(){
   // Render a single task row. readOnly = I'm not the owner (assigned viewer).
   const renderItem=(t)=>{
     const isDemand=t.source==="demand";
-    const readOnly=!isOwner(t);
+    const iAmOwner=isOwner(t);
+    const iAmCreator=isCreator(t);
+    const canManage=iAmOwner||iAmCreator;   // edit/delete
     const assignedPills=isShared(t)
       ? `<div class="todo-assigned">${(t.assigned||[]).map(a=>`<span class="asg-pill" title="${a}">${a.split(" ")[0]}</span>`).join("")}</div>`
       : "";
-    return `<div class="todo-item ${readOnly?'ro':''}" onclick="openTaskModal('${t.id}')">
+    // Ownership tag: show who has to do it when it's not me
+    const ownerTag = !iAmOwner ? ` <span class="own-tag" title="Responsable: ${t.owner}">👤 ${t.owner.split(" ")[0]}</span>` : "";
+    const privTag = t.private ? ` <span class="priv-tag" title="Privada · solo tú la ves">🔒</span>` : "";
+    return `<div class="todo-item ${!iAmOwner?'ro':''}" onclick="openTaskModal('${t.id}')">
         <span class="todo-prio" title="Prioridad ${prioMeta(prioOf(t)).label}">${PRIO_ICON[prioOf(t)]}</span>
-        <div class="todo-chk${t.done?" dn":""}" ${readOnly?'':`onclick="event.stopPropagation();toggleTodo('${t.id}')"`}></div>
+        <div class="todo-chk${t.done?" dn":""}" ${iAmOwner?`onclick="event.stopPropagation();toggleTodo('${t.id}')"`:'title="Solo el responsable puede completarla"'}></div>
         <div class="todo-main">
-          <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--acc-bg);color:var(--acc);font-weight:600;letter-spacing:.03em;margin-left:4px">DEMAND</span>`:""}${readOnly?` <span class="ro-tag" title="Solo lectura · propiedad de ${t.owner}">👁 ${t.owner.split(" ")[0]}</span>`:""}</div>
+          <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--acc-bg);color:var(--acc);font-weight:600;letter-spacing:.03em;margin-left:4px">DEMAND</span>`:""}${ownerTag}${privTag}</div>
           ${assignedPills}
         </div>
         ${isDemand
           ?`<span style="font-size:11px;color:var(--text3);white-space:nowrap">gestionar en Supply</span>`
-          :readOnly
-            ?``
-            :`<select class="todo-asg-quick" onclick="event.stopPropagation()" onchange="quickAssign('${t.id}',this.value);this.value='';" title="Compartir con…">
+          :canManage
+            ?`<select class="todo-asg-quick" onclick="event.stopPropagation()" onchange="quickAssign('${t.id}',this.value);this.value='';" title="Compartir con…">
                 <option value="">+ compartir</option>
                 ${TODO_USERS.filter(u=>u!==t.owner&&!(t.assigned||[]).includes(u)).length>1?`<option value="__all">Todos</option>`:''}
                 ${TODO_USERS.filter(u=>u!==t.owner&&!(t.assigned||[]).includes(u)).map(u=>`<option value="${u}">${u}</option>`).join("")}
               </select>
-              <button class="todo-del" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`}
+              <button class="todo-del" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`
+            :``}
       </div>`;
-  };
+  }
+;
 
   // Render the mine/shared subsections for a set of tasks (the "B" nesting)
   const byPrio=(a,b)=>prioRank(prioOf(a))-prioRank(prioOf(b));
@@ -1013,9 +1176,14 @@ function renderTodos(){
 
   // ── Control bar: expand/collapse all + priority filter ──
   let html=`<div class="todo-ctrlbar">
-    <button class="todo-ctrl-btn" onclick="toggleAllGroups(${anyCollapsed?'true':'false'})" title="${anyCollapsed?'Expandir todo':'Colapsar todo'}">
-      <span style="font-size:11px">${anyCollapsed?'⊕ Expandir todo':'⊖ Colapsar todo'}</span>
-    </button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="todo-ctrl-btn" onclick="toggleAllGroups(${anyCollapsed?'true':'false'})" title="${anyCollapsed?'Expandir todo':'Colapsar todo'}">
+        <span style="font-size:11px">${anyCollapsed?'⊕ Expandir todo':'⊖ Colapsar todo'}</span>
+      </button>
+      <button class="todo-ctrl-btn ${window._todoMineOnly?'on':''}" onclick="window._todoMineOnly=!window._todoMineOnly;renderTodos()" title="Ver solo las tareas donde soy owner">
+        <span style="font-size:11px">${window._todoMineOnly?'● Solo mías':'○ Solo mías'}</span>
+      </button>
+    </div>
     <div class="todo-prio-filter">
       <span class="tpf-lbl">Prioridad:</span>
       ${[{id:'',label:'Todas'}].concat(PRIO_LEVELS).map(p=>`<span class="tpf-chip ${window._todoPrioFilter===p.id?'on':''}" ${p.id&&p.color?`style="${window._todoPrioFilter===p.id?`background:${p.color}18;color:${p.color};border-color:${p.color}`:''}"`:''} onclick="window._todoPrioFilter='${p.id}';renderTodos()">${p.label}</span>`).join("")}
@@ -1063,6 +1231,8 @@ function renderTodos(){
 
   if(!html)html=`<p class="todo-empty">Sin tareas.</p>`;
   el.innerHTML=html;
+  // Keep calendar in sync when tasks change (deadlines, done, etc.)
+  if(_panels&&_panels.cal&&document.getElementById('cal-grid'))renderCalendar();
 }
 
 
@@ -1098,12 +1268,27 @@ async function showHome(){
     </div>
   </div>
   <div class="home-full">
-    <div class="card">
-      <div class="card-title">Pendientes</div>
-      <div id="todo-list"></div>
-      <div class="todo-add">
-        <input id="todo-inp" class="todo-inp" placeholder="Añadir pendiente..." onkeydown="if(event.key==='Enter')addTodo()"/>
-        <button class="todo-btn" onclick="addTodo()">+</button>
+    <div class="tc-tabs">
+      <button class="tc-tab" id="tab-tasks" onclick="togglePanel('tasks')"><i class="ti ti-checklist"></i> Tareas</button>
+      <button class="tc-tab" id="tab-cal" onclick="togglePanel('cal')"><i class="ti ti-calendar"></i> Calendario</button>
+    </div>
+    <div class="tc-split" id="tc-split">
+      <div class="card tc-panel" id="panel-tasks">
+        <div class="card-title">Pendientes</div>
+        <div id="todo-list"></div>
+        <div class="todo-add">
+          <input id="todo-inp" class="todo-inp" placeholder="Añadir pendiente..." onkeydown="if(event.key==='Enter')addTodo()"/>
+          <button class="todo-btn" onclick="addTodo()">+</button>
+        </div>
+      </div>
+      <div class="card tc-panel" id="panel-cal">
+        <div class="cal-head">
+          <button class="cal-nav" onclick="calMove(-1)">‹</button>
+          <div class="cal-title" id="cal-title">—</div>
+          <button class="cal-nav" onclick="calMove(1)">›</button>
+        </div>
+        <div id="cal-grid"></div>
+        <div id="cal-upcoming"></div>
       </div>
     </div>
   </div>
@@ -1141,6 +1326,8 @@ async function showHome(){
   </div>`;
   // Render todos with pending/completed split (single source of truth)
   renderTodos();
+  // Init the tasks/calendar split panels (both visible by default)
+  applyPanels();
   // Project row click delegation (must run after innerHTML is set)
   document.querySelectorAll('#home-view .proj-row').forEach(tr=>{
     tr.addEventListener('click',()=>navTo('pm'));
