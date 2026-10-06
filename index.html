@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-09-30 12:51" data-file="index"/>
+<meta name="build-stamp" content="2026-10-06 09:34" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -423,7 +423,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-09-30 12:51"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-10-06 09:34"};</script>
 </head>
 <body>
 
@@ -939,8 +939,15 @@ function creatorOf(t){return t.creator||t.owner;}          // fallback to owner 
 function isCreator(t){return creatorOf(t)===myName();}
 const SUPERADMIN="Pablo F.";
 function isSuperAdmin(){return myName()===SUPERADMIN;}
-function canManageTask(t){return isOwner(t)||isCreator(t)||isSuperAdmin();}   // edit / delete
-function canCompleteTask(t){return isOwner(t)||isSuperAdmin();}                // tick done
+// Permission model (public by default):
+//  · edit fields + complete → anyone in the team on any task they can see (private ones are creator-only anyway)
+//  · delete                → creator, owner or superadmin (avoid accidental deletions)
+//  · privacy lock          → creator only (handled in UI)
+function isTeamMember(){return TODO_USERS.includes(myName());}
+function canEditTask(t){return canSee(t)&&(isTeamMember()||isSuperAdmin());}
+function canManageTask(t){return canEditTask(t);}                                   // edit (kept name for existing callers)
+function canCompleteTask(t){return canEditTask(t);}                                 // tick done
+function canDeleteTask(t){return isOwner(t)||isCreator(t)||isSuperAdmin();}         // delete
 function initials(n){return (n||"?").split(/[\s.]+/).filter(Boolean).map(x=>x[0]).join("").slice(0,2).toUpperCase();}
 function isAssignedToMe(t){return Array.isArray(t.assigned)&&t.assigned.includes(myName());}
 // Visibility model: everything is PUBLIC by default. Private tasks are visible ONLY to their creator.
@@ -963,7 +970,9 @@ async function toggleTodo(id){
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({done:t.done})});}catch(e){}
 }
 async function delTodo(id){
-  S_TODOS=S_TODOS.filter(t=>t.id!==id);renderTodos();
+  const t=S_TODOS.find(x=>String(x.id)===String(id));
+  if(!t||!canDeleteTask(t))return;
+  S_TODOS=S_TODOS.filter(x=>String(x.id)!==String(id));renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"DELETE",headers:{...TODO_SB_H,"Prefer":"return=minimal"}});}catch(e){}
 }
 const TODO_USERS=['Pablo F.','Conrado P.','Fabio H.G.'];
@@ -1160,7 +1169,7 @@ function fmtTaskDate(d){try{return new Date(d).toLocaleDateString("es-ES",{day:"
 function renderTaskModal(){
   const t=_taskDraft;
   const iAmCreator=creatorOf(t)===myName();
-  const canManage=t.owner===myName()||iAmCreator||isSuperAdmin();
+  const canManage=canEditTask(t);
   const ro=!canManage;
   const root=document.getElementById("task-modal-root");
   root.innerHTML=`
@@ -1463,7 +1472,7 @@ function renderTodos(){
           ${unreadFor(t.id)?`<span class="mention-flag" title="Te han mencionado">@${unreadFor(t.id)}</span>`:''}
           <span class="own-bubble ${isOwner(t)?'me':''}" title="Responsable: ${t.owner||'—'}"><b>${initials(t.owner)}</b>${(t.owner||'—').split(" ")[0]}</span>
           ${isDemand?'':lockBtn}
-          ${!isDemand&&canEdit?`<button class="todo-del" title="Eliminar" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`:''}
+          ${!isDemand&&canDeleteTask(t)?`<button class="todo-del" title="Eliminar" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`:''}
         </div>
       </div>`;
   };
