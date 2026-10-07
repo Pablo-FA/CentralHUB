@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-10-07 10:05" data-file="index"/>
+<meta name="build-stamp" content="2026-10-07 10:34" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -411,6 +411,17 @@ textarea.tfi{resize:vertical;min-height:70px}
 .st-opt:hover{background:var(--surface2)}
 .st-opt.on{font-weight:700}
 .tm-seg4{grid-template-columns:repeat(4,1fr)}
+.gcombo{position:relative}
+.gcombo-inp{padding-right:36px!important}
+.gcombo-btn{position:absolute;right:1px;top:1px;bottom:1px;width:34px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;border-radius:0 8px 8px 0}
+.gcombo-btn:hover{color:var(--acc)}
+.gcombo-pop{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-md),0 14px 36px rgba(0,0,0,.16);padding:4px;display:none;z-index:20;max-height:240px;overflow-y:auto}
+.gcombo-pop.on{display:block}
+.gc-opt{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--text);cursor:pointer}
+.gc-opt:hover{background:var(--surface2)}
+.gc-opt.on{font-weight:700;color:var(--acc)}
+.gc-new{color:var(--acc);font-weight:600;border-bottom:1px solid var(--border);border-radius:7px 7px 0 0;margin-bottom:2px}
+.gc-clear{color:var(--text3);font-size:12px;border-top:1px solid var(--border);border-radius:0 0 7px 7px;margin-top:2px}
 /* ═══ TODAY BOX ═══ */
 #today-box{margin:-4px 0 22px}
 .today-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid #dc2626;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
@@ -459,7 +470,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-10-07 10:05"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-10-07 10:34"};</script>
 </head>
 <body>
 
@@ -1001,9 +1012,9 @@ function getTodos(){
 function isShared(t){return Array.isArray(t.assigned)&&t.assigned.length>0;}
 // saveTodos removed — todos now persist individually to Supabase
 async function toggleTodo(id){
-  const t=S_TODOS.find(x=>x.id===id);if(!t)return;
-  t.done=!t.done;renderTodos();
-  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({done:t.done})});}catch(e){}
+  const t=S_TODOS.find(x=>String(x.id)===String(id));if(!t)return;
+  t.done=!t.done; t.state=t.done?'done':'wip'; renderTodos();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({done:t.done,state:t.state})});}catch(e){}
 }
 async function delTodo(id){
   const t=S_TODOS.find(x=>String(x.id)===String(id));
@@ -1019,12 +1030,13 @@ const prioMeta=id=>PRIO_LEVELS.find(p=>p.id===id)||PRIO_LEVELS[1];
 const prioRank=id=>id==='high'?0:id==='mid'?1:2;
 // ── Task state ──
 const STATE_LEVELS=[
-  {id:'todo',   label:'Por empezar', color:'#8888a8'},
-  {id:'doing',  label:'En curso',    color:'#6366f1'},
-  {id:'blocked',label:'Bloqueada',   color:'#dc2626'},
-  {id:'review', label:'En revisión', color:'#d97706'}
+  {id:'wip',   label:'WIP',      color:'#6366f1'},
+  {id:'done',  label:'Done',     color:'#16a34a'},
+  {id:'hold',  label:'OnHold',   color:'#d97706'},
+  {id:'review',label:'Revision', color:'#8b5cf6'}
 ];
-const stateOf=t=>t.state||'todo';
+const LEGACY_STATE={todo:'wip',doing:'wip',blocked:'hold'};   // old values still in DB before migration
+const stateOf=t=>t.done?'done':(LEGACY_STATE[t.state]||t.state||'wip');
 const stateMeta=id=>STATE_LEVELS.find(s=>s.id===id)||STATE_LEVELS[0];
 // Visual indicator: double-chevron (high, red) / single (mid, amber) / dash (low, grey)
 const PRIO_ICON={
@@ -1237,8 +1249,11 @@ function renderTaskModal(){
               </select>
             </div>
             <div class="tfld"><label>Grupo / área</label>
-              <input class="tfi tm-ctl" list="task-groups" value="${(t.grp||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.grp=this.value"'} placeholder="Sin grupo"/>
-              <datalist id="task-groups">${getTaskGroups().map(g=>`<option value="${g}">`).join("")}</datalist>
+              <div class="gcombo" id="gcombo">
+                <input id="grp-inp" class="tfi tm-ctl gcombo-inp" value="${(t.grp||'').replace(/"/g,'&quot;')}" ${ro?'disabled':'oninput="_taskDraft.grp=this.value;grpOpen(true)" onfocus="grpOpen(false)" onkeydown="grpKey(event)"'} placeholder="Sin grupo" autocomplete="off"/>
+                ${ro?'':`<button type="button" class="gcombo-btn" onmousedown="event.preventDefault();grpToggle()" tabindex="-1"><i class="ti ti-chevron-down"></i></button>`}
+                <div class="gcombo-pop" id="gcombo-pop"></div>
+              </div>
             </div>
             <div class="tfld tm-lockcell">
               <button type="button" id="tm-lock" class="tm-lock ${t.private?'on':''}" ${iAmCreator?'onclick="toggleDraftPrivate()"':'disabled'} title="${iAmCreator?(t.private?'Privada · solo tú la ves':'Pública · clic para hacerla privada'):'Solo el creador puede cambiar la privacidad'}"><i class="ti ti-lock${t.private?'':'-open'}"></i></button>
@@ -1285,7 +1300,29 @@ function renderTaskStateSeg(ro){
   return STATE_LEVELS.map(s=>{const on=stateOf(t)===s.id;
     return `<button type="button" class="tm-seg-btn ${on?'on':''}" style="${on?`color:${s.color};background:${s.color}1f;box-shadow:inset 0 0 0 1px ${s.color}`:''}" ${ro?'disabled':`onclick="setDraftState('${s.id}')"`}><span class="st-dot" style="background:${s.color}"></span>${s.label}</button>`;}).join("");
 }
-function setDraftState(id){_taskDraft.state=id;const w=document.getElementById('tm-state');if(w)w.innerHTML=renderTaskStateSeg(false);}
+function setDraftState(id){_taskDraft.state=id;_taskDraft.done=(id==='done');const w=document.getElementById('tm-state');if(w)w.innerHTML=renderTaskStateSeg(false);}
+// Group combobox: shows ALL groups; typing filters; first option creates a new one
+function grpOpen(filter){
+  const pop=document.getElementById('gcombo-pop'), inp=document.getElementById('grp-inp'); if(!pop||!inp)return;
+  const q=inp.value.trim(), nq=normTxt(q);
+  const all=getTaskGroups();
+  const list=filter&&q?all.filter(g=>normTxt(g).includes(nq)):all;
+  const exact=all.some(g=>normTxt(g)===nq);
+  let h='';
+  if(filter&&q&&!exact)h+=`<div class="gc-opt gc-new" onmousedown="event.preventDefault();grpPick(${JSON.stringify(q).replace(/"/g,'&quot;')})"><i class="ti ti-plus"></i>Crear grupo «${escHtml(q)}»</div>`;
+  else h+=`<div class="gc-opt gc-new" onmousedown="event.preventDefault();grpNew()"><i class="ti ti-plus"></i>Nuevo grupo…</div>`;
+  h+=list.map(g=>`<div class="gc-opt ${g===_taskDraft.grp?'on':''}" onmousedown="event.preventDefault();grpPick(${JSON.stringify(g).replace(/"/g,'&quot;')})">${escHtml(g)}${g===_taskDraft.grp?'<i class="ti ti-check" style="margin-left:auto"></i>':''}</div>`).join("");
+  if(_taskDraft.grp)h+=`<div class="gc-opt gc-clear" onmousedown="event.preventDefault();grpPick('')">Quitar grupo</div>`;
+  pop.innerHTML=h; pop.classList.add('on');
+}
+function grpNew(){const inp=document.getElementById('grp-inp');inp.value='';_taskDraft.grp='';inp.placeholder='Escribe el nombre del nuevo grupo y pulsa Enter…';inp.focus();grpOpen(true);}
+function grpToggle(){const pop=document.getElementById('gcombo-pop');if(pop.classList.contains('on'))pop.classList.remove('on');else{document.getElementById('grp-inp').focus();grpOpen(false);}}
+function grpPick(g){const inp=document.getElementById('grp-inp');_taskDraft.grp=g;inp.value=g;inp.placeholder='Sin grupo';document.getElementById('gcombo-pop').classList.remove('on');}
+function grpKey(e){
+  if(e.key==='Escape'){document.getElementById('gcombo-pop').classList.remove('on');}
+  if(e.key==='Enter'){e.preventDefault();grpPick(e.target.value.trim());}
+}
+document.addEventListener('mousedown',e=>{const pop=document.getElementById('gcombo-pop');if(pop&&pop.classList.contains('on')&&!e.target.closest('#gcombo'))pop.classList.remove('on');});
 function setDraftPrio(id){_taskDraft.priority=id;const w=document.getElementById('tm-prio');if(w)w.innerHTML=renderTaskPrioChips(false);}
 function toggleDraftPrivate(){
   _taskDraft.private=!_taskDraft.private;
@@ -1330,7 +1367,8 @@ async function saveTask(){
   const t=_taskDraft;
   const grp=(t.grp&&t.grp.trim())?t.grp.trim():null;
   const priority=t.priority||'mid';
-  const fields={text:t.text,description:t.description||null,deadline:t.deadline||null,grp,priority,owner:t.owner,private:!!t.private,state:t.state||'todo'};
+  const state=stateOf(t);
+  const fields={text:t.text,description:t.description||null,deadline:t.deadline||null,grp,priority,owner:t.owner,private:!!t.private,state,done:state==='done'};
   const live=S_TODOS.find(x=>String(x.id)===String(t.id));
   if(live)Object.assign(live,fields);
   closeTaskModal();
@@ -1350,7 +1388,7 @@ async function saveTaskComment(){
 async function addTodo(){
   const inp=document.getElementById("todo-inp");
   if(!inp||!inp.value.trim())return;
-  const todo={id:Date.now()+"",owner:currentUser?.name||"",creator:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp:null,priority:"mid",private:false,state:"todo"};
+  const todo={id:Date.now()+"",owner:currentUser?.name||"",creator:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp:null,priority:"mid",private:false,state:"wip"};
   S_TODOS.push(todo); // optimistic
   inp.value="";renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(todo)});}catch(e){}
@@ -1360,7 +1398,7 @@ async function addTodo(){
 async function addTodoToGroup(group,inp){
   if(!inp||!inp.value.trim())return;
   const grp=group&&group.trim()?group.trim():null;
-  const todo={id:Date.now()+"",owner:currentUser?.name||"",creator:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp,priority:"mid",private:false,state:"todo"};
+  const todo={id:Date.now()+"",owner:currentUser?.name||"",creator:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp,priority:"mid",private:false,state:"wip"};
   S_TODOS.push(todo);
   inp.value="";
   renderTodos();
@@ -1507,7 +1545,7 @@ function renderCalendar(){
 // ═══ STATE PILL + MENU ═══
 function statePill(t,canEdit){
   const s=stateMeta(stateOf(t));
-  return `<button class="st-pill" style="--st:${s.color}" ${canEdit&&!t.done?`onclick="event.stopPropagation();openStateMenu(event,'${t.id}')"`:'onclick="event.stopPropagation()" disabled'} title="Estado: ${s.label}${canEdit?' · clic para cambiar':''}"><span class="st-dot"></span>${t.done?'Hecha':s.label}${canEdit&&!t.done?'<i class="ti ti-chevron-down st-caret"></i>':''}</button>`;
+  return `<button class="st-pill" style="--st:${s.color}" ${canEdit?`onclick="event.stopPropagation();openStateMenu(event,'${t.id}')"`:'onclick="event.stopPropagation()" disabled'} title="Estado: ${s.label}${canEdit?' · clic para cambiar':''}"><span class="st-dot"></span>${s.label}${canEdit?'<i class="ti ti-chevron-down st-caret"></i>':''}</button>`;
 }
 function openStateMenu(e,id){
   closeStateMenu();
@@ -1524,9 +1562,9 @@ function closeStateMenu(){const m=document.getElementById('st-menu');if(m)m.remo
 async function setTaskState(id,state){
   closeStateMenu();
   const t=S_TODOS.find(x=>String(x.id)===String(id)); if(!t||!canEditTask(t))return;
-  t.state=state; renderTodos();
-  if(_taskDraft&&String(_taskDraft.id)===String(id)){_taskDraft.state=state;const w=document.getElementById('tm-state');if(w)w.innerHTML=renderTaskStateSeg(false);}
-  await patchTodo(id,{state});
+  t.state=state; t.done=(state==='done'); renderTodos();
+  if(_taskDraft&&String(_taskDraft.id)===String(id)){_taskDraft.state=state;_taskDraft.done=t.done;const w=document.getElementById('tm-state');if(w)w.innerHTML=renderTaskStateSeg(false);}
+  await patchTodo(id,{state,done:t.done});
 }
 
 // ═══ TODAY BOX: my open High-priority tasks, by deadline ═══
