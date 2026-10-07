@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-10-06 09:34" data-file="index"/>
+<meta name="build-stamp" content="2026-10-07 10:05" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -400,6 +400,42 @@ textarea.tfi{resize:vertical;min-height:70px}
 .mp-item.on,.mp-item:hover{background:var(--acc-bg);color:var(--acc)}
 .mention-flag{font-size:10px;font-weight:700;color:#fff;background:var(--acc);border-radius:20px;padding:1px 7px}
 @media(max-width:560px){.tm-grid{grid-template-columns:minmax(0,1fr) 38px}.tm-grid>.tfld:not(.tm-lockcell){grid-column:1 / -1}.tm-lockcell{grid-column:2;grid-row:auto}.tm-span2{grid-column:1 / -1}}
+/* ═══ TASK STATE ═══ */
+.st-pill{--st:#8888a8;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:20px;border:1px solid color-mix(in srgb,var(--st) 35%,transparent);background:color-mix(in srgb,var(--st) 12%,transparent);color:var(--st);font-family:inherit;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;transition:all .12s}
+.st-pill:hover:not(:disabled){border-color:var(--st)}
+.st-pill:disabled{cursor:default;opacity:.8}
+.st-dot{width:7px;height:7px;border-radius:50%;background:var(--st,currentColor);flex-shrink:0}
+.st-caret{font-size:11px;opacity:.7;margin-left:-2px}
+.st-menu{position:fixed;z-index:400;min-width:180px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-md),0 14px 36px rgba(0,0,0,.16);padding:4px}
+.st-opt{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;font-size:12px;font-weight:500;color:var(--text);cursor:pointer}
+.st-opt:hover{background:var(--surface2)}
+.st-opt.on{font-weight:700}
+.tm-seg4{grid-template-columns:repeat(4,1fr)}
+/* ═══ TODAY BOX ═══ */
+#today-box{margin:-4px 0 22px}
+.today-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid #dc2626;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.today-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.today-ttl{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text)}
+.today-ic{display:inline-flex;width:16px;height:16px}
+.today-sub{font-size:12px;font-weight:500;color:var(--text3)}
+.today-meta{font-size:12px;color:var(--text3)}
+.today-meta b{color:var(--text)}
+.today-over{color:#dc2626;font-weight:700}
+.today-list{display:flex;flex-direction:column}
+.today-item{display:flex;align-items:center;gap:12px;padding:9px 6px;border-top:1px solid var(--border);cursor:pointer;border-radius:6px}
+.today-item:first-child{border-top:none}
+.today-item:hover{background:var(--surface2)}
+.today-due{flex:0 0 120px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.today-due.over{background:rgba(220,38,38,.12);color:#dc2626}
+.today-due.today{background:var(--acc);color:#fff}
+.today-due.soon{background:var(--acc-bg);color:var(--acc)}
+.today-due.later{background:var(--surface2);color:var(--text2)}
+.today-due.none{background:transparent;color:var(--text3);border:1px dashed var(--border)}
+.today-txt{flex:1;min-width:0}
+.today-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.today-grp{font-size:11px;color:var(--text3);margin-top:1px}
+.today-more{font-size:11px;color:var(--text3);padding:8px 6px 0;border-top:1px solid var(--border);margin-top:2px}
+.today-empty{font-size:13px;color:var(--text3);padding:6px 2px}
 /* ═══ NOTIFICATION BELL ═══ */
 .nb-wrap{position:relative}
 .nb-btn{position:relative;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
@@ -423,7 +459,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-10-06 09:34"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-10-07 10:05"};</script>
 </head>
 <body>
 
@@ -981,6 +1017,15 @@ const PRIO_LEVELS=[{id:'high',label:'Alta',color:'#dc2626'},{id:'mid',label:'Med
 const prioOf=t=>t.priority||'mid'; // default mid
 const prioMeta=id=>PRIO_LEVELS.find(p=>p.id===id)||PRIO_LEVELS[1];
 const prioRank=id=>id==='high'?0:id==='mid'?1:2;
+// ── Task state ──
+const STATE_LEVELS=[
+  {id:'todo',   label:'Por empezar', color:'#8888a8'},
+  {id:'doing',  label:'En curso',    color:'#6366f1'},
+  {id:'blocked',label:'Bloqueada',   color:'#dc2626'},
+  {id:'review', label:'En revisión', color:'#d97706'}
+];
+const stateOf=t=>t.state||'todo';
+const stateMeta=id=>STATE_LEVELS.find(s=>s.id===id)||STATE_LEVELS[0];
 // Visual indicator: double-chevron (high, red) / single (mid, amber) / dash (low, grey)
 const PRIO_ICON={
   high:`<svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px" title="Alta"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>`,
@@ -1203,6 +1248,9 @@ function renderTaskModal(){
             <div class="tfld tm-span2"><label>Prioridad</label>
               <div class="tm-seg" id="tm-prio">${renderTaskPrioChips(ro)}</div>
             </div>
+            <div class="tfld tm-full"><label>Estado</label>
+              <div class="tm-seg tm-seg4" id="tm-state">${renderTaskStateSeg(ro)}</div>
+            </div>
           </div>
         </div>
         <div class="tmf">
@@ -1232,6 +1280,12 @@ function renderTaskPrioChips(ro){
   return PRIO_LEVELS.map(p=>{const on=prioOf(t)===p.id;
     return `<button type="button" class="tm-seg-btn ${on?'on':''}" style="${on?`color:${p.color};background:${p.color}1f;box-shadow:inset 0 0 0 1px ${p.color}`:''}" ${ro?'disabled':`onclick="setDraftPrio('${p.id}')"`}><span class="tm-seg-ic">${PRIO_ICON[p.id]}</span>${p.label}</button>`;}).join("");
 }
+function renderTaskStateSeg(ro){
+  const t=_taskDraft;
+  return STATE_LEVELS.map(s=>{const on=stateOf(t)===s.id;
+    return `<button type="button" class="tm-seg-btn ${on?'on':''}" style="${on?`color:${s.color};background:${s.color}1f;box-shadow:inset 0 0 0 1px ${s.color}`:''}" ${ro?'disabled':`onclick="setDraftState('${s.id}')"`}><span class="st-dot" style="background:${s.color}"></span>${s.label}</button>`;}).join("");
+}
+function setDraftState(id){_taskDraft.state=id;const w=document.getElementById('tm-state');if(w)w.innerHTML=renderTaskStateSeg(false);}
 function setDraftPrio(id){_taskDraft.priority=id;const w=document.getElementById('tm-prio');if(w)w.innerHTML=renderTaskPrioChips(false);}
 function toggleDraftPrivate(){
   _taskDraft.private=!_taskDraft.private;
@@ -1276,7 +1330,7 @@ async function saveTask(){
   const t=_taskDraft;
   const grp=(t.grp&&t.grp.trim())?t.grp.trim():null;
   const priority=t.priority||'mid';
-  const fields={text:t.text,description:t.description||null,deadline:t.deadline||null,grp,priority,owner:t.owner,private:!!t.private};
+  const fields={text:t.text,description:t.description||null,deadline:t.deadline||null,grp,priority,owner:t.owner,private:!!t.private,state:t.state||'todo'};
   const live=S_TODOS.find(x=>String(x.id)===String(t.id));
   if(live)Object.assign(live,fields);
   closeTaskModal();
@@ -1296,7 +1350,7 @@ async function saveTaskComment(){
 async function addTodo(){
   const inp=document.getElementById("todo-inp");
   if(!inp||!inp.value.trim())return;
-  const todo={id:Date.now()+"",owner:currentUser?.name||"",creator:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp:null,priority:"mid",private:false};
+  const todo={id:Date.now()+"",owner:currentUser?.name||"",creator:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp:null,priority:"mid",private:false,state:"todo"};
   S_TODOS.push(todo); // optimistic
   inp.value="";renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(todo)});}catch(e){}
@@ -1306,7 +1360,7 @@ async function addTodo(){
 async function addTodoToGroup(group,inp){
   if(!inp||!inp.value.trim())return;
   const grp=group&&group.trim()?group.trim():null;
-  const todo={id:Date.now()+"",owner:currentUser?.name||"",creator:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp,priority:"mid",private:false};
+  const todo={id:Date.now()+"",owner:currentUser?.name||"",creator:currentUser?.name||"",text:inp.value.trim(),done:false,source:"manual",assigned:[],description:null,deadline:null,log:[],grp,priority:"mid",private:false,state:"todo"};
   S_TODOS.push(todo);
   inp.value="";
   renderTodos();
@@ -1450,6 +1504,64 @@ function renderCalendar(){
   }
 }
 
+// ═══ STATE PILL + MENU ═══
+function statePill(t,canEdit){
+  const s=stateMeta(stateOf(t));
+  return `<button class="st-pill" style="--st:${s.color}" ${canEdit&&!t.done?`onclick="event.stopPropagation();openStateMenu(event,'${t.id}')"`:'onclick="event.stopPropagation()" disabled'} title="Estado: ${s.label}${canEdit?' · clic para cambiar':''}"><span class="st-dot"></span>${t.done?'Hecha':s.label}${canEdit&&!t.done?'<i class="ti ti-chevron-down st-caret"></i>':''}</button>`;
+}
+function openStateMenu(e,id){
+  closeStateMenu();
+  const t=S_TODOS.find(x=>String(x.id)===String(id)); if(!t)return;
+  const r=e.currentTarget.getBoundingClientRect();
+  const m=document.createElement('div'); m.id='st-menu'; m.className='st-menu';
+  m.innerHTML=STATE_LEVELS.map(s=>`<div class="st-opt ${stateOf(t)===s.id?'on':''}" onclick="event.stopPropagation();setTaskState('${id}','${s.id}')"><span class="st-dot" style="background:${s.color}"></span>${s.label}${stateOf(t)===s.id?'<i class="ti ti-check" style="margin-left:auto"></i>':''}</div>`).join("");
+  document.body.appendChild(m);
+  const left=Math.min(r.left,window.innerWidth-190);
+  m.style.left=left+'px'; m.style.top=(r.bottom+6)+'px';
+  setTimeout(()=>document.addEventListener('click',closeStateMenu,{once:true}),0);
+}
+function closeStateMenu(){const m=document.getElementById('st-menu');if(m)m.remove();}
+async function setTaskState(id,state){
+  closeStateMenu();
+  const t=S_TODOS.find(x=>String(x.id)===String(id)); if(!t||!canEditTask(t))return;
+  t.state=state; renderTodos();
+  if(_taskDraft&&String(_taskDraft.id)===String(id)){_taskDraft.state=state;const w=document.getElementById('tm-state');if(w)w.innerHTML=renderTaskStateSeg(false);}
+  await patchTodo(id,{state});
+}
+
+// ═══ TODAY BOX: my open High-priority tasks, by deadline ═══
+function dueInfo(d){
+  if(!d)return {lbl:'Sin fecha',cls:'none',sort:'9999-99-99'};
+  const today=ymd(new Date()); const tm=new Date();tm.setDate(tm.getDate()+1); const tom=ymd(tm);
+  const dt=new Date(d+"T12:00:00"); const nice=`${dt.getDate()} ${MON[dt.getMonth()]}`;
+  if(d<today)return {lbl:'Vencida · '+nice,cls:'over',sort:d};
+  if(d===today)return {lbl:'Hoy',cls:'today',sort:d};
+  if(d===tom)return {lbl:'Mañana',cls:'soon',sort:d};
+  return {lbl:nice,cls:'later',sort:d};
+}
+function renderToday(){
+  const el=document.getElementById('today-box'); if(!el)return;
+  const list=S_TODOS.filter(t=>canSee(t)&&isOwner(t)&&!t.done&&prioOf(t)==='high')
+    .sort((a,b)=>dueInfo(a.deadline).sort.localeCompare(dueInfo(b.deadline).sort));
+  const over=list.filter(t=>dueInfo(t.deadline).cls==='over').length;
+  const max=6, shown=list.slice(0,max);
+  el.innerHTML=`<div class="today-card">
+    <div class="today-head">
+      <div class="today-ttl"><span class="today-ic">${PRIO_ICON.high}</span>Tus tareas para hoy<span class="today-sub">· prioridad alta, por fecha límite</span></div>
+      <div class="today-meta">${list.length?`<b>${list.length}</b> pendiente${list.length>1?'s':''}`:''}${over?` · <span class="today-over">${over} vencida${over>1?'s':''}</span>`:''}</div>
+    </div>
+    ${list.length?`<div class="today-list">${shown.map(t=>{const d=dueInfo(t.deadline);
+      return `<div class="today-item" onclick="openTaskModal('${t.id}')">
+        <span class="today-due ${d.cls}">${d.lbl}</span>
+        <div class="today-txt"><div class="today-name">${escHtml(t.text)}</div>${t.grp?`<div class="today-grp">${escHtml(t.grp)}</div>`:''}</div>
+        ${statePill(t,canEditTask(t))}
+        <div class="todo-chk" onclick="event.stopPropagation();toggleTodo('${t.id}')" title="Marcar como hecha"></div>
+      </div>`;}).join("")}</div>
+      ${list.length>max?`<div class="today-more">+${list.length-max} más en Pendientes</div>`:''}`
+    :`<div class="today-empty">🎉 No tienes tareas de prioridad alta pendientes.</div>`}
+  </div>`;
+}
+
 function renderTodos(){
   const el=document.getElementById("todo-list");
   if(!el)return;
@@ -1470,6 +1582,7 @@ function renderTodos(){
         <div class="todo-right">
           ${isDemand?`<span style="font-size:11px;color:var(--text3);white-space:nowrap">gestionar en Supply</span>`:''}
           ${unreadFor(t.id)?`<span class="mention-flag" title="Te han mencionado">@${unreadFor(t.id)}</span>`:''}
+          ${isDemand?'':statePill(t,canEdit)}
           <span class="own-bubble ${isOwner(t)?'me':''}" title="Responsable: ${t.owner||'—'}"><b>${initials(t.owner)}</b>${(t.owner||'—').split(" ")[0]}</span>
           ${isDemand?'':lockBtn}
           ${!isDemand&&canDeleteTask(t)?`<button class="todo-del" title="Eliminar" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`:''}
@@ -1557,6 +1670,7 @@ function renderTodos(){
 
   if(!html)html=`<p class="todo-empty">Sin tareas.</p>`;
   el.innerHTML=html;
+  renderToday();
   // Keep calendar in sync when tasks change (deadlines, done, etc.)
   if(_panels&&_panels.cal&&document.getElementById('cal-grid'))renderCalendar();
 }
@@ -1574,6 +1688,7 @@ async function showHome(){
     <p>${now.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</p>
     <span class="role">${currentUser.role}</span>
   </div>
+  <div id="today-box"></div>
   <div class="stats-row">
     <div class="scard" style="border-left:3px solid ${m.fteUtil>90?"var(--red)":m.fteUtil>70?"var(--ok)":"var(--warn)"}">
       <div class="scard-lbl">Utilización</div>
