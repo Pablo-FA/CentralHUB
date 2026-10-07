@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-10-07 10:34" data-file="index"/>
+<meta name="build-stamp" content="2026-10-07 10:58" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -371,7 +371,8 @@ textarea.tfi{resize:vertical;min-height:70px}
 .tm-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;height:38px}
 .tm-seg-btn{display:flex;align-items:center;justify-content:center;gap:6px;height:38px;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text2);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .12s}
 .tm-seg-btn:hover:not(:disabled):not(.on){border-color:var(--border2);color:var(--text)}
-.tm-seg-btn:disabled{cursor:default}
+.tm-seg-btn:disabled{cursor:not-allowed}
+.tm-seg-btn:disabled:not(.on){opacity:.4}
 .tm-seg-ic{display:inline-flex;width:14px;height:14px}
 .tm-seg-ic svg{width:14px!important;height:14px!important}
 /* comments frame */
@@ -422,6 +423,20 @@ textarea.tfi{resize:vertical;min-height:70px}
 .gc-opt.on{font-weight:700;color:var(--acc)}
 .gc-new{color:var(--acc);font-weight:600;border-bottom:1px solid var(--border);border-radius:7px 7px 0 0;margin-bottom:2px}
 .gc-clear{color:var(--text3);font-size:12px;border-top:1px solid var(--border);border-radius:0 0 7px 7px;margin-top:2px}
+/* ═══ DEPENDENCIES ═══ */
+.todo-item.child{padding-left:calc(4px + var(--depth,1) * 22px)}
+.tree-elbow{color:var(--text3);margin-right:6px;font-weight:700}
+.dep-chip{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text3);vertical-align:middle;white-space:nowrap}
+.dep-chip.blk{background:rgba(217,119,6,.12);border-color:rgba(217,119,6,.35);color:#d97706}
+.todo-chk.blk{opacity:.35;cursor:not-allowed}
+.st-blocked{padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.5;max-width:240px}
+.st-blocked b{color:var(--text)} .st-blocked span{color:var(--text3);font-size:11px}
+.tm-suffix{position:relative}
+.tm-suffix span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text3);pointer-events:none}
+.tm-suffix input{padding-right:48px}
+.tm-hint{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.3;min-height:0}
+.tm-hint a{color:var(--acc);cursor:pointer;font-weight:600}
+.gc-sub{font-size:11px;color:var(--text3);white-space:nowrap}
 /* ═══ TODAY BOX ═══ */
 #today-box{margin:-4px 0 22px}
 .today-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid #dc2626;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
@@ -470,7 +485,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-10-07 10:34"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-10-07 10:58"};</script>
 </head>
 <body>
 
@@ -1015,10 +1030,13 @@ async function toggleTodo(id){
   const t=S_TODOS.find(x=>String(x.id)===String(id));if(!t)return;
   t.done=!t.done; t.state=t.done?'done':'wip'; renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"PATCH",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify({done:t.done,state:t.state})});}catch(e){}
+  await cascadeDone(t);
 }
 async function delTodo(id){
   const t=S_TODOS.find(x=>String(x.id)===String(id));
   if(!t||!canDeleteTask(t))return;
+  // Children become independent (keep their last deadline)
+  for(const ch of childrenOf(t)){ch.parent_id=null;if(ch.state==='hold'&&!ch.done)ch.state='wip';await patchTodo(ch.id,{parent_id:null,state:ch.done?'done':(ch.state||'wip')});}
   S_TODOS=S_TODOS.filter(x=>String(x.id)!==String(id));renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos?id=eq.'+encodeURIComponent(id),{method:"DELETE",headers:{...TODO_SB_H,"Prefer":"return=minimal"}});}catch(e){}
 }
@@ -1038,6 +1056,41 @@ const STATE_LEVELS=[
 const LEGACY_STATE={todo:'wip',doing:'wip',blocked:'hold'};   // old values still in DB before migration
 const stateOf=t=>t.done?'done':(LEGACY_STATE[t.state]||t.state||'wip');
 const stateMeta=id=>STATE_LEVELS.find(s=>s.id===id)||STATE_LEVELS[0];
+// ── Dependencies (parent → child) ──
+const taskById=id=>id==null?null:S_TODOS.find(x=>String(x.id)===String(id));
+const parentOf=t=>t&&t.parent_id?taskById(t.parent_id):null;
+const childrenOf=t=>S_TODOS.filter(x=>x.parent_id&&String(x.parent_id)===String(t.id));
+const isBlocked=t=>{const p=parentOf(t);return !!(p&&!p.done);};
+function descendantIds(t,acc=new Set()){childrenOf(t).forEach(ch=>{if(!acc.has(String(ch.id))){acc.add(String(ch.id));descendantIds(ch,acc);}});return acc;}
+function addDaysYmd(d,n){const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+(parseInt(n)||0));return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;}
+const offsetOf=t=>(t.offset_days==null||t.offset_days==='')?2:parseInt(t.offset_days)||0;
+function inheritedDeadline(t){const p=parentOf(t);return p&&p.deadline?addDaysYmd(p.deadline,offsetOf(t)):null;}
+// Recompute children deadlines (recursively) when a parent's deadline changes
+async function cascadeDeadline(parent){
+  for(const ch of childrenOf(parent)){
+    if(ch.deadline_manual||!parent.deadline)continue;
+    const nd=addDaysYmd(parent.deadline,offsetOf(ch));
+    if(ch.deadline!==nd){ch.deadline=nd;await patchTodo(ch.id,{deadline:nd});}
+    await cascadeDeadline(ch);
+  }
+}
+// Parent done/reopened → unblock (WIP + notify) or re-block (OnHold) its children
+async function cascadeDone(parent){
+  for(const ch of childrenOf(parent)){
+    if(ch.done)continue;
+    if(parent.done){
+      if(ch.state==='hold'||!ch.state){ch.state='wip';await patchTodo(ch.id,{state:'wip'});}
+      if(ch.owner&&ch.owner!==myName())await sendUnblockNotif(ch,parent);
+    }
+    // parent reopened → children keep whatever state the team chose (flexible dependencies)
+  }
+  renderTodos();
+}
+async function sendUnblockNotif(child,parent){
+  const row={id:'n_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),recipient:child.owner,task_id:String(child.id),author:myName(),
+    excerpt:`«${parent.text}» está en Done. Ya puedes empezar.`,read:false,kind:'unblock'};
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/notifications',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify([row])});}catch(e){}
+}
 // Visual indicator: double-chevron (high, red) / single (mid, amber) / dash (low, grey)
 const PRIO_ICON={
   high:`<svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px" title="Alta"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg>`,
@@ -1121,11 +1174,11 @@ function renderBell(){
       return `<div class="nb-item ${n.read?'':'unread'}" onclick="openNotif('${n.id}')">
         <span class="tmc-av">${initials(n.author||'?')}</span>
         <div style="flex:1;min-width:0">
-          <div class="nb-t"><b>${escHtml(firstOf(n.author||'—'))}</b> te mencionó en <b>${escHtml(t?t.text:'una tarea')}</b></div>
+          <div class="nb-t">${n.kind==='unblock'?`🔓 <b>${escHtml(t?t.text:'Una tarea')}</b> se ha desbloqueado`:`<b>${escHtml(firstOf(n.author||'—'))}</b> te mencionó en <b>${escHtml(t?t.text:'una tarea')}</b>`}</div>
           <div class="nb-x">${renderCommentTxt(n.excerpt||'')}</div>
           <div class="nb-when">${timeAgo(n.created_at)}</div>
         </div>
-      </div>`;}).join(""):'<div class="nb-empty">No tienes menciones.</div>'}</div>`;
+      </div>`;}).join(""):'<div class="nb-empty">No tienes notificaciones.</div>'}</div>`;
 }
 function toggleNotifPanel(e){
   e.stopPropagation();
@@ -1259,7 +1312,21 @@ function renderTaskModal(){
               <button type="button" id="tm-lock" class="tm-lock ${t.private?'on':''}" ${iAmCreator?'onclick="toggleDraftPrivate()"':'disabled'} title="${iAmCreator?(t.private?'Privada · solo tú la ves':'Pública · clic para hacerla privada'):'Solo el creador puede cambiar la privacidad'}"><i class="ti ti-lock${t.private?'':'-open'}"></i></button>
             </div>
 
-            <div class="tfld"><label>Fecha límite</label><input type="date" class="tfi tm-ctl" value="${t.deadline||''}" ${ro?'disabled':'onchange="_taskDraft.deadline=this.value"'}/></div>
+            <div class="tfld"><label>Depende de</label>
+              <div class="gcombo" id="dcombo">
+                <input id="dep-inp" class="tfi tm-ctl gcombo-inp" value="${escHtml(parentOf(t)?parentOf(t).text:'')}" ${ro?'disabled':'oninput="depOpen()" onfocus="depOpen()" onkeydown="if(event.key===\'Escape\')document.getElementById(\'dcombo-pop\').classList.remove(\'on\')"'} placeholder="Sin dependencia" autocomplete="off"/>
+                ${ro?'':`<button type="button" class="gcombo-btn" onmousedown="event.preventDefault();document.getElementById('dep-inp').focus();depOpen(true)" tabindex="-1"><i class="ti ti-chevron-down"></i></button>`}
+                <div class="gcombo-pop" id="dcombo-pop"></div>
+              </div>
+            </div>
+            <div class="tfld"><label>Margen sobre su deadline</label>
+              <div class="tm-suffix"><input type="number" min="0" class="tfi tm-ctl" id="dep-off" value="${offsetOf(t)}" ${ro||!t.parent_id?'disabled':'oninput="_taskDraft.offset_days=parseInt(this.value)||0;depRefresh()"'}/><span>días</span></div>
+            </div>
+            <div class="tfld tm-lockcell">
+              <button type="button" class="tm-lock" id="dep-clear" ${ro||!t.parent_id?'disabled':'onclick="depPick(null)"'} title="Quitar dependencia"><i class="ti ti-link-off"></i></button>
+            </div>
+            <div class="tfld"><label>Fecha límite</label><input type="date" id="dl-inp" class="tfi tm-ctl" value="${t.deadline||''}" ${ro?'disabled':'onchange="_taskDraft.deadline=this.value;if(_taskDraft.parent_id){_taskDraft.deadline_manual=true;depRefresh();}"'}/>
+              <div class="tm-hint" id="dl-hint">${depHintHtml(t,ro)}</div></div>
             <div class="tfld tm-span2"><label>Prioridad</label>
               <div class="tm-seg" id="tm-prio">${renderTaskPrioChips(ro)}</div>
             </div>
@@ -1298,7 +1365,8 @@ function renderTaskPrioChips(ro){
 function renderTaskStateSeg(ro){
   const t=_taskDraft;
   return STATE_LEVELS.map(s=>{const on=stateOf(t)===s.id;
-    return `<button type="button" class="tm-seg-btn ${on?'on':''}" style="${on?`color:${s.color};background:${s.color}1f;box-shadow:inset 0 0 0 1px ${s.color}`:''}" ${ro?'disabled':`onclick="setDraftState('${s.id}')"`}><span class="st-dot" style="background:${s.color}"></span>${s.label}</button>`;}).join("");
+    const lock=false;
+    return `<button type="button" class="tm-seg-btn ${on?'on':''}" style="${on?`color:${s.color};background:${s.color}1f;box-shadow:inset 0 0 0 1px ${s.color}`:''}" ${ro||lock?`disabled ${lock?'title="Bloqueada hasta que la tarea padre esté en Done"':''}`:`onclick="setDraftState('${s.id}')"`}><span class="st-dot" style="background:${s.color}"></span>${s.label}</button>`;}).join("");
 }
 function setDraftState(id){_taskDraft.state=id;_taskDraft.done=(id==='done');const w=document.getElementById('tm-state');if(w)w.innerHTML=renderTaskStateSeg(false);}
 // Group combobox: shows ALL groups; typing filters; first option creates a new one
@@ -1323,6 +1391,41 @@ function grpKey(e){
   if(e.key==='Enter'){e.preventDefault();grpPick(e.target.value.trim());}
 }
 document.addEventListener('mousedown',e=>{const pop=document.getElementById('gcombo-pop');if(pop&&pop.classList.contains('on')&&!e.target.closest('#gcombo'))pop.classList.remove('on');});
+function depHintHtml(t,ro){
+  const p=parentOf(t); if(!p)return '';
+  if(t.deadline_manual)return `Fijada a mano${ro?'':` · <a onclick="_taskDraft.deadline_manual=false;depRefresh()">↺ heredar de la tarea padre</a>`}`;
+  return p.deadline?`🔗 Heredada: «${escHtml(p.text)}» + ${offsetOf(t)} días`:`🔗 La tarea padre aún no tiene fecha`;
+}
+function depRefresh(){
+  const t=_taskDraft, p=parentOf(t);
+  if(p&&!t.deadline_manual&&p.deadline){t.deadline=addDaysYmd(p.deadline,offsetOf(t));const d=document.getElementById('dl-inp');if(d)d.value=t.deadline;}
+  const h=document.getElementById('dl-hint'); if(h)h.innerHTML=depHintHtml(t,false);
+  const off=document.getElementById('dep-off'), clr=document.getElementById('dep-clear');
+  if(off){off.disabled=!p;off.oninput=()=>{_taskDraft.offset_days=parseInt(off.value)||0;depRefresh();};}
+  if(clr){clr.disabled=!p;clr.onclick=()=>depPick(null);}
+  const st=document.getElementById('tm-state'); if(st)st.innerHTML=renderTaskStateSeg(false);
+}
+function depOpen(){
+  const pop=document.getElementById('dcombo-pop'), inp=document.getElementById('dep-inp'); if(!pop||!inp)return;
+  const self=_taskDraft, banned=descendantIds(self); banned.add(String(self.id));
+  const q=normTxt(inp.value.trim()); const cur=parentOf(self);
+  const showAll=cur&&inp.value===cur.text;
+  const list=S_TODOS.filter(x=>canSee(x)&&!banned.has(String(x.id))&&(showAll||!q||normTxt(x.text).includes(q)))
+    .sort((a,b)=>(a.done-b.done)||(a.text||'').localeCompare(b.text||'')).slice(0,40);
+  pop.innerHTML=(list.length?list.map(x=>`<div class="gc-opt ${cur&&String(cur.id)===String(x.id)?'on':''}" onmousedown="event.preventDefault();depPick('${x.id}')">
+      <span class="st-dot" style="background:${stateMeta(stateOf(x)).color}"></span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(x.text)}</span><span class="gc-sub">${escHtml(x.grp||'')}</span></div>`).join("")
+    :'<div class="gc-opt" style="color:var(--text3);cursor:default">Sin resultados</div>')
+    +(cur?`<div class="gc-opt gc-clear" onmousedown="event.preventDefault();depPick(null)">Quitar dependencia</div>`:'');
+  pop.classList.add('on');
+}
+function depPick(id){
+  const t=_taskDraft; t.parent_id=id?String(id):null; if(!id)t.deadline_manual=false;
+  const np=id?taskById(id):null; if(np&&!np.done&&stateOf(t)==='wip'){t.state='hold';}
+  const inp=document.getElementById('dep-inp'); if(inp)inp.value=id?(taskById(id)||{}).text||'':'';
+  const pop=document.getElementById('dcombo-pop'); if(pop)pop.classList.remove('on');
+  depRefresh();
+}
+document.addEventListener('mousedown',e=>{const pop=document.getElementById('dcombo-pop');if(pop&&pop.classList.contains('on')&&!e.target.closest('#dcombo'))pop.classList.remove('on');});
 function setDraftPrio(id){_taskDraft.priority=id;const w=document.getElementById('tm-prio');if(w)w.innerHTML=renderTaskPrioChips(false);}
 function toggleDraftPrivate(){
   _taskDraft.private=!_taskDraft.private;
@@ -1367,13 +1470,20 @@ async function saveTask(){
   const t=_taskDraft;
   const grp=(t.grp&&t.grp.trim())?t.grp.trim():null;
   const priority=t.priority||'mid';
-  const state=stateOf(t);
-  const fields={text:t.text,description:t.description||null,deadline:t.deadline||null,grp,priority,owner:t.owner,private:!!t.private,state,done:state==='done'};
   const live=S_TODOS.find(x=>String(x.id)===String(t.id));
+  const before=live?{deadline:live.deadline,done:!!live.done}:{};
+  // dependency: inherit deadline unless fixed manually
+  const parent=taskById(t.parent_id);
+  if(parent&&!t.deadline_manual&&parent.deadline)t.deadline=addDaysYmd(parent.deadline,offsetOf(t));
+  const state=stateOf(t);   // OnHold is only suggested when picking the parent in the modal; the user's choice always wins
+  const fields={text:t.text,description:t.description||null,deadline:t.deadline||null,grp,priority,owner:t.owner,private:!!t.private,state,done:state==='done',
+    parent_id:parent?String(parent.id):null,offset_days:offsetOf(t),deadline_manual:!!(parent&&t.deadline_manual)};
   if(live)Object.assign(live,fields);
   closeTaskModal();
   renderTodos();
   await patchTodo(t.id,fields);
+  if(live&&before.deadline!==live.deadline)await cascadeDeadline(live);
+  if(live&&before.done!==live.done)await cascadeDone(live);
 }
 // For non-managers: they can only add comments. Persist just the log.
 async function saveTaskComment(){
@@ -1481,7 +1591,7 @@ function calByDate(){
 function calCard(t){
   const col=prioMeta(prioOf(t)).color;
   return `<div class="cal-card" style="border-left-color:${col}" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="${(t.text||'').replace(/"/g,'&quot;')}">
-    <div class="cal-card-t">${t.text}</div>
+    <div class="cal-card-t">${t.parent_id?'<i class="ti ti-link" style="font-size:11px;opacity:.7"></i> ':''}${t.text}</div>
     <div class="cal-card-m"><span class="cal-av ${isOwner(t)?'me':''}">${initials(t.owner)}</span>${(t.owner||'').split(" ")[0]}${t.grp?` · ${t.grp}`:''}</div>
   </div>`;
 }
@@ -1552,7 +1662,7 @@ function openStateMenu(e,id){
   const t=S_TODOS.find(x=>String(x.id)===String(id)); if(!t)return;
   const r=e.currentTarget.getBoundingClientRect();
   const m=document.createElement('div'); m.id='st-menu'; m.className='st-menu';
-  m.innerHTML=STATE_LEVELS.map(s=>`<div class="st-opt ${stateOf(t)===s.id?'on':''}" onclick="event.stopPropagation();setTaskState('${id}','${s.id}')"><span class="st-dot" style="background:${s.color}"></span>${s.label}${stateOf(t)===s.id?'<i class="ti ti-check" style="margin-left:auto"></i>':''}</div>`).join("");
+  m.innerHTML=(isBlocked(t)?`<div class="st-blocked"><i class="ti ti-link"></i> Depende de <b>${escHtml(parentOf(t).text)}</b><br><span>La tarea padre aún no está en Done.</span></div>`:'')+STATE_LEVELS.map(s=>`<div class="st-opt ${stateOf(t)===s.id?'on':''}" onclick="event.stopPropagation();setTaskState('${id}','${s.id}')"><span class="st-dot" style="background:${s.color}"></span>${s.label}${stateOf(t)===s.id?'<i class="ti ti-check" style="margin-left:auto"></i>':''}</div>`).join("");
   document.body.appendChild(m);
   const left=Math.min(r.left,window.innerWidth-190);
   m.style.left=left+'px'; m.style.top=(r.bottom+6)+'px';
@@ -1562,9 +1672,11 @@ function closeStateMenu(){const m=document.getElementById('st-menu');if(m)m.remo
 async function setTaskState(id,state){
   closeStateMenu();
   const t=S_TODOS.find(x=>String(x.id)===String(id)); if(!t||!canEditTask(t))return;
+  const wasDone=!!t.done;
   t.state=state; t.done=(state==='done'); renderTodos();
   if(_taskDraft&&String(_taskDraft.id)===String(id)){_taskDraft.state=state;_taskDraft.done=t.done;const w=document.getElementById('tm-state');if(w)w.innerHTML=renderTaskStateSeg(false);}
   await patchTodo(id,{state,done:t.done});
+  if(wasDone!==t.done)await cascadeDone(t);
 }
 
 // ═══ TODAY BOX: my open High-priority tasks, by deadline ═══
@@ -1607,16 +1719,18 @@ function renderTodos(){
   const me=myName();
 
   // Render a single task row. readOnly = I'm not the owner (assigned viewer).
-  const renderItem=(t)=>{
+  const renderItem=(t,depth=0)=>{
     const isDemand=t.source==="demand";
     const canEdit=canManageTask(t), canDone=canCompleteTask(t);
     const lockBtn = isCreator(t)
       ? `<button class="todo-lock ${t.private?'on':''}" title="${t.private?'Privada · solo tú la ves (clic para hacerla pública)':'Pública · clic para hacerla privada'}" onclick="event.stopPropagation();togglePrivate('${t.id}')"><i class="ti ti-lock${t.private?'':'-open'}"></i></button>`
       : ``;
-    return `<div class="todo-item ${!canEdit?'ro':''}" onclick="openTaskModal('${t.id}')">
+    const par=parentOf(t), blocked=isBlocked(t);
+    const depChip=par?`<span class="dep-chip ${blocked?'blk':''}" title="Depende de «${escHtml(par.text)}»${blocked?' (aún no está en Done)':' (ya en Done)'}"><i class="ti ti-link"></i>${escHtml(par.text.length>28?par.text.slice(0,28)+'…':par.text)}</span>`:'';
+    return `<div class="todo-item ${!canEdit?'ro':''} ${depth?'child':''}" style="${depth?`--depth:${Math.min(depth,3)}`:''}" onclick="openTaskModal('${t.id}')">
         <span class="todo-prio" title="Prioridad ${prioMeta(prioOf(t)).label}">${PRIO_ICON[prioOf(t)]}</span>
-        <div class="todo-chk${t.done?" dn":""}" ${canDone?`onclick="event.stopPropagation();toggleTodo('${t.id}')"`:'title="Solo el responsable puede completarla"'}></div>
-        <div class="todo-txt${t.done?" dn":""}">${t.text}${isDemand?` <span class="demand-tag">DEMAND</span>`:""}</div>
+        <div class="todo-chk${t.done?" dn":""}" ${canDone?`onclick="event.stopPropagation();toggleTodo('${t.id}')"`:'onclick="event.stopPropagation()" title="Sin permiso"'}></div>
+        <div class="todo-txt${t.done?" dn":""}">${depth?'<span class="tree-elbow">↳</span>':''}${t.text}${isDemand?` <span class="demand-tag">DEMAND</span>`:""}${depChip}</div>
         <div class="todo-right">
           ${isDemand?`<span style="font-size:11px;color:var(--text3);white-space:nowrap">gestionar en Supply</span>`:''}
           ${unreadFor(t.id)?`<span class="mention-flag" title="Te han mencionado">@${unreadFor(t.id)}</span>`:''}
@@ -1636,7 +1750,14 @@ function renderTodos(){
   // Flat list of pending tasks in a group, sorted by priority (no mine/shared split)
   const renderGroupTasks=(list)=>{
     const pending=list.filter(t=>!t.done&&passPrio(t)).sort(byPrio);
-    return pending.length? pending.map(renderItem).join("") : `<p class="todo-empty">Sin pendientes.</p>`;
+    if(!pending.length)return `<p class="todo-empty">Sin pendientes.</p>`;
+    // Tree order: roots (parent not in this list) then their children, indented
+    const ids=new Set(pending.map(t=>String(t.id))), out=[], seen=new Set();
+    const walk=(t,depth)=>{if(seen.has(String(t.id)))return;seen.add(String(t.id));out.push(renderItem(t,depth));
+      pending.filter(x=>String(x.parent_id)===String(t.id)).forEach(ch=>walk(ch,depth+1));};
+    pending.filter(t=>!t.parent_id||!ids.has(String(t.parent_id))).forEach(t=>walk(t,0));
+    pending.forEach(t=>walk(t,0)); // safety for any leftover
+    return out.join("");
   };
 
   // ── Group tasks by area (grp). null/empty → "Sin grupo" ──
