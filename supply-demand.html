@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-08-28 18:15" data-file="supply-demand"/>
+<meta name="build-stamp" content="2026-10-08 14:24" data-file="supply-demand"/>
 <meta charset="UTF-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -127,7 +127,7 @@ input[type=range]{accent-color:var(--acc);width:100%}
 .cap-col{display:none !important;}
 /* ══════════════════════════════════════════════════════════════════ */
 </style>
-<script>window.__BUILD__={file:"supply-demand",stamp:"2026-08-28 18:15"};</script>
+<script>window.__BUILD__={file:"supply-demand",stamp:"2026-10-08 14:24"};</script>
 </head>
 <body>
 <div id="root"></div><div id="mroot"></div>
@@ -1962,7 +1962,7 @@ async function saveP(){
 function confirmDelP(id){
   const p=S.profiles.find(x=>x.id===id);if(!p)return;
   document.getElementById("mroot").insertAdjacentHTML("beforeend",`
-    <div class="modal-overlay" id="del-confirm" style="z-index:200;display:flex;align-items:center;justify-content:center">
+    <div class="ov" id="del-confirm" style="z-index:200;align-items:center" onclick="if(event.target.id==='del-confirm')this.remove()">
       <div class="modal" style="max-width:400px;padding:24px">
         <div style="font-size:16px;font-weight:600;margin-bottom:10px">¿Eliminar este perfil?</div>
         <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:20px">Vas a eliminar permanentemente a <strong style="color:var(--t)">${p.name}</strong>. Esta acción no se puede deshacer y también eliminará sus asignaciones.</div>
@@ -1974,8 +1974,8 @@ function confirmDelP(id){
     </div>`);
 }
 async function doDelP(id){
-  S.profiles=S.profiles.filter(p=>p.id!==id);
-  S.assigns=S.assigns.filter(a=>a.profile_id!==id);
+  S.profiles=S.profiles.filter(p=>String(p.id)!==String(id));
+  S.assigns=S.assigns.filter(a=>String(a.profile_id)!==String(id));
   document.getElementById("del-confirm")?.remove();
   await save();cm();render();
 }
