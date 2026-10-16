@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-10-07 10:58" data-file="index"/>
+<meta name="build-stamp" content="2026-10-16 16:29" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -437,6 +437,39 @@ textarea.tfi{resize:vertical;min-height:70px}
 .tm-hint{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.3;min-height:0}
 .tm-hint a{color:var(--acc);cursor:pointer;font-weight:600}
 .gc-sub{font-size:11px;color:var(--text3);white-space:nowrap}
+/* ═══ TASKS TOP BAR / SECTIONS / DUE ═══ */
+.todo-topadd{display:flex;gap:8px;margin:2px 0 10px}
+.tta-inp{flex:1;display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);transition:border-color .12s}
+.tta-inp:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-bg)}
+.tta-inp i{color:var(--acc);font-size:15px}
+.tta-inp input{flex:1;border:none;outline:none;background:transparent;font-family:inherit;font-size:13px;color:var(--text)}
+.tta-sec{height:38px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tta-newsec{display:none;gap:8px;margin:-2px 0 12px;padding:10px;border:1px dashed var(--acc-border);border-radius:9px;background:var(--acc-bg)}
+.tta-newsec.on{display:flex}
+.tta-newsec input{flex:1;height:34px;padding:0 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface);font-family:inherit;font-size:13px;color:var(--text);outline:none}
+.tta-newsec input:focus{border-color:var(--acc)}
+.tg-priv{display:inline-flex;align-items:center;gap:3px;margin-left:8px;font-size:10px;font-weight:700;color:var(--acc);background:var(--acc-bg);border-radius:20px;padding:1px 8px;vertical-align:middle}
+.tg-act.on{opacity:1;color:var(--acc)}
+.todo-right .st-pill{width:96px;justify-content:flex-start}
+.todo-right .own-bubble{width:100px;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis}
+.todo-lock,.todo-del,.todo-slot{flex:0 0 24px;width:24px;box-sizing:border-box;justify-content:center;text-align:center}
+.todo-due{flex:0 0 78px;text-align:right;font-size:11px;font-weight:600;white-space:nowrap;color:var(--text3)}
+.todo-due.over{color:#dc2626}
+.todo-due.today{color:var(--acc);font-weight:700}
+.todo-due.soon{color:var(--acc)}
+.todo-due.later{color:var(--text2)}
+.tg-del:hover{color:#dc2626}
+.gdel-box{width:100%;max-width:440px;padding:26px 26px 20px;text-align:left}
+.gdel-ic{width:40px;height:40px;border-radius:12px;background:rgba(220,38,38,.12);color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:14px}
+.gdel-box h3{font-size:16px;font-weight:700;margin:0 0 6px;color:var(--text)}
+.gdel-box p{font-size:13px;color:var(--text2);margin:0 0 14px;line-height:1.5}
+.gdel-opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--border);border-radius:9px;margin-bottom:8px;cursor:pointer;font-size:13px;color:var(--text)}
+.gdel-opt small{color:var(--text3);font-size:11px}
+.gdel-opt:has(input:checked){border-color:var(--acc);background:var(--acc-bg)}
+.gdel-opt.danger:has(input:checked){border-color:#dc2626;background:rgba(220,38,38,.08)}
+.gdel-opt input{margin-top:3px;accent-color:var(--acc)}
+.gdel-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.gdel-go{background:#dc2626!important;border-color:#dc2626!important;color:#fff!important}
 /* ═══ TODAY BOX ═══ */
 #today-box{margin:-4px 0 22px}
 .today-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid #dc2626;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
@@ -485,7 +518,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-10-07 10:58"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-10-16 16:29"};</script>
 </head>
 <body>
 
@@ -948,7 +981,7 @@ async function loadTodos(){
 }
 // Returns todos for the current user (from cache)
 function myName(){return currentUser?.name||"";}
-function getTaskGroups(){const s=new Set();S_TODOS.forEach(t=>{if(t.grp&&t.grp.trim())s.add(t.grp.trim());});return [...s].sort((a,b)=>a.localeCompare(b));}
+function getTaskGroups(){const s=new Set();S_TODOS.forEach(t=>{if(t.grp&&t.grp.trim())s.add(t.grp.trim());});S_GROUPS.forEach(g=>{if(g.name)s.add(g.name);});return [...s].filter(canSeeGroup).sort((a,b)=>a.localeCompare(b));}
 
 // Expand or collapse ALL groups at once
 function toggleAllGroups(expand){
@@ -967,12 +1000,17 @@ async function renameGroup(g){
   const newName=name.trim();
   if(!newName||newName===current)return;
   const affected=S_TODOS.filter(t=>t.grp===current&&canManageTask(t));
-  if(!affected.length){alert("No tienes permiso sobre tareas de este grupo.");return;}
+  if(!affected.length&&!groupMeta(current)){alert("No tienes permiso sobre tareas de este grupo.");return;}
   affected.forEach(t=>{t.grp=newName;});
   // carry over collapse state
   if(window._todoGroupOpen&&current in window._todoGroupOpen){window._todoGroupOpen[newName]=window._todoGroupOpen[current];delete window._todoGroupOpen[current];}
+  const gm=groupMeta(current); if(gm)gm.name=newName;
   renderTodos();
   for(const t of affected){await patchTodo(t.id,{grp:newName});}
+  if(gm){try{
+    await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/task_groups?name=eq.'+encodeURIComponent(current),{method:"DELETE",headers:{...TODO_SB_H,"Prefer":"return=minimal"}});
+    await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/task_groups',{method:"POST",headers:{...TODO_SB_H,"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify([{name:newName,creator:gm.creator,private:!!gm.private}])});
+  }catch(e){}}
 }
 
 // Share a whole group: apply chosen assignees to all tasks currently in the group
@@ -1013,9 +1051,71 @@ function canDeleteTask(t){return isOwner(t)||isCreator(t)||isSuperAdmin();}     
 function initials(n){return (n||"?").split(/[\s.]+/).filter(Boolean).map(x=>x[0]).join("").slice(0,2).toUpperCase();}
 function isAssignedToMe(t){return Array.isArray(t.assigned)&&t.assigned.includes(myName());}
 // Visibility model: everything is PUBLIC by default. Private tasks are visible ONLY to their creator.
+// ── Sections (task_groups): can exist empty and be private ──
+let S_GROUPS=[];
+const groupMeta=name=>S_GROUPS.find(g=>g.name===name);
+function canSeeGroup(name){const g=groupMeta(name);return !(g&&g.private&&g.creator!==myName());}
+function canLockGroup(name){const g=groupMeta(name);return isSuperAdmin()||!g||!g.creator||g.creator===myName();}
+async function loadTaskGroups(){
+  try{const r=await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/task_groups?select=*',{headers:TODO_SB_H,cache:'no-store'});S_GROUPS=r.ok?await r.json():[];}
+  catch(e){S_GROUPS=[];}
+}
 function canSee(t){
-  if(t.private)return isCreator(t);   // private → only the creator
-  return true;                        // public → everyone
+  if(t.grp&&!canSeeGroup(t.grp.trim()))return false;   // private section → only its creator
+  if(t.private)return isCreator(t);                     // private task → only the creator
+  return true;                                          // public → everyone
+}
+function showNewSection(){const b=document.getElementById('tta-newsec');b.classList.add('on');const i=document.getElementById('newsec-inp');i.value='';i.focus();}
+function hideNewSection(){document.getElementById('tta-newsec').classList.remove('on');}
+async function createSection(name){
+  const n=(name||'').trim(); if(!n)return;
+  if(getTaskGroups().some(g=>normTxt(g)===normTxt(n))){alert('Ya existe una sección con ese nombre.');return;}
+  const row={name:n,creator:myName(),private:false};
+  S_GROUPS.push(row); hideNewSection();
+  window._todoGroupOpen=window._todoGroupOpen||{}; window._todoGroupOpen[n]=true;
+  renderTodos();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/task_groups',{method:"POST",headers:{...TODO_SB_H,"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify([row])});}catch(e){}
+}
+function askDeleteGroup(name){
+  if(!canLockGroup(name))return;
+  const tasks=S_TODOS.filter(t=>(t.grp||'').trim()===name);
+  const n=tasks.length, blocked=tasks.filter(t=>!canDeleteTask(t)).length;
+  const root=document.getElementById('task-modal-root');
+  root.innerHTML=`<div class="tmov" id="gdel-ov" style="align-items:center" onclick="if(event.target.id==='gdel-ov')closeTaskModal()">
+    <div class="tm-frame gdel-box">
+      <div class="gdel-ic"><i class="ti ti-trash"></i></div>
+      <h3>¿Eliminar la sección «${escHtml(name)}»?</h3>
+      <p>${n?`Contiene <b>${n} tarea${n>1?'s':''}</b>. ¿Qué hacemos con ${n>1?'ellas':'ella'}?`:'La sección está vacía.'}</p>
+      ${n?`<label class="gdel-opt"><input type="radio" name="gdel-mode" value="move" checked> <span><b>Mover${n>1?'las':'la'} a "Sin grupo"</b><br><small>Las tareas se conservan.</small></span></label>
+      <label class="gdel-opt danger"><input type="radio" name="gdel-mode" value="delete"> <span><b>Eliminar también las tareas</b><br><small>No se puede deshacer.${blocked?` ${blocked} que no puedes borrar se moverán a "Sin grupo".`:''}</small></span></label>`:''}
+      <div class="gdel-btns">
+        <button class="todo-btn" onclick="closeTaskModal()">Cancelar</button>
+        <button class="todo-btn gdel-go" onclick="doDeleteGroup('${name.replace(/'/g,"\\'")}')">Eliminar sección</button>
+      </div>
+    </div></div>`;
+}
+async function doDeleteGroup(name){
+  const sel=document.querySelector('input[name="gdel-mode"]:checked');
+  const mode=sel?sel.value:'move';
+  closeTaskModal();
+  const tasks=S_TODOS.filter(t=>(t.grp||'').trim()===name);
+  for(const t of tasks){
+    if(mode==='delete'&&canDeleteTask(t)){await delTodo(t.id);}
+    else{t.grp=null;await patchTodo(t.id,{grp:null});}
+  }
+  S_GROUPS=S_GROUPS.filter(g=>g.name!==name);
+  if(window._todoGroupOpen)delete window._todoGroupOpen[name];
+  renderTodos();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/task_groups?name=eq.'+encodeURIComponent(name),{method:"DELETE",headers:{...TODO_SB_H,"Prefer":"return=minimal"}});}catch(e){}
+}
+async function toggleGroupPrivate(name){
+  if(!canLockGroup(name))return;
+  let g=groupMeta(name);
+  if(!g){g={name,creator:myName(),private:false};S_GROUPS.push(g);}   // legacy section: first locker becomes creator
+  if(!g.creator)g.creator=myName();
+  g.private=!g.private;
+  renderTodos();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/task_groups',{method:"POST",headers:{...TODO_SB_H,"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify([{name:g.name,creator:g.creator,private:g.private}])});}catch(e){}
 }
 // Base visibility + the "Solo mías" filter (owner === me)
 function getTodos(){
@@ -1736,8 +1836,9 @@ function renderTodos(){
           ${unreadFor(t.id)?`<span class="mention-flag" title="Te han mencionado">@${unreadFor(t.id)}</span>`:''}
           ${isDemand?'':statePill(t,canEdit)}
           <span class="own-bubble ${isOwner(t)?'me':''}" title="Responsable: ${t.owner||'—'}"><b>${initials(t.owner)}</b>${(t.owner||'—').split(" ")[0]}</span>
-          ${isDemand?'':lockBtn}
-          ${!isDemand&&canDeleteTask(t)?`<button class="todo-del" title="Eliminar" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`:''}
+          ${isDemand?'':(lockBtn||'<span class="todo-slot"></span>')}
+          ${!isDemand&&canDeleteTask(t)?`<button class="todo-del" title="Eliminar" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`:'<span class="todo-slot"></span>'}
+                  <span class="todo-due ${t.deadline?dueInfo(t.deadline).cls:'none'}" title="${t.deadline?(dueInfo(t.deadline).cls==='over'?'Vencida':'Fecha límite'):'Sin fecha límite'}">${t.deadline?(dueInfo(t.deadline).cls==='over'?'<i class="ti ti-alert-circle"></i> '+dueInfo(t.deadline).lbl.split(' · ')[1]:dueInfo(t.deadline).lbl):''}</span>
         </div>
       </div>`;
   };
@@ -1763,6 +1864,7 @@ function renderTodos(){
   // ── Group tasks by area (grp). null/empty → "Sin grupo" ──
   const groups={};
   todos.forEach(t=>{const g=(t.grp&&t.grp.trim())?t.grp.trim():"__nogroup";(groups[g]=groups[g]||[]).push(t);});
+  if(!window._todoMineOnly)S_GROUPS.forEach(g=>{if(g.name&&canSeeGroup(g.name)&&!groups[g.name])groups[g.name]=[];});   // empty sections
   // Order: named groups alphabetically, "Sin grupo" last
   const groupNames=Object.keys(groups).filter(g=>g!=="__nogroup").sort((a,b)=>a.localeCompare(b));
   if(groups["__nogroup"])groupNames.push("__nogroup");
@@ -1799,11 +1901,13 @@ function renderTodos(){
       <div class="todo-group-head">
         <div class="tg-headmain" onclick="window._todoGroupOpen['${g.replace(/'/g,"\\'")}']=${isOpen?"false":"true"};renderTodos()">
           <span class="tg-caret" style="transform:rotate(${isOpen?"90":"0"}deg)">▶</span>
-          <span class="tg-name">${label}</span>
+          <span class="tg-name">${label}${groupMeta(g)&&groupMeta(g).private?` <span class="tg-priv" title="Sección privada · solo tú la ves"><i class="ti ti-lock"></i> Privada</span>`:""}</span>
           <span class="tg-count">${pending.length}</span>
         </div>
         ${g!=="__nogroup"?`<div class="tg-actions">
+          ${canLockGroup(g)?`<button class="tg-act ${groupMeta(g)&&groupMeta(g).private?'on':''}" title="${groupMeta(g)&&groupMeta(g).private?'Privada · clic para hacerla pública':'Hacer privada (solo tú la verás)'}" onclick="event.stopPropagation();toggleGroupPrivate('${g.replace(/'/g,"\\'")}')"><i class="ti ti-lock${groupMeta(g)&&groupMeta(g).private?'':'-open'}"></i></button>`:''}
           <button class="tg-act" title="Renombrar grupo" onclick="event.stopPropagation();renameGroup('${g.replace(/'/g,"\\'")}')">✏️</button>
+          ${canLockGroup(g)?`<button class="tg-act tg-del" title="Eliminar sección" onclick="event.stopPropagation();askDeleteGroup('${g.replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i></button>`:''}
         </div>`:''}
       </div>
       ${isOpen?`<div class="todo-group-body">
@@ -1837,7 +1941,7 @@ function renderTodos(){
 
 async function showHome(){
   if(!currentUser)return;
-  const [,m,activeProjects]=await Promise.all([loadTodos(),loadMetrics(),loadActiveProjects()]);
+  const [,m,activeProjects]=await Promise.all([loadTodos(),loadMetrics(),loadActiveProjects(),loadTaskGroups()]);
   const todos=getTodos(),now=new Date();
   const capColors={"Creative":"#7c6ee8","CGI":"#22c55e","Content":"#f59e0b","Media":"#3b82f6","Data":"#ef4444","Development":"#06b6d4","DPM":"#ec4899"};
   const h=now.getHours(),gr=h<13?"Buenos días ☀️":h<20?"Buenas tardes 🌤":"Buenas noches 🌙";
@@ -1848,25 +1952,6 @@ async function showHome(){
     <span class="role">${currentUser.role}</span>
   </div>
   <div id="today-box"></div>
-  <div class="stats-row">
-    <div class="scard" style="border-left:3px solid ${m.fteUtil>90?"var(--red)":m.fteUtil>70?"var(--ok)":"var(--warn)"}">
-      <div class="scard-lbl">Utilización</div>
-      <div class="scard-val" style="color:${m.fteUtil>70?"var(--ok)":m.fteUtil>40?"var(--warn)":"var(--danger)"};cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:currentColor;text-decoration-style:dashed" onclick="navToSD('supply','asignacion')">${m.fteUtil||0}%</div>
-      <div class="scard-sub">${m.allocatedFte||0} de ${m.total||0} FTEs asignados</div>
-    </div>
-    <div class="scard" style="border-left:3px solid var(--acc)">
-      <div class="scard-lbl">Current Capacity</div>
-      <div class="scard-val" style="cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--acc-border);text-decoration-style:dashed" onclick="navToSD('supply','disponibles')">${m.bench||0}</div>
-      <div class="scard-sub">${(m.bench||0)===1?"persona disponible":"personas disponibles"}</div>
-    </div>
-    <div class="scard"><div class="scard-lbl">Cargabilidad media</div><div class="scard-val" style="color:${m.avg>=80?"var(--ok)":m.avg>=50?"var(--warn)":"var(--danger)"}">${m.avg||0}%</div><div class="scard-sub">Promedio del centro</div></div>
-    <div class="scard"><div class="scard-lbl">Proyectos activos</div><div class="scard-val" style="cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-style:dashed;text-decoration-color:var(--acc-border)" onclick="navTo('pm')">${m.projs||0}</div><div class="scard-sub">Asignaciones confirmadas</div></div>
-    <div class="scard">
-      <div class="scard-lbl">Demand abierta</div>
-      <div class="scard-val" style="color:${m.openD>0?"var(--acc)":"var(--text)"};cursor:pointer;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--acc-border);text-decoration-style:dashed" onclick="navToTab('demand')">${m.openD||0}</div>
-      <div class="scard-sub">Sin asignar · ver →</div>
-    </div>
-  </div>
   <div class="home-full">
     <div class="tc-tabs">
       <button class="tc-tab" id="tab-tasks" onclick="togglePanel('tasks')"><i class="ti ti-checklist"></i> Tareas</button>
@@ -1875,11 +1960,16 @@ async function showHome(){
     <div class="tc-split" id="tc-split">
       <div class="card tc-panel" id="panel-tasks">
         <div class="card-title">Pendientes</div>
-        <div id="todo-list"></div>
-        <div class="todo-add">
-          <input id="todo-inp" class="todo-inp" placeholder="Añadir pendiente..." onkeydown="if(event.key==='Enter')addTodo()"/>
-          <button class="todo-btn" onclick="addTodo()">+</button>
+        <div class="todo-topadd">
+          <div class="tta-inp"><i class="ti ti-plus"></i><input id="todo-inp" placeholder="Nueva tarea… (Enter para crear)" onkeydown="if(event.key==='Enter')addTodo()"/></div>
+          <button class="todo-ctrl-btn tta-sec" id="tta-sec-btn" onclick="showNewSection()"><i class="ti ti-folder-plus"></i> Nueva sección</button>
         </div>
+        <div class="tta-newsec" id="tta-newsec">
+          <input id="newsec-inp" placeholder="Nombre de la nueva sección…" onkeydown="if(event.key==='Enter')createSection(this.value);if(event.key==='Escape')hideNewSection()"/>
+          <button class="todo-btn" style="background:var(--acc);color:#fff;border-color:var(--acc)" onclick="createSection(document.getElementById('newsec-inp').value)">Crear</button>
+          <button class="todo-btn" onclick="hideNewSection()">Cancelar</button>
+        </div>
+        <div id="todo-list"></div>
       </div>
       <div class="card tc-panel" id="panel-cal">
         <div class="cal-head">
