@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-10-16 16:43" data-file="index"/>
+<meta name="build-stamp" content="2026-10-16 16:53" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -452,6 +452,22 @@ textarea.tfi{resize:vertical;min-height:70px}
 .tg-priv{display:inline-flex;align-items:center;gap:3px;margin-left:8px;font-size:10px;font-weight:700;color:var(--acc);background:var(--acc-bg);border-radius:20px;padding:1px 8px;vertical-align:middle}
 .tg-act.on{opacity:1;color:var(--acc)}
 .todo-right>*{flex-shrink:0}
+#todo-list{container-type:inline-size;container-name:todos}
+.todo-item{min-width:0;box-sizing:border-box}
+.todo-right{min-width:0}
+.todo-due{overflow:hidden;text-overflow:ellipsis}
+.ob-name{overflow:hidden;text-overflow:ellipsis}
+/* Narrow task panel: owner bubble → initials only, shorter date column */
+@container todos (max-width:600px){
+  .todo-right .own-bubble{width:auto!important;min-width:0!important;flex:0 0 auto!important;padding:2px!important}
+  .todo-right .own-bubble .ob-name{display:none}
+  .todo-due{flex-basis:54px!important}
+}
+@container todos (max-width:420px){
+  .todo-right{gap:4px}
+  .todo-due{flex-basis:44px!important;font-size:10px}
+  .todo-lock,.todo-del,.todo-slot{flex-basis:20px!important;width:20px!important}
+}
 .st-pill{width:24px;height:24px;padding:0;justify-content:center;border-radius:50%}
 .st-pill .st-dot{width:10px;height:10px}
 .today-item .st-pill{flex-shrink:0}
@@ -522,7 +538,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-10-16 16:43"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-10-16 16:53"};</script>
 </head>
 <body>
 
@@ -1839,7 +1855,7 @@ function renderTodos(){
         <div class="todo-right">
           ${unreadFor(t.id)?`<span class="mention-flag" title="Te han mencionado">@${unreadFor(t.id)}</span>`:''}
           ${isDemand?'<span class="todo-slot"></span>':statePill(t,canEdit)}
-          <span class="own-bubble ${isOwner(t)?'me':''}" title="Responsable: ${t.owner||'—'}"><b>${initials(t.owner)}</b>${(t.owner||'—').split(" ")[0]}</span>
+          <span class="own-bubble ${isOwner(t)?'me':''}" title="Responsable: ${t.owner||'—'}"><b>${initials(t.owner)}</b><span class="ob-name">${(t.owner||'—').split(" ")[0]}</span></span>
           ${isDemand?'<span class="todo-slot"></span>':(lockBtn||'<span class="todo-slot"></span>')}
           ${!isDemand&&canDeleteTask(t)?`<button class="todo-del" title="Eliminar" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`:'<span class="todo-slot"></span>'}
                   <span class="todo-due ${t.deadline?dueInfo(t.deadline).cls:'none'}" title="${t.deadline?(dueInfo(t.deadline).cls==='over'?'Vencida':'Fecha límite'):'Sin fecha límite'}">${t.deadline?(dueInfo(t.deadline).cls==='over'?'<i class="ti ti-alert-circle"></i> '+dueInfo(t.deadline).lbl.split(' · ')[1]:dueInfo(t.deadline).lbl):''}</span>
