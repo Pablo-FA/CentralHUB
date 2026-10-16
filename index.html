@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-10-16 16:29" data-file="index"/>
+<meta name="build-stamp" content="2026-10-16 16:43" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -214,12 +214,13 @@ body{background:var(--bg)}
 .todo-group-body{padding:2px 4px 8px}
 .todo-subhead{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;padding-left:2px}
 .todo-empty{color:var(--text3);font-size:12px;padding:4px 0 4px 2px}
+.todo-empty-done{color:var(--acc);cursor:pointer;font-weight:600}
 .todo-group-add{margin-top:6px;padding-left:2px}
 .todo-group-inp{width:100%;max-width:340px;padding:6px 10px;border:1px dashed var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:transparent;color:var(--text)}
 .todo-group-inp:focus{outline:none;border-color:var(--acc);border-style:solid;background:var(--bg)}
 .todo-group-inp::placeholder{color:var(--text3)}
-.todo-item .todo-txt{flex:1;min-width:0}
-.todo-right{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}
+.todo-item .todo-txt{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.todo-right{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;flex-wrap:nowrap}
 .own-bubble{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 10px 2px 2px;white-space:nowrap}
 .own-bubble b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--border);color:var(--text2);font-size:9px;font-weight:700}
 .own-bubble.me{background:var(--acc-bg);border-color:var(--acc-border);color:var(--acc)}
@@ -402,7 +403,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 .mention-flag{font-size:10px;font-weight:700;color:#fff;background:var(--acc);border-radius:20px;padding:1px 7px}
 @media(max-width:560px){.tm-grid{grid-template-columns:minmax(0,1fr) 38px}.tm-grid>.tfld:not(.tm-lockcell){grid-column:1 / -1}.tm-lockcell{grid-column:2;grid-row:auto}.tm-span2{grid-column:1 / -1}}
 /* ═══ TASK STATE ═══ */
-.st-pill{--st:#8888a8;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:20px;border:1px solid color-mix(in srgb,var(--st) 35%,transparent);background:color-mix(in srgb,var(--st) 12%,transparent);color:var(--st);font-family:inherit;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;transition:all .12s}
+.st-pill{--st:#8888a8;display:inline-flex;flex-shrink:0;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:20px;border:1px solid color-mix(in srgb,var(--st) 35%,transparent);background:color-mix(in srgb,var(--st) 12%,transparent);color:var(--st);font-family:inherit;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;transition:all .12s}
 .st-pill:hover:not(:disabled){border-color:var(--st)}
 .st-pill:disabled{cursor:default;opacity:.8}
 .st-dot{width:7px;height:7px;border-radius:50%;background:var(--st,currentColor);flex-shrink:0}
@@ -450,8 +451,11 @@ textarea.tfi{resize:vertical;min-height:70px}
 .tta-newsec input:focus{border-color:var(--acc)}
 .tg-priv{display:inline-flex;align-items:center;gap:3px;margin-left:8px;font-size:10px;font-weight:700;color:var(--acc);background:var(--acc-bg);border-radius:20px;padding:1px 8px;vertical-align:middle}
 .tg-act.on{opacity:1;color:var(--acc)}
-.todo-right .st-pill{width:96px;justify-content:flex-start}
-.todo-right .own-bubble{width:100px;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis}
+.todo-right>*{flex-shrink:0}
+.st-pill{width:24px;height:24px;padding:0;justify-content:center;border-radius:50%}
+.st-pill .st-dot{width:10px;height:10px}
+.today-item .st-pill{flex-shrink:0}
+.todo-right .own-bubble{width:100px;min-width:100px;flex:0 0 100px;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis}
 .todo-lock,.todo-del,.todo-slot{flex:0 0 24px;width:24px;box-sizing:border-box;justify-content:center;text-align:center}
 .todo-due{flex:0 0 78px;text-align:right;font-size:11px;font-weight:600;white-space:nowrap;color:var(--text3)}
 .todo-due.over{color:#dc2626}
@@ -518,7 +522,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-10-16 16:29"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-10-16 16:43"};</script>
 </head>
 <body>
 
@@ -1078,14 +1082,15 @@ async function createSection(name){
 }
 function askDeleteGroup(name){
   if(!canLockGroup(name))return;
-  const tasks=S_TODOS.filter(t=>(t.grp||'').trim()===name);
-  const n=tasks.length, blocked=tasks.filter(t=>!canDeleteTask(t)).length;
+  const tasks=S_TODOS.filter(t=>(t.grp||'').trim()===name&&canSee(t));   // only what I can see
+  const n=tasks.length, nDone=tasks.filter(t=>t.done).length, nPend=n-nDone;
+  const blocked=tasks.filter(t=>!canDeleteTask(t)).length;
   const root=document.getElementById('task-modal-root');
   root.innerHTML=`<div class="tmov" id="gdel-ov" style="align-items:center" onclick="if(event.target.id==='gdel-ov')closeTaskModal()">
     <div class="tm-frame gdel-box">
       <div class="gdel-ic"><i class="ti ti-trash"></i></div>
       <h3>¿Eliminar la sección «${escHtml(name)}»?</h3>
-      <p>${n?`Contiene <b>${n} tarea${n>1?'s':''}</b>. ¿Qué hacemos con ${n>1?'ellas':'ella'}?`:'La sección está vacía.'}</p>
+      <p>${n?`Contiene <b>${n} tarea${n>1?'s':''}</b> (${nPend} pendiente${nPend!==1?'s':''} · ${nDone} completada${nDone!==1?'s':''}). ¿Qué hacemos con ${n>1?'ellas':'ella'}?`:'La sección está vacía.'}</p>
       ${n?`<label class="gdel-opt"><input type="radio" name="gdel-mode" value="move" checked> <span><b>Mover${n>1?'las':'la'} a "Sin grupo"</b><br><small>Las tareas se conservan.</small></span></label>
       <label class="gdel-opt danger"><input type="radio" name="gdel-mode" value="delete"> <span><b>Eliminar también las tareas</b><br><small>No se puede deshacer.${blocked?` ${blocked} que no puedes borrar se moverán a "Sin grupo".`:''}</small></span></label>`:''}
       <div class="gdel-btns">
@@ -1100,7 +1105,7 @@ async function doDeleteGroup(name){
   closeTaskModal();
   const tasks=S_TODOS.filter(t=>(t.grp||'').trim()===name);
   for(const t of tasks){
-    if(mode==='delete'&&canDeleteTask(t)){await delTodo(t.id);}
+    if(mode==='delete'&&canSee(t)&&canDeleteTask(t)){await delTodo(t.id);}
     else{t.grp=null;await patchTodo(t.id,{grp:null});}
   }
   S_GROUPS=S_GROUPS.filter(g=>g.name!==name);
@@ -1755,7 +1760,7 @@ function renderCalendar(){
 // ═══ STATE PILL + MENU ═══
 function statePill(t,canEdit){
   const s=stateMeta(stateOf(t));
-  return `<button class="st-pill" style="--st:${s.color}" ${canEdit?`onclick="event.stopPropagation();openStateMenu(event,'${t.id}')"`:'onclick="event.stopPropagation()" disabled'} title="Estado: ${s.label}${canEdit?' · clic para cambiar':''}"><span class="st-dot"></span>${s.label}${canEdit?'<i class="ti ti-chevron-down st-caret"></i>':''}</button>`;
+  return `<button class="st-pill" style="--st:${s.color}" ${canEdit?`onclick="event.stopPropagation();openStateMenu(event,'${t.id}')"`:'onclick="event.stopPropagation()" disabled'} title="${s.label}${canEdit?' · clic para cambiar el estado':''}" aria-label="Estado: ${s.label}"><span class="st-dot"></span></button>`;
 }
 function openStateMenu(e,id){
   closeStateMenu();
@@ -1830,13 +1835,12 @@ function renderTodos(){
     return `<div class="todo-item ${!canEdit?'ro':''} ${depth?'child':''}" style="${depth?`--depth:${Math.min(depth,3)}`:''}" onclick="openTaskModal('${t.id}')">
         <span class="todo-prio" title="Prioridad ${prioMeta(prioOf(t)).label}">${PRIO_ICON[prioOf(t)]}</span>
         <div class="todo-chk${t.done?" dn":""}" ${canDone?`onclick="event.stopPropagation();toggleTodo('${t.id}')"`:'onclick="event.stopPropagation()" title="Sin permiso"'}></div>
-        <div class="todo-txt${t.done?" dn":""}">${depth?'<span class="tree-elbow">↳</span>':''}${t.text}${isDemand?` <span class="demand-tag">DEMAND</span>`:""}${depChip}</div>
+        <div class="todo-txt${t.done?" dn":""}">${depth?'<span class="tree-elbow">↳</span>':''}${t.text}${isDemand?` <span class="demand-tag" title="Tarea generada desde Demand · se gestiona en Supply & Demand">DEMAND</span>`:""}${depChip}</div>
         <div class="todo-right">
-          ${isDemand?`<span style="font-size:11px;color:var(--text3);white-space:nowrap">gestionar en Supply</span>`:''}
           ${unreadFor(t.id)?`<span class="mention-flag" title="Te han mencionado">@${unreadFor(t.id)}</span>`:''}
-          ${isDemand?'':statePill(t,canEdit)}
+          ${isDemand?'<span class="todo-slot"></span>':statePill(t,canEdit)}
           <span class="own-bubble ${isOwner(t)?'me':''}" title="Responsable: ${t.owner||'—'}"><b>${initials(t.owner)}</b>${(t.owner||'—').split(" ")[0]}</span>
-          ${isDemand?'':(lockBtn||'<span class="todo-slot"></span>')}
+          ${isDemand?'<span class="todo-slot"></span>':(lockBtn||'<span class="todo-slot"></span>')}
           ${!isDemand&&canDeleteTask(t)?`<button class="todo-del" title="Eliminar" onclick="event.stopPropagation();delTodo('${t.id}')">×</button>`:'<span class="todo-slot"></span>'}
                   <span class="todo-due ${t.deadline?dueInfo(t.deadline).cls:'none'}" title="${t.deadline?(dueInfo(t.deadline).cls==='over'?'Vencida':'Fecha límite'):'Sin fecha límite'}">${t.deadline?(dueInfo(t.deadline).cls==='over'?'<i class="ti ti-alert-circle"></i> '+dueInfo(t.deadline).lbl.split(' · ')[1]:dueInfo(t.deadline).lbl):''}</span>
         </div>
@@ -1851,7 +1855,8 @@ function renderTodos(){
   // Flat list of pending tasks in a group, sorted by priority (no mine/shared split)
   const renderGroupTasks=(list)=>{
     const pending=list.filter(t=>!t.done&&passPrio(t)).sort(byPrio);
-    if(!pending.length)return `<p class="todo-empty">Sin pendientes.</p>`;
+    if(!pending.length){const nd=list.filter(t=>t.done).length;
+      return `<p class="todo-empty">Sin pendientes${nd?` · <span class="todo-empty-done" onclick="window._doneTodosOpen=true;renderTodos()">${nd} completada${nd>1?'s':''} (ver en «Completadas»)</span>`:'.'}</p>`;}
     // Tree order: roots (parent not in this list) then their children, indented
     const ids=new Set(pending.map(t=>String(t.id))), out=[], seen=new Set();
     const walk=(t,depth)=>{if(seen.has(String(t.id)))return;seen.add(String(t.id));out.push(renderItem(t,depth));
