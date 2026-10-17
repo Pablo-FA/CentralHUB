@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-10-17 11:57" data-file="index"/>
+<meta name="build-stamp" content="2026-10-17 18:20" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -138,6 +138,12 @@ body{background:var(--bg)}
 #home-view::-webkit-scrollbar{width:4px}
 #home-view::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 #tool-frame{width:100%;height:100%;border:none;display:none}
+.sales-tabs{display:none;align-items:center;gap:4px;height:46px;padding:0 20px;border-bottom:1px solid var(--border);background:var(--surface);box-sizing:border-box}
+#content.sales-mode #tool-frame{height:calc(100% - 46px)}
+.st-tab{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 14px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--text3);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .12s}
+.st-tab i{font-size:15px}
+.st-tab:hover{color:var(--text);background:var(--surface2)}
+.st-tab.on{color:var(--acc);background:var(--acc-bg);border-color:var(--acc-border)}
 #ph-view{height:100%;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
 #ph-view.on{display:flex}
 
@@ -581,7 +587,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-10-17 11:57"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-10-17 18:20"};</script>
 </head>
 <body>
 
@@ -656,7 +662,7 @@ textarea.tfi{resize:vertical;min-height:70px}
       </div>
       <div class="ni" id="ni-sales" onclick="navTo('sales')">
         <i class="ti ti-trending-up"></i>
-        <span class="ni-lbl">Sales Tracking</span>
+        <span class="ni-lbl">Sales</span>
       </div>
       <div class="ni" id="ni-pm" onclick="navTo('pm')">
         <i class="ti ti-chart-bar"></i>
@@ -689,6 +695,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 
     <div id="content">
       <div id="home-view"></div>
+      <div id="sales-tabs" class="sales-tabs" role="tablist"></div>
       <iframe id="tool-frame" src="" allow="storage-access"></iframe>
       <div id="ph-view">
         <div class="ph-wrap">
@@ -779,6 +786,8 @@ async function loadBuildStamps(){
     {label:'Supply & Demand',url:'supply-demand.html'},
     {label:'Project Health',url:'pm_tracker_v4.html'},
     {label:'Sales Tracking',url:'sales-tracking.html'},
+    {label:'GTM',url:'powermap.html'},
+    {label:'Offerings',url:'offerings.html'},
     {label:'Tarifario',url:'rate-card.html'},
     {label:'Executive Hub',url:'executive-hub-cap.html'}
   ];
@@ -874,9 +883,32 @@ function setActive(id){
   if(id)document.getElementById(id)?.classList.add("on");
 }
 function hideAll(){
+  showSalesTabs(false);
   document.getElementById("home-view").style.display="none";
   document.getElementById("tool-frame").style.display="none";
   document.getElementById("ph-view").classList.remove("on");
+}
+
+// ═══ SALES · tabs (add/remove a line to change the tabs) ═══
+const SALES_TABS=[
+  {id:'tracking', label:'Sales tracking', url:'sales-tracking.html', icon:'ti-chart-line'},
+  {id:'gtm',      label:'GTM',            url:'powermap.html',       icon:'ti-world'},
+  {id:'offerings',label:'Offerings',      url:'offerings.html',      icon:'ti-package'}
+];
+let currentSalesTab=SALES_TABS[0].id;
+function renderSalesTabs(){
+  const bar=document.getElementById('sales-tabs'); if(!bar)return;
+  bar.innerHTML=SALES_TABS.map(t=>`<button class="st-tab ${t.id===currentSalesTab?'on':''}" role="tab" aria-selected="${t.id===currentSalesTab}" onclick="setSalesTab('${t.id}')"><i class="ti ${t.icon}"></i>${t.label}</button>`).join("");
+}
+function setSalesTab(id){
+  const tab=SALES_TABS.find(t=>t.id===id)||SALES_TABS[0];
+  currentSalesTab=tab.id; renderSalesTabs();
+  const f=document.getElementById("tool-frame");
+  if(!f.src||!f.src.split('?')[0].endsWith(tab.url)){f.src=tab.url;}   // same iframe → load event re-applies theme
+}
+function showSalesTabs(on){
+  document.getElementById('content').classList.toggle('sales-mode',!!on);
+  document.getElementById('sales-tabs').style.display=on?'flex':'none';
 }
 
 function navTo(view,label){
@@ -913,7 +945,8 @@ function navTo(view,label){
   } else if(view==="sales"){
     setActive("ni-sales");
     const f=document.getElementById("tool-frame");
-    if(!f.src||!f.src.includes("sales-tracking")){f.src="sales-tracking.html";}
+    showSalesTabs(true);
+    setSalesTab(SALES_TABS[0].id);   // always opens on Sales tracking
     f.style.display="block";
     currentTool="sales";
   } else if(view==="ph"){
@@ -1365,7 +1398,10 @@ async function sendMentionNotifs(t,entry,mentions){
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/notifications',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(rows)});}
   catch(e){console.warn('notif error',e);}
 }
-function unreadFor(taskId){return S_NOTIFS.filter(n=>!n.read&&String(n.task_id)===String(taskId)).length;}
+// A notification may point to the todos.id or to its ref_id (e.g. 'offering_<id>') → accept both
+function notifTask(n){return S_TODOS.find(x=>String(x.id)===String(n.task_id)||(x.ref_id&&String(x.ref_id)===String(n.task_id)));}
+function notifMatches(n,t){return String(n.task_id)===String(t.id)||(t.ref_id&&String(n.task_id)===String(t.ref_id));}
+function unreadFor(taskId){const t=S_TODOS.find(x=>String(x.id)===String(taskId));return S_NOTIFS.filter(n=>!n.read&&(t?notifMatches(n,t):String(n.task_id)===String(taskId))).length;}
 function timeAgo(iso){const m=Math.round((Date.now()-new Date(iso))/60000);if(m<1)return'ahora';if(m<60)return m+' min';const h=Math.round(m/60);if(h<24)return h+' h';return Math.round(h/24)+' d';}
 function renderBell(){
   const badge=document.getElementById('nb-badge'), panel=document.getElementById('nb-panel');
@@ -1375,7 +1411,7 @@ function renderBell(){
   if(!panel)return;
   panel.innerHTML=`<div class="nb-head"><b>Notificaciones</b>${un?`<button onclick="markAllNotifsRead()">Marcar todas como leídas</button>`:''}</div>
     <div class="nb-list">${S_NOTIFS.length?S_NOTIFS.map(n=>{
-      const t=S_TODOS.find(x=>String(x.id)===String(n.task_id));
+      const t=notifTask(n);
       return `<div class="nb-item ${n.read?'':'unread'}" onclick="openNotif('${n.id}')">
         <span class="tmc-av">${initials(n.author||'?')}</span>
         <div style="flex:1;min-width:0">
@@ -1403,11 +1439,12 @@ async function openNotif(id){
   const n=S_NOTIFS.find(x=>x.id===id); if(!n)return;
   document.getElementById('nb-panel').classList.remove('on');
   const hv=document.getElementById('home-view'); if(hv&&getComputedStyle(hv).display==='none')navTo('home');
-  if(!S_TODOS.find(x=>String(x.id)===String(n.task_id)))await loadTodos();
-  if(S_TODOS.find(x=>String(x.id)===String(n.task_id)))openTaskModal(n.task_id);
+  if(!notifTask(n))await loadTodos();
+  const t=notifTask(n);
+  if(t&&canSee(t))openTaskModal(t.id);
   else alert('Esta tarea ya no existe o es privada.');
-  // opening a task clears all its mentions for me
-  S_NOTIFS.filter(x=>!x.read&&String(x.task_id)===String(n.task_id)).forEach(x=>markNotifRead(x.id));
+  // opening a task clears all its notifications for me
+  if(t)S_NOTIFS.filter(x=>!x.read&&notifMatches(x,t)).forEach(x=>markNotifRead(x.id));
 }
 
 // ═══ TASK DETAIL MODAL ═══
@@ -1416,7 +1453,7 @@ function openTaskModal(id){
   const t=S_TODOS.find(x=>String(x.id)===String(id));
   if(!t)return;
   _taskDraft=JSON.parse(JSON.stringify(t));
-  S_NOTIFS.filter(x=>!x.read&&String(x.task_id)===String(id)).forEach(x=>markNotifRead(x.id));
+  S_NOTIFS.filter(x=>!x.read&&notifMatches(x,t)).forEach(x=>markNotifRead(x.id));
   if(!Array.isArray(_taskDraft.assigned))_taskDraft.assigned=[];
   if(!Array.isArray(_taskDraft.log))_taskDraft.log=[];
   _taskCommentIdx=null;
@@ -1994,7 +2031,7 @@ function renderTodos(){
     return `<div class="todo-item ${!canEdit?'ro':''} ${depth?'child':''}" style="${depth?`--depth:${Math.min(depth,3)}`:''}" onclick="openTaskModal('${t.id}')">
         <span class="todo-prio" title="Prioridad ${prioMeta(prioOf(t)).label}">${PRIO_ICON[prioOf(t)]}</span>
         <div class="todo-chk${t.done?" dn":""}" ${canDone?`onclick="event.stopPropagation();toggleTodo('${t.id}')"`:'onclick="event.stopPropagation()" title="Sin permiso"'}></div>
-        <div class="todo-txt${t.done?" dn":""}">${nKids?`<button class="tree-tog ${open?'open':''}" title="${open?'Ocultar':'Mostrar'} ${nKids} tarea${nKids>1?'s':''} anidada${nKids>1?'s':''}" onclick="event.stopPropagation();toggleTaskTree('${t.id}')"><i class="ti ti-chevron-right"></i></button>`:(depth?'':'<span class="tree-tog-slot"></span>')}${depth?'<span class="tree-elbow">↳</span>':''}${t.text}${nKids&&!open?` <span class="kids-chip" onclick="event.stopPropagation();toggleTaskTree('${t.id}')">${nKids} anidada${nKids>1?'s':''}</span>`:''}${isDemand?` <span class="demand-tag" title="Tarea generada desde Demand · se gestiona en Supply & Demand">DEMAND</span>`:""}${depChip}</div>
+        <div class="todo-txt${t.done?" dn":""}">${nKids?`<button class="tree-tog ${open?'open':''}" title="${open?'Ocultar':'Mostrar'} ${nKids} tarea${nKids>1?'s':''} anidada${nKids>1?'s':''}" onclick="event.stopPropagation();toggleTaskTree('${t.id}')"><i class="ti ti-chevron-right"></i></button>`:(depth?'':'<span class="tree-tog-slot"></span>')}${depth?'<span class="tree-elbow">↳</span>':''}${t.text}${nKids&&!open?` <span class="kids-chip" onclick="event.stopPropagation();toggleTaskTree('${t.id}')">${nKids} anidada${nKids>1?'s':''}</span>`:''}${isDemand?` <span class="demand-tag" title="Tarea generada desde Demand · se gestiona en Supply & Demand">DEMAND</span>`:""}${t.source==='offering'?` <span class="demand-tag" style="cursor:pointer" title="Mención en GTM / Offerings · clic para abrir Offerings" onclick="event.stopPropagation();navTo('sales');setSalesTab('offerings')">OFFERING</span>`:""}${depChip}</div>
         <div class="todo-right">
           ${unreadFor(t.id)?`<span class="mention-flag" title="Te han mencionado">@${unreadFor(t.id)}</span>`:''}
           ${isDemand?'<span class="todo-slot"></span>':statePill(t,canEdit)}
