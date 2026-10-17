@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-10-16 17:02" data-file="index"/>
+<meta name="build-stamp" content="2026-10-16 18:15" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -496,6 +496,33 @@ textarea.tfi{resize:vertical;min-height:70px}
 #todo-list .todo-item>.todo-txt{min-width:0;overflow:hidden;overflow-wrap:anywhere;word-break:break-word}
 #todo-list .todo-item>.todo-right{justify-self:end;min-width:max-content}
 #todo-list .dep-chip,#todo-list .demand-tag{max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+/* ═══ NESTED TASKS ═══ */
+.tree-tog{width:18px;height:18px;margin-right:6px;border:none;border-radius:5px;background:transparent;color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;transition:transform .15s,background .12s;font-size:13px;padding:0}
+.tree-tog:hover{background:var(--surface2);color:var(--acc)}
+.tree-tog.open{transform:rotate(90deg);color:var(--acc)}
+.tree-tog-slot{display:inline-block;width:18px;margin-right:6px;vertical-align:middle}
+.kids-chip{display:inline-flex;align-items:center;margin-left:8px;font-size:10px;font-weight:600;padding:1px 8px;border-radius:20px;background:var(--acc-bg);color:var(--acc);cursor:pointer;vertical-align:middle;white-space:nowrap}
+.tm-crumb{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--acc);cursor:pointer;margin-top:3px;max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tm-crumb:hover{text-decoration:underline}
+.tm-kids{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg)}
+.tk-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--surface);transition:background .1s}
+.tk-row:hover{background:var(--surface2)}
+.tk-row.dragging{opacity:.4}
+.tk-row.over{box-shadow:inset 0 2px 0 var(--acc)}
+.tk-row.done .tk-txt{text-decoration:line-through;color:var(--text3)}
+.tk-grip{color:var(--text3);cursor:grab;display:inline-flex;font-size:14px}
+.tk-num{flex:0 0 18px;height:18px;border-radius:50%;background:var(--surface2);color:var(--text2);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.tk-txt{flex:1;min-width:0;font-size:13px;color:var(--text);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk-txt:hover{color:var(--acc)}
+.tk-own{flex:0 0 22px;height:22px;border-radius:50%;background:var(--border);color:var(--text2);font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.tk-due{flex:0 0 52px;font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap}
+.tk-due.over{color:#dc2626}.tk-due.today,.tk-due.soon{color:var(--acc)}
+.tk-x{border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:14px;padding:2px;border-radius:5px;display:inline-flex}
+.tk-x:hover{color:#dc2626;background:var(--surface2)}
+.tk-empty{padding:10px 12px;font-size:12px;color:var(--text3);background:var(--surface)}
+.tk-add{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface)}
+.tk-add i{color:var(--acc);font-size:15px}
+.tk-add input{flex:1;border:none;outline:none;background:transparent;font-family:inherit;font-size:13px;color:var(--text);height:24px}
 /* ═══ TODAY BOX ═══ */
 #today-box{margin:-4px 0 22px}
 .today-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid #dc2626;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
@@ -544,7 +571,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-10-16 17:02"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-10-16 18:15"};</script>
 </head>
 <body>
 
@@ -1186,7 +1213,8 @@ const stateMeta=id=>STATE_LEVELS.find(s=>s.id===id)||STATE_LEVELS[0];
 // ── Dependencies (parent → child) ──
 const taskById=id=>id==null?null:S_TODOS.find(x=>String(x.id)===String(id));
 const parentOf=t=>t&&t.parent_id?taskById(t.parent_id):null;
-const childrenOf=t=>S_TODOS.filter(x=>x.parent_id&&String(x.parent_id)===String(t.id));
+const sortSiblings=(a,b)=>((a.sort_order??1e9)-(b.sort_order??1e9))||String(a.created_at||a.id).localeCompare(String(b.created_at||b.id));
+const childrenOf=t=>S_TODOS.filter(x=>x.parent_id&&String(x.parent_id)===String(t.id)).sort(sortSiblings);
 const isBlocked=t=>{const p=parentOf(t);return !!(p&&!p.done);};
 function descendantIds(t,acc=new Set()){childrenOf(t).forEach(ch=>{if(!acc.has(String(ch.id))){acc.add(String(ch.id));descendantIds(ch,acc);}});return acc;}
 function addDaysYmd(d,n){const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+(parseInt(n)||0));return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;}
@@ -1415,7 +1443,7 @@ function renderTaskModal(){
       <!-- Frame 1 · task details -->
       <div class="tmodal tm-frame">
         <div class="tmh">
-          <div><h3>Detalle de tarea</h3><div style="font-size:12px;color:var(--text3);margin-top:2px">Responsable: ${t.owner||'—'}${creatorOf(t)&&creatorOf(t)!==t.owner?' · creada por '+creatorOf(t):''}${ro?' · 👁 solo lectura':''}</div></div>
+          <div><h3>Detalle de tarea</h3>${parentOf(t)?`<div class="tm-crumb" onclick="openTaskModal('${parentOf(t).id}')" title="Abrir la tarea padre"><i class="ti ti-corner-left-up"></i> ${escHtml(parentOf(t).text)}</div>`:''}<div style="font-size:12px;color:var(--text3);margin-top:2px">Responsable: ${t.owner||'—'}${creatorOf(t)&&creatorOf(t)!==t.owner?' · creada por '+creatorOf(t):''}${ro?' · 👁 solo lectura':''}</div></div>
           <button class="tclose" onclick="closeTaskModal()">✕</button>
         </div>
         <div class="tmb">
@@ -1459,6 +1487,9 @@ function renderTaskModal(){
             </div>
             <div class="tfld tm-full"><label>Estado</label>
               <div class="tm-seg tm-seg4" id="tm-state">${renderTaskStateSeg(ro)}</div>
+            </div>
+            <div class="tfld tm-full"><label>Tareas anidadas <span style="font-weight:400;color:var(--text3)">· arrastra para ordenar la secuencia</span></label>
+              <div class="tm-kids" id="tm-kids">${renderModalKids(ro)}</div>
             </div>
           </div>
         </div>
@@ -1553,6 +1584,62 @@ function depPick(id){
   depRefresh();
 }
 document.addEventListener('mousedown',e=>{const pop=document.getElementById('dcombo-pop');if(pop&&pop.classList.contains('on')&&!e.target.closest('#dcombo'))pop.classList.remove('on');});
+// ═══ NESTED TASKS (modal) ═══
+function renderModalKids(ro){
+  const t=_taskDraft; const live=taskById(t.id); if(!live)return '';
+  const kids=childrenOf(live).filter(canSee);
+  const rows=kids.map((k,i)=>{const s=stateMeta(stateOf(k));const d=k.deadline?dueInfo(k.deadline):null;
+    return `<div class="tk-row ${k.done?'done':''}" draggable="${ro?'false':'true'}" data-id="${k.id}"
+        ondragstart="kidDragStart(event)" ondragover="kidDragOver(event)" ondragleave="this.classList.remove('over')" ondrop="kidDrop(event)" ondragend="kidDragEnd()">
+      ${ro?'':'<span class="tk-grip" title="Arrastra para reordenar"><i class="ti ti-grip-vertical"></i></span>'}
+      <span class="tk-num">${i+1}</span>
+      <span class="st-dot" style="background:${s.color}" title="${s.label}"></span>
+      <span class="tk-txt" onclick="openTaskModal('${k.id}')" title="Abrir tarea">${escHtml(k.text)}</span>
+      <span class="tk-own" title="${escHtml(k.owner||'—')}">${initials(k.owner)}</span>
+      <span class="tk-due ${d?d.cls:''}">${d?(d.cls==='over'?d.lbl.split(' · ')[1]:d.lbl):''}</span>
+      ${ro?'':`<button class="tk-x" title="Desvincular (la tarea se conserva)" onclick="unlinkKid('${k.id}')"><i class="ti ti-unlink"></i></button>`}
+    </div>`;}).join("");
+  return (rows||'<div class="tk-empty">Sin tareas anidadas.</div>')+(ro?'':`
+    <div class="tk-add"><i class="ti ti-subtask"></i><input id="tk-add-inp" placeholder="Añadir tarea anidada… (Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addKid(this.value)}"/></div>`);
+}
+function refreshModalKids(){const w=document.getElementById('tm-kids');if(w)w.innerHTML=renderModalKids(false);}
+async function addKid(text){
+  const v=(text||'').trim(); const parent=taskById(_taskDraft.id); if(!v||!parent)return;
+  const kids=childrenOf(parent);
+  const todo={id:Date.now()+"",owner:parent.owner||myName(),creator:myName(),text:v,done:false,source:"manual",assigned:[],description:null,
+    deadline:parent.deadline?addDaysYmd(parent.deadline,2):null,log:[],grp:parent.grp||null,priority:parent.priority||"mid",private:false,
+    state:parent.done?"wip":"hold",parent_id:String(parent.id),offset_days:2,deadline_manual:false,
+    sort_order:kids.length?Math.max(...kids.map(k=>k.sort_order??0))+1:1,created_at:new Date().toISOString()};
+  S_TODOS.push(todo);
+  window._taskOpen=window._taskOpen||{}; window._taskOpen[String(parent.id)]=true;   // show it in the list
+  refreshModalKids(); renderTodos();
+  const inp=document.getElementById('tk-add-inp'); if(inp)inp.focus();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/todos',{method:"POST",headers:{...TODO_SB_H,"Prefer":"return=minimal"},body:JSON.stringify(todo)});}catch(e){}
+}
+async function unlinkKid(id){
+  const k=taskById(id); if(!k)return;
+  k.parent_id=null; k.sort_order=null; if(k.state==='hold'&&!k.done)k.state='wip';
+  refreshModalKids(); renderTodos();
+  await patchTodo(id,{parent_id:null,sort_order:null,state:k.done?'done':k.state});
+}
+// drag & drop reorder
+let _kidDrag=null;
+function kidDragStart(e){_kidDrag=e.currentTarget.dataset.id;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',_kidDrag);}catch(_){}}
+function kidDragOver(e){e.preventDefault();e.currentTarget.classList.add('over');}
+function kidDragEnd(){_kidDrag=null;document.querySelectorAll('.tk-row').forEach(r=>r.classList.remove('dragging','over'));}
+async function kidDrop(e){
+  e.preventDefault(); const target=e.currentTarget.dataset.id; const from=_kidDrag; kidDragEnd();
+  if(!from||from===target)return;
+  const parent=taskById(_taskDraft.id); const kids=childrenOf(parent);
+  const ids=kids.map(k=>String(k.id)); const fi=ids.indexOf(String(from)); let ti=ids.indexOf(String(target));
+  if(fi<0||ti<0)return;
+  ids.splice(fi,1); ids.splice(ti,0,String(from));
+  const changed=[];
+  ids.forEach((id,i)=>{const k=taskById(id);if(k.sort_order!==i+1){k.sort_order=i+1;changed.push(k);}});
+  refreshModalKids(); renderTodos();
+  for(const k of changed)await patchTodo(k.id,{sort_order:k.sort_order});
+}
+function toggleTaskTree(id){window._taskOpen=window._taskOpen||{};window._taskOpen[String(id)]=!window._taskOpen[String(id)];renderTodos();}
 function setDraftPrio(id){_taskDraft.priority=id;const w=document.getElementById('tm-prio');if(w)w.innerHTML=renderTaskPrioChips(false);}
 function toggleDraftPrivate(){
   _taskDraft.private=!_taskDraft.private;
@@ -1846,18 +1933,18 @@ function renderTodos(){
   const me=myName();
 
   // Render a single task row. readOnly = I'm not the owner (assigned viewer).
-  const renderItem=(t,depth=0)=>{
+  const renderItem=(t,depth=0,nKids=0,open=false)=>{
     const isDemand=t.source==="demand";
     const canEdit=canManageTask(t), canDone=canCompleteTask(t);
     const lockBtn = isCreator(t)
       ? `<button class="todo-lock ${t.private?'on':''}" title="${t.private?'Privada · solo tú la ves (clic para hacerla pública)':'Pública · clic para hacerla privada'}" onclick="event.stopPropagation();togglePrivate('${t.id}')"><i class="ti ti-lock${t.private?'':'-open'}"></i></button>`
       : ``;
     const par=parentOf(t), blocked=isBlocked(t);
-    const depChip=par?`<span class="dep-chip ${blocked?'blk':''}" title="Depende de «${escHtml(par.text)}»${blocked?' (aún no está en Done)':' (ya en Done)'}"><i class="ti ti-link"></i>${escHtml(par.text.length>28?par.text.slice(0,28)+'…':par.text)}</span>`:'';
+    const depChip=(par&&!depth)?`<span class="dep-chip ${blocked?'blk':''}" title="Depende de «${escHtml(par.text)}»${blocked?' (aún no está en Done)':' (ya en Done)'}"><i class="ti ti-link"></i>${escHtml(par.text.length>28?par.text.slice(0,28)+'…':par.text)}</span>`:'';
     return `<div class="todo-item ${!canEdit?'ro':''} ${depth?'child':''}" style="${depth?`--depth:${Math.min(depth,3)}`:''}" onclick="openTaskModal('${t.id}')">
         <span class="todo-prio" title="Prioridad ${prioMeta(prioOf(t)).label}">${PRIO_ICON[prioOf(t)]}</span>
         <div class="todo-chk${t.done?" dn":""}" ${canDone?`onclick="event.stopPropagation();toggleTodo('${t.id}')"`:'onclick="event.stopPropagation()" title="Sin permiso"'}></div>
-        <div class="todo-txt${t.done?" dn":""}">${depth?'<span class="tree-elbow">↳</span>':''}${t.text}${isDemand?` <span class="demand-tag" title="Tarea generada desde Demand · se gestiona en Supply & Demand">DEMAND</span>`:""}${depChip}</div>
+        <div class="todo-txt${t.done?" dn":""}">${nKids?`<button class="tree-tog ${open?'open':''}" title="${open?'Ocultar':'Mostrar'} ${nKids} tarea${nKids>1?'s':''} anidada${nKids>1?'s':''}" onclick="event.stopPropagation();toggleTaskTree('${t.id}')"><i class="ti ti-chevron-right"></i></button>`:(depth?'':'<span class="tree-tog-slot"></span>')}${depth?'<span class="tree-elbow">↳</span>':''}${t.text}${nKids&&!open?` <span class="kids-chip" onclick="event.stopPropagation();toggleTaskTree('${t.id}')">${nKids} anidada${nKids>1?'s':''}</span>`:''}${isDemand?` <span class="demand-tag" title="Tarea generada desde Demand · se gestiona en Supply & Demand">DEMAND</span>`:""}${depChip}</div>
         <div class="todo-right">
           ${unreadFor(t.id)?`<span class="mention-flag" title="Te han mencionado">@${unreadFor(t.id)}</span>`:''}
           ${isDemand?'<span class="todo-slot"></span>':statePill(t,canEdit)}
@@ -1882,8 +1969,13 @@ function renderTodos(){
       return `<p class="todo-empty">Sin pendientes${nd?` · <span class="todo-empty-done" onclick="window._doneTodosOpen=true;renderTodos()">${nd} completada${nd>1?'s':''} (ver en «Completadas»)</span>`:'.'}</p>`;}
     // Tree order: roots (parent not in this list) then their children, indented
     const ids=new Set(pending.map(t=>String(t.id))), out=[], seen=new Set();
-    const walk=(t,depth)=>{if(seen.has(String(t.id)))return;seen.add(String(t.id));out.push(renderItem(t,depth));
-      pending.filter(x=>String(x.parent_id)===String(t.id)).forEach(ch=>walk(ch,depth+1));};
+    window._taskOpen=window._taskOpen||{};   // parent id → expanded? (default collapsed)
+    const walk=(t,depth)=>{if(seen.has(String(t.id)))return;seen.add(String(t.id));
+      const kids=pending.filter(x=>String(x.parent_id)===String(t.id)).sort(sortSiblings);
+      const open=!!window._taskOpen[String(t.id)];
+      out.push(renderItem(t,depth,kids.length,open));
+      if(open)kids.forEach(ch=>walk(ch,depth+1));
+      else kids.forEach(ch=>{const hide=x=>{seen.add(String(x.id));pending.filter(y=>String(y.parent_id)===String(x.id)).forEach(hide);};hide(ch);});};
     pending.filter(t=>!t.parent_id||!ids.has(String(t.parent_id))).forEach(t=>walk(t,0));
     pending.forEach(t=>walk(t,0)); // safety for any leftover
     return out.join("");
