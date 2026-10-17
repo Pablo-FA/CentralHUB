@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta name="build-stamp" content="2026-10-16 18:15" data-file="index"/>
+<meta name="build-stamp" content="2026-10-17 11:57" data-file="index"/>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>MO Platform · Marketing Operations</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -523,6 +523,16 @@ textarea.tfi{resize:vertical;min-height:70px}
 .tk-add{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface)}
 .tk-add i{color:var(--acc);font-size:15px}
 .tk-add input{flex:1;border:none;outline:none;background:transparent;font-family:inherit;font-size:13px;color:var(--text);height:24px}
+.tg-done:hover{color:#16a34a}
+.arch-wrap{margin-top:14px;border-top:1px solid var(--border);padding-top:8px}
+.arch-head{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding:2px 0;font-size:11px;color:var(--text3);font-weight:500}
+.arch-caret{font-size:10px;transition:transform .15s;display:inline-block}
+.arch-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--border)}
+.arch-row:last-child{border-bottom:none}
+.arch-row i{color:#16a34a;font-size:15px}
+.arch-name{font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arch-meta{font-size:11px;color:var(--text3);white-space:nowrap}
+.arch-btn{font-size:11px!important;padding:4px 10px!important}
 /* ═══ TODAY BOX ═══ */
 #today-box{margin:-4px 0 22px}
 .today-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid #dc2626;border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
@@ -571,7 +581,7 @@ textarea.tfi{resize:vertical;min-height:70px}
 </style>
 <div id="task-modal-root"></div>
 
-<script>window.__BUILD__={file:"index",stamp:"2026-10-16 18:15"};</script>
+<script>window.__BUILD__={file:"index",stamp:"2026-10-17 11:57"};</script>
 </head>
 <body>
 
@@ -1034,7 +1044,7 @@ async function loadTodos(){
 }
 // Returns todos for the current user (from cache)
 function myName(){return currentUser?.name||"";}
-function getTaskGroups(){const s=new Set();S_TODOS.forEach(t=>{if(t.grp&&t.grp.trim())s.add(t.grp.trim());});S_GROUPS.forEach(g=>{if(g.name)s.add(g.name);});return [...s].filter(canSeeGroup).sort((a,b)=>a.localeCompare(b));}
+function getTaskGroups(){const s=new Set();S_TODOS.forEach(t=>{if(t.grp&&t.grp.trim())s.add(t.grp.trim());});S_GROUPS.forEach(g=>{if(g.name)s.add(g.name);});return [...s].filter(n=>canSeeGroup(n)&&!isArchivedGroup(n)).sort((a,b)=>a.localeCompare(b));}
 
 // Expand or collapse ALL groups at once
 function toggleAllGroups(expand){
@@ -1107,6 +1117,7 @@ function isAssignedToMe(t){return Array.isArray(t.assigned)&&t.assigned.includes
 // ── Sections (task_groups): can exist empty and be private ──
 let S_GROUPS=[];
 const groupMeta=name=>S_GROUPS.find(g=>g.name===name);
+const isArchivedGroup=name=>{const g=groupMeta(name);return !!(g&&g.archived);};
 function canSeeGroup(name){const g=groupMeta(name);return !(g&&g.private&&g.creator!==myName());}
 function canLockGroup(name){const g=groupMeta(name);return isSuperAdmin()||!g||!g.creator||g.creator===myName();}
 async function loadTaskGroups(){
@@ -1128,6 +1139,45 @@ async function createSection(name){
   window._todoGroupOpen=window._todoGroupOpen||{}; window._todoGroupOpen[n]=true;
   renderTodos();
   try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/task_groups',{method:"POST",headers:{...TODO_SB_H,"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify([row])});}catch(e){}
+}
+function askCompleteGroup(name){
+  if(!canLockGroup(name))return;
+  const tasks=S_TODOS.filter(t=>(t.grp||'').trim()===name&&canSee(t));
+  const pend=tasks.filter(t=>!t.done);
+  if(!pend.length){archiveGroup(name,false);return;}   // nothing pending → complete directly
+  const root=document.getElementById('task-modal-root');
+  root.innerHTML=`<div class="tmov" id="gdel-ov" style="align-items:center" onclick="if(event.target.id==='gdel-ov')closeTaskModal()">
+    <div class="tm-frame gdel-box">
+      <div class="gdel-ic" style="background:rgba(22,163,74,.12);color:#16a34a"><i class="ti ti-circle-check"></i></div>
+      <h3>¿Completar la sección «${escHtml(name)}»?</h3>
+      <p>Todavía tiene <b>${pend.length} tarea${pend.length>1?'s':''} pendiente${pend.length>1?'s':''}</b>. Si continúas, se marcará${pend.length>1?'n':''} como <b>Done</b> y la sección pasará a «Secciones completadas». Podrás reabrirla cuando quieras.</p>
+      <div class="gdel-btns">
+        <button class="todo-btn" onclick="closeTaskModal()">Cancelar</button>
+        <button class="todo-btn" style="background:#16a34a;border-color:#16a34a;color:#fff" onclick="closeTaskModal();archiveGroup('${name.replace(/'/g,"\\'")}',true)">Marcar Done y completar</button>
+      </div>
+    </div></div>`;
+}
+async function archiveGroup(name,closePending){
+  if(closePending){
+    for(const t of S_TODOS.filter(x=>(x.grp||'').trim()===name&&canSee(x)&&!x.done&&canCompleteTask(x))){
+      t.done=true;t.state='done';await patchTodo(t.id,{done:true,state:'done'});await cascadeDone(t);
+    }
+  }
+  let g=groupMeta(name);
+  if(!g){g={name,creator:myName(),private:false};S_GROUPS.push(g);}
+  if(!g.creator)g.creator=myName();
+  g.archived=true; g.archived_at=new Date().toISOString();
+  renderTodos();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/task_groups',{method:"POST",headers:{...TODO_SB_H,"Prefer":"resolution=merge-duplicates,return=minimal"},
+    body:JSON.stringify([{name:g.name,creator:g.creator,private:!!g.private,archived:true,archived_at:g.archived_at}])});}catch(e){}
+}
+async function reopenGroup(name){
+  const g=groupMeta(name); if(!g||!canLockGroup(name))return;
+  g.archived=false; g.archived_at=null;
+  window._todoGroupOpen=window._todoGroupOpen||{}; window._todoGroupOpen[name]=true;
+  renderTodos();
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/task_groups',{method:"POST",headers:{...TODO_SB_H,"Prefer":"resolution=merge-duplicates,return=minimal"},
+    body:JSON.stringify([{name:g.name,creator:g.creator,private:!!g.private,archived:false,archived_at:null}])});}catch(e){}
 }
 function askDeleteGroup(name){
   if(!canLockGroup(name))return;
@@ -1169,7 +1219,7 @@ async function toggleGroupPrivate(name){
   if(!g.creator)g.creator=myName();
   g.private=!g.private;
   renderTodos();
-  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/task_groups',{method:"POST",headers:{...TODO_SB_H,"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify([{name:g.name,creator:g.creator,private:g.private}])});}catch(e){}
+  try{await fetch('https://xqqgqbkesicymfukkmnq.supabase.co/rest/v1/task_groups',{method:"POST",headers:{...TODO_SB_H,"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify([{name:g.name,creator:g.creator,private:g.private,archived:!!g.archived}])});}catch(e){}
 }
 // Base visibility + the "Solo mías" filter (owner === me)
 function getTodos(){
@@ -1986,7 +2036,10 @@ function renderTodos(){
   todos.forEach(t=>{const g=(t.grp&&t.grp.trim())?t.grp.trim():"__nogroup";(groups[g]=groups[g]||[]).push(t);});
   if(!window._todoMineOnly)S_GROUPS.forEach(g=>{if(g.name&&canSeeGroup(g.name)&&!groups[g.name])groups[g.name]=[];});   // empty sections
   // Order: named groups alphabetically, "Sin grupo" last
-  const groupNames=Object.keys(groups).filter(g=>g!=="__nogroup").sort((a,b)=>a.localeCompare(b));
+  const archivedNames=Object.keys(groups).filter(g=>g!=="__nogroup"&&isArchivedGroup(g)&&!groups[g].some(t=>!t.done));
+  S_GROUPS.forEach(g=>{if(g.archived&&canSeeGroup(g.name)&&!archivedNames.includes(g.name)&&!groups[g.name])archivedNames.push(g.name);});
+  archivedNames.sort((a,b)=>a.localeCompare(b));
+  const groupNames=Object.keys(groups).filter(g=>g!=="__nogroup"&&!archivedNames.includes(g)).sort((a,b)=>a.localeCompare(b));
   if(groups["__nogroup"])groupNames.push("__nogroup");
 
   window._todoGroupOpen=window._todoGroupOpen||{}; // collapse state per group
@@ -2026,6 +2079,7 @@ function renderTodos(){
         </div>
         ${g!=="__nogroup"?`<div class="tg-actions">
           ${canLockGroup(g)?`<button class="tg-act ${groupMeta(g)&&groupMeta(g).private?'on':''}" title="${groupMeta(g)&&groupMeta(g).private?'Privada · clic para hacerla pública':'Hacer privada (solo tú la verás)'}" onclick="event.stopPropagation();toggleGroupPrivate('${g.replace(/'/g,"\\'")}')"><i class="ti ti-lock${groupMeta(g)&&groupMeta(g).private?'':'-open'}"></i></button>`:''}
+          ${canLockGroup(g)?`<button class="tg-act tg-done" title="Completar sección (se oculta y queda en «Secciones completadas»)" onclick="event.stopPropagation();askCompleteGroup('${g.replace(/'/g,"\\'")}')"><i class="ti ti-circle-check"></i></button>`:''}
           <button class="tg-act" title="Renombrar grupo" onclick="event.stopPropagation();renameGroup('${g.replace(/'/g,"\\'")}')">✏️</button>
           ${canLockGroup(g)?`<button class="tg-act tg-del" title="Eliminar sección" onclick="event.stopPropagation();askDeleteGroup('${g.replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i></button>`:''}
         </div>`:''}
@@ -2039,6 +2093,20 @@ function renderTodos(){
     </div>`;
   });
 
+  // ── Secciones completadas (archivadas) ──
+  if(archivedNames.length&&!window._todoMineOnly){
+    const aopen=window._archOpen===true;
+    html+=`<div class="arch-wrap">
+      <div class="arch-head" onclick="window._archOpen=${aopen?'false':'true'};renderTodos()">
+        <span class="arch-caret" style="transform:rotate(${aopen?90:0}deg)">▶</span>
+        <span>Secciones completadas · ${archivedNames.length}</span>
+      </div>
+      ${aopen?archivedNames.map(n=>{const k=(groups[n]||[]).length;const gm=groupMeta(n);
+        return `<div class="arch-row"><i class="ti ti-circle-check"></i><span class="arch-name">${escHtml(n)}</span>
+          <span class="arch-meta">${k} tarea${k!==1?'s':''}${gm&&gm.archived_at?' · '+new Date(gm.archived_at).toLocaleDateString('es-ES',{day:'numeric',month:'short'}):''}</span>
+          ${canLockGroup(n)?`<button class="todo-btn arch-btn" onclick="reopenGroup('${n.replace(/'/g,"\\'")}')">Reabrir</button>`:''}</div>`;}).join(""):''}
+    </div>`;
+  }
   // ── Completadas (colapsable, todas las áreas juntas) ──
   if(doneAll.length){
     const open=window._doneTodosOpen===true;
